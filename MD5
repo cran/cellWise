@@ -1,0 +1,17 @@
+bca7b975b6f131a40e5e0181673be030 *DESCRIPTION
+297f30823573da0e54dadf8cc1a7be42 *NAMESPACE
+f2cbcac897a8df68cff886a4c6d7232d *R/DDC_code.R
+b31950dacdeaa599c40780c71ea42306 *build/vignette.rds
+4ce3d64bd735bf03e619b07ce2b3b77f *data/glass.rdata
+a73983a293536156c337c4ff1ad46b34 *data/mortality.rdata
+49c2a8b239bbc0ff532c1980c5a71234 *data/philips.rdata
+cfd53b66de2b6c75c3f5e41795c50347 *inst/doc/DDC_examples.R
+3d36e78b6f9b62cc1aeacfaf6070b295 *inst/doc/DDC_examples.Rmd
+3a7d8c3d6566f6302f5a9be998ce5067 *inst/doc/DDC_examples.html
+0b313eeca08fa957761eb433684f0dba *man/DetectDeviatingCells.Rd
+e91784227dd4b689468b1f79fe2050fe *man/cellMap.Rd
+9275be0ab17fbbb2c0360e2c8525826c *man/checkDataSet.Rd
+9eb247b3ddfb28cf346c7c9498b81d94 *man/glass.Rd
+5bcd42710ea4267318e9b2cbbcd8b1fa *man/mortality.Rd
+f65fba66070b5e7e32d3d39a7a2f1adc *man/philips.Rd
+3d36e78b6f9b62cc1aeacfaf6070b295 *vignettes/DDC_examples.Rmd

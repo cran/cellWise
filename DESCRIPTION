@@ -1,0 +1,26 @@
+Package: cellWise
+Type: Package
+Version: 1.0.0
+Date: 2016-12-06
+Title: Analyzing Data with Cellwise Outliers
+Authors@R: c(
+            person(given="Jakob",family="Raymaekers", role = c("aut","cre"),
+            email="jakob.raymaekers@kuleuven.be"),
+            person(given="Peter",family="Rousseeuw", role = c("aut")),
+            person(given="Wannes",family="Van den Bossche", role = c("aut")) 
+             )
+Depends: R (>= 3.2.0)
+Suggests: knitr, robustHD, robustbase, rrcov, MASS
+Imports: reshape2, scales, ggplot2, matrixStats, gridExtra
+Description: Tools for detecting cellwise outliers and robust methods to analyze data which may contain them. 
+License: GPL (>= 2)
+LazyLoad: yes
+Author: Jakob Raymaekers [aut, cre],
+    Peter Rousseeuw [aut],
+    Wannes Van den Bossche [aut]
+Maintainer: Jakob Raymaekers <jakob.raymaekers@kuleuven.be>
+VignetteBuilder: knitr
+NeedsCompilation: no
+Packaged: 2016-12-06 16:01:54 UTC; JakobR
+Repository: CRAN
+Date/Publication: 2016-12-07 02:29:23
