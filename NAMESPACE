@@ -1,6 +1,7 @@
+useDynLib(cellWise, .registration=TRUE)
 
+importFrom(Rcpp, evalCpp)
 import("ggplot2")
-
 importFrom("utils", "data")
 importFrom("stats", "mad", "median", "na.omit", "pchisq", "qchisq","weighted.mean")
 importFrom("matrixStats","weightedMedian")
@@ -10,7 +11,7 @@ importFrom("scales","rescale")
 
 
 export(checkDataSet)
-
 export(DetectDeviatingCells)
-
 export(cellMap)
+export(estLocScale)
+export(wrap)

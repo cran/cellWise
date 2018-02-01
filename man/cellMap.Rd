@@ -11,11 +11,11 @@ and possibly combining cells into blocks. A cellmap shows which cells are missin
 }
 
 \usage{
-cellMap(D, R, indcells, indrows, showVals = FALSE, xlabels = "",
+cellMap(D, R, indcells, indrows, showVals = NULL, xlabels = "",
         ylabels = "", mTitle = "",xtitle = "", ytitle = "",
         xshowindex = NULL, yshowindex = NULL, xblocksize = 1,
         yblocksize = 1, autolabel = TRUE, anglex = 90, sizexy = 1.1,
-        hjustXlabels = 1,hjustYlabels = 1)
+        hjustXlabels = 1,hjustYlabels = 1, colContrast = 1, outlyingGrad = FALSE)
 }
 
 \arguments{
@@ -32,7 +32,7 @@ cellMap(D, R, indcells, indrows, showVals = FALSE, xlabels = "",
   Indices of outlying rows (required input argument).
   }
   \item{showVals}{
-  Whether to show the entries of D in the cellmap. Defaults to \code{FALSE}.
+  Takes the values \code{"D"}, \code{"R"} or \code{NULL} and determines whether or not to show the entries of the data matrix (D) or the residuals (R) in the cellmap. Defaults to \code{NULL}.
   }
   \item{xlabels}{
   Labels for the x-axis.
@@ -77,6 +77,12 @@ cellMap(D, R, indcells, indrows, showVals = FALSE, xlabels = "",
   }
   \item{hjustYlabels}{
   Adjust y-labels: 0=left, 0.5=centered, 1=right. Defaults to \eqn{1}.
+  }
+  \item{colContrast}{
+ Parameter regulating the contrast of colors, should be in \eqn{[1,5]}. Defaults to \eqn{1}.
+  }
+  \item{outlyingGrad}{
+  If \code{TRUE}, the color is gradually adjusted in function of the outlyingness. Defaults to \code{FALSE}.
   }
 }
 

@@ -2,7 +2,7 @@
 \alias{checkDataSet}
 
 \title{
-Purify the dataset
+Clean the dataset
 }
 
 \description{
@@ -11,7 +11,7 @@ columns and rows that do not satisfy the conditions.
 It is used by the \code{\link{DetectDeviatingCells}} function but can be used by itself, to clean a dataset for a different type of analysis.
 }
 \usage{
-checkDataSet(X, fracNA = 0.5, numDiscrete = 3, precScale = 1e-12)
+checkDataSet(X, fracNA = 0.5, numDiscrete = 3, precScale = 1e-12, silent = FALSE)
 }
 
 \arguments{
@@ -30,6 +30,10 @@ checkDataSet(X, fracNA = 0.5, numDiscrete = 3, precScale = 1e-12)
   Only consider columns whose scale is larger than precScale.
   Here scale is measured by the median absolute deviation.
   Defaults to \eqn{1e-12}.
+}
+ \item{silent}{
+  Whether or not the function progress messages should be printed
+  Defaults to FALSE.
 }
 }
 

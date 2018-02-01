@@ -19,6 +19,10 @@ DetectDeviatingCells(X, DDCpars = list())
   }
   \item{DDCpars}{ A list of available options:
     \itemize{
+     \item{ \code{fastDDC} \cr
+      Whether to use the fastDDC option or not. Defaults to \eqn{TRUE}.}
+      \item{ \code{transFun} \cr
+      The transformation function used to compute the robust correlations when \code{fastDDC} \eqn{ = TRUE}. Can be \code{"wrap"} or \code{"rank"}. Defaults to \code{"wrap"}.}
       \item{ \code{fracNA} \cr
       Only consider columns and rows with fewer NAs (missing
       values) than this fraction (percentage). Defaults to \eqn{0.5}.}
@@ -49,6 +53,8 @@ DetectDeviatingCells(X, DDCpars = list())
       If TRUE, the imputed data matrix \code{Ximp} in the output
       will include the rows and columns that were not
       part of the analysis (and can still contain NAs). Defaults to \code{FALSE}.}
+      \item{ \code{silent} \cr
+      If TRUE, statements tracking the algorithm's progress will not be printed. Defaults to \code{FALSE}.}
     }
   }
 }
@@ -86,10 +92,10 @@ DetectDeviatingCells(X, DDCpars = list())
     Standardized \code{X}.           
     }
     \item{\code{k} \cr
-    Number of columns used in estimation.          
+    Number of neighbors used in estimation.          
     }
     \item{\code{ngbrs} \cr
-    Indicates highest correlated columns.           
+    Indicates neighbors of each column, i.e. the columns most correlated with it.   
     }
     \item{\code{robcors} \cr
     Robust correlations.           
@@ -98,22 +104,22 @@ DetectDeviatingCells(X, DDCpars = list())
     Robust slopes.          
     }              
     \item{\code{Xest} \cr
-    Estimated \code{X}.           
+    Predicted \code{X}.           
     }
     \item{\code{stdResid} \cr
-    Standardized residuals of orginal \code{X} minus the estimated \code{Xest}.           
+    Residuals of orginal \code{X} minus the estimated \code{Xest},standardized by       column..           
     }
     \item{\code{indcells} \cr
     Indices of the cells which were flagged in the analysis.
     }
     \item{\code{Ti} \cr
-    Testvalues (outlyingness) of each row.         
+    Outlyingness (test) value of each row.         
     }
     \item{\code{indrows} \cr
     Indices of the rows which were flagged in the analysis.
     }
     \item{\code{indall} \cr
-    Indices of both the cells and rows which were flagged in the analysis.
+    Indices of all cells which were flagged in the analysis plus all cells in flagged rows.
     }            
     \item{\code{Ximp} \cr
     Imputed \code{X}.           
@@ -124,6 +130,8 @@ DetectDeviatingCells(X, DDCpars = list())
 \references{
  Rousseeuw P.J., Van den Bossche W. (2016). Detecting deviating data cells.
  \emph{arXiv:1601.07251}
+  Raymaekers, J., Rousseeuw P.J. (2018). Fast robust correlation for high dimensional data.
+ \emph{arXiv:1712.05151}
 }
 
 \author{

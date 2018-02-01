@@ -9,9 +9,14 @@ knitr::opts_chunk$set(
 library("cellWise")
 
 # Default options for DetectDeviatingCells:
-DDCpars=list(fracNA=0.5,numDiscrete=3,precScale=1e-12,
-             tolProb=0.99,corrlim=0.5,combinRule ="wmean",
-             includeSelf=T,rowdetect=TRUE,returnBigXimp=F)
+DDCpars = list(fracNA = 0.5,numDiscrete = 3,precScale = 1e-12,
+             tolProb = 0.99, corrlim = 0.5, combinRule = "wmean",
+             includeSelf = TRUE, rowdetect = TRUE, returnBigXimp = F,
+             fastDDC = FALSE)
+fastDDCpars = list(fracNA = 0.5,numDiscrete = 3,precScale = 1e-12,
+             tolProb = 0.99, corrlim = 0.5, combinRule = "wmean",
+             includeSelf = TRUE, rowdetect = TRUE, returnBigXimp = F,
+             fastDDC = TRUE)
 
 
 ## ------------------------------------------------------------------------
@@ -82,7 +87,6 @@ round((DDCxclean$Ximp - xclean)[1:12,],2)
 
 ## ----results='hide',message=FALSE,warning=FALSE--------------------------
  library(robustHD)
- library(gridExtra)
  data(TopGear)
 
 ## ----fig.height=10,fig.width=10------------------------------------------
@@ -148,7 +152,7 @@ ggpcol = cellMap(D=tempX,
                  ylabels=ylabels,
                  mTitle="By column",
                  yshowindex=yshowindex,
-                 showVals=TRUE,
+                 showVals="D",
                  hjustYlabels=0.5) 
 plot(ggpcol)
 
@@ -160,14 +164,14 @@ ggpDDC = cellMap(D=tempX,
                  ylabels=ylabels,
                  mTitle="DetectDeviatingCells",
                  yshowindex=yshowindex,
-                 showVals=TRUE,
+                 showVals="D",
                  hjustYlabels=0.5)
 plot(ggpDDC)
 
 # Creating the pdf:
 pdfName = "cellmap_TopGear.pdf"
 pdf(pdfName, width = 20, height = 15 )
-grid.arrange(ggpcol,ggpDDC,nrow=1) # arranges ggplot2,.. on a page
+gridExtra::grid.arrange(ggpcol,ggpDDC,nrow=1) # arranges ggplot2,.. on a page
 dev.off()
 
 
@@ -292,13 +296,16 @@ ggpDDC = cellMap(D=remX, R=DDCmortality$stdResid,
 plot(ggpDDC)
 
 pdf(paste("cellmap_mortality_",xblocksize,".pdf",sep=""),width=14,height=12)
-grid.arrange(ggpROBPCA,ggpDDC,nrow=1)
+gridExtra::grid.arrange(ggpROBPCA,ggpDDC,nrow=1)
 dev.off()
 
 ## ------------------------------------------------------------------------
 data(glass)
 DDCglass = DetectDeviatingCells(glass,DDCpars) # takes 1 or 2 minutes
 remX = DDCglass$remX
+dim(remX)
+fastDDCglass = DetectDeviatingCells(glass, fastDDCpars)
+remXfast = fastDDCglass$remX
 dim(remX)
 
 ## ----results='hide',message=FALSE,warning=FALSE--------------------------
@@ -352,8 +359,24 @@ ggpDDC = cellMap(D=remX, R=DDCglass$stdResid,
                         autolabel=F)
 plot(ggpDDC)
 
+
+ggpfastDDC = cellMap(D=remXfast, R=fastDDCglass$stdResid,
+                        indcells=fastDDCglass$indcells,
+                        indrows=integer(0), # DDCglass$indrows,
+                        xlabels=xlabels,
+                        ylabels=ylabels,
+                        mTitle="fast DetectDeviatingCells",
+                        xblocksize=xblocksize,
+                        yblocksize=yblocksize,
+                        anglex=0,
+                        xtitle=xtitle,
+                        ytitle=ytitle,
+                        sizexy=1.5,
+                        autolabel=F)
+plot(ggpfastDDC)
+
 pdf(paste("cellmap_glass2_",xblocksize,".pdf",sep=""),width=16,height=10)
-grid.arrange(ggpROBPCA,ggpDDC,ncol=1)
+gridExtra::grid.arrange(ggpROBPCA,ggpDDC,ncol=1)
 dev.off()
 
 ## ------------------------------------------------------------------------
