@@ -141,7 +141,7 @@ DetectDeviatingCells <- function(X, DDCpars = list()){
   returned.result <- list(Ximp = res$Ximp,k = res$k,ngbrs = res$ngbrs, robcors = res$robcors,
                           robslopes = res$robslopes, Xest = res$Xest, stdResid = res$stdResid,
                           indcells = drop(res$indcells), Ti = res$Ti, indrows = drop(res$indrows),
-                          indall = res$indall, indNAs = res$indNAs, Z = res$Z, profile = res$profile)
+                          indall = res$indall, indNAs = res$indNAs, Z = res$Z)
   
   if (returnBigXimp) {
     Ximp <- data.matrix(X, rownames.force = TRUE)

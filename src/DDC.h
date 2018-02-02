@@ -377,7 +377,7 @@ arma::vec equiGYfilt(arma::vec v, double qCut, const int miter) {
   arma::uvec id = arma::regspace<arma::uvec>(0,(vobs.size()-1));
   while ((converge == 0) && (iter < miter)) {
     iter = iter + 1;
-    vobs = rawEquiGYfilt(vobs, qCut = qCut);
+    vobs = rawEquiGYfilt(vobs, qCut);
     id = id(arma::find_finite(vobs));
     if (vobs.is_finite() ){
       converge = 1;
@@ -426,7 +426,7 @@ arma::vec deShrink(arma::vec colj, arma::mat Z, const int coln, double qRegr, do
   //	colj(1) = 0; // take out first entry
   
   arma::vec zj = Z.col(coln);   // column with response(from Z)
-  double a = slopeMedWLS(colj, zj, qRegr = qRegr, precScale = precScale);
+  double a = slopeMedWLS(colj, zj, qRegr, precScale);
   arma::vec deshrunk = a * colj;
   return(deshrunk);
 }

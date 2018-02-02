@@ -1,6 +1,6 @@
 Package: cellWise
 Type: Package
-Version: 2.0.7
+Version: 2.0.8
 Date: 2018-02-01
 Title: Analyzing Data with Cellwise Outliers
 Authors@R: c(
@@ -24,6 +24,6 @@ Maintainer: Jakob Raymaekers <jakob.raymaekers@kuleuven.be>
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
 NeedsCompilation: yes
-Packaged: 2018-02-01 18:44:58 UTC; u0105404
+Packaged: 2018-02-02 09:20:25 UTC; u0105404
 Repository: CRAN
-Date/Publication: 2018-02-01 22:46:03 UTC
+Date/Publication: 2018-02-02 18:21:06 UTC

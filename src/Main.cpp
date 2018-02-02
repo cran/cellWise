@@ -1,6 +1,5 @@
 // #include <Rmath.h>
 #include "DDC.h"
-#include <Rcpp/Benchmark/Timer.h> //for profiling
 
 using namespace Rcpp;
 using namespace arma;

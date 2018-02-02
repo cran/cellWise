@@ -32,8 +32,8 @@
 //----------------------------------------------------------------------
 
 double annAspectRatio(			// compute aspect ratio of box
-	int					dim,			// dimension
-	const ANNorthRect	&bnd_box);		// bounding cube
+    int					dim,			// dimension
+    const ANNorthRect	&bnd_box);		// bounding cube
 
 void annEnclRect(				// compute smallest enclosing rectangle
 	ANNpointArray		pa,				// point array
