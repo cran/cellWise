@@ -19,6 +19,7 @@ wrap <- function(X, locX, scaleX, precScale = 1e-12) {
   if (!is.data.frame(X) & !is.matrix(X) & !is.vector(X)) {
     stop("The input data must be a vector, matrix or a data frame")
   }
+  X <- as.matrix(X)
   if (!length(locX) == dim(X)[2] || !length(scaleX) == dim(X)[2]) {
     stop("The arguments \"locX\" and \"scaleX\" should both be of length dim(X)[2]")
   }
@@ -32,9 +33,8 @@ wrap <- function(X, locX, scaleX, precScale = 1e-12) {
     warning("The \"precScale\" argument was changed to 1e-12.")
   }
   
-  
   # Execute wrapping
-  res <- tryCatch( .Call('_cellWise_Wrap_cpp', as.matrix(X[, colInWrap]), locX, scaleX, precScale,
+  res <- tryCatch( .Call('_cellWise_Wrap_cpp', X[, colInWrap], locX, scaleX, precScale,
                          PACKAGE = 'cellWise'),
                    "std::range_error" = function(e){
                      conditionMessage( e ) })

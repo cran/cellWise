@@ -31,11 +31,13 @@ DetectDeviatingCells(X, DDCpars = list())
       be considered discrete and not used in the analysis. Defaults to \eqn{3}.}
       \item{ \code{precScale} \cr
       Only consider columns whose scale is larger than \code{precScale}.
-      Here scale is measured by the median absolute deviation. Defaults to \eqn{1e-12}.}  
-      \item{ \code{tolProb} \cr
+      Here scale is measured by the median absolute deviation. Defaults to \eqn{1e-12}.}        \item{ \code{tolProb} \cr
       Tolerance probability, with default \eqn{0.99}, which
-      determines the cutoff values for flagging outliers.
-      Used in several the steps of the algorithm.}
+      determines the cutoff values for flagging outliers in
+      several steps of the algorithm.
+      More flexibility in the cutoff values can be obtained by setting the
+      \code{tolProbCell}, \code{tolProbRow}, \code{tolProbReg} and \code{tolProbCorr}
+      parameters individually.}
       \item{ \code{corrlim} \cr
       When trying to estimate \eqn{z_{ij}} from other variables \eqn{h}, we 
       will only use variables \eqn{h} with \eqn{|\rho_{j,h}| \ge corrlim}.

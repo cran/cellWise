@@ -275,7 +275,7 @@ cellMap <- function(D, R, indcells, indrows, showVals = NULL, xlabels = "",
   ggp <- ggp + scale_fill_gradientn(colours = colorends,
                                     values = rescale(gradientends),
                                     rescaler = function(x, ...) x,
-                                    oob = identity) +  
+                                    oob = scales::squish) +  
     ggtitle(mTitle) +
     coord_fixed() + 
     theme_classic(base_size = base_size*1) + 

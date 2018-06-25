@@ -174,7 +174,7 @@ data(dog_walker)
 X <- dog_walker
 
 # Combine all pixels of an image in a row:
-dims <- dim(X); dims # 400 162 288   3
+dims <- dim(X); dims # 54 144 180   3
 dim(X) <- c(dims[1], prod(dims[2:4]))
 dim(X) #  54 77760
 

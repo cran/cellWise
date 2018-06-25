@@ -36,6 +36,18 @@ DetectDeviatingCells <- function(X, DDCpars = list()){
   if (!"tolProb" %in% names(DDCpars)) {
     DDCpars$tolProb <- 0.99
   }
+  if (!"tolProbCell" %in% names(DDCpars)) {
+    DDCpars$tolProbCell <- DDCpars$tolProb
+  }
+  if (!"tolProbRow" %in% names(DDCpars)) {
+    DDCpars$tolProbRow <- DDCpars$tolProb
+  }
+  if (!"tolProbReg" %in% names(DDCpars)) {
+    DDCpars$tolProbReg <- DDCpars$tolProb
+  }
+  if (!"tolProbCorr" %in% names(DDCpars)) {
+    DDCpars$tolProbCorr <- DDCpars$tolProb
+  }
   if (!"corrlim" %in% names(DDCpars)) {
     DDCpars$corrlim <- 0.5
   }
@@ -83,36 +95,19 @@ DetectDeviatingCells <- function(X, DDCpars = list()){
   if (!"k" %in% names(DDCpars)) {
     DDCpars$k <- 100
   }
+  
+  # Convert option parameters to integers
   DDCpars$transFun <- pmatch(DDCpars$transFun, 
-                             c("Huber", "wrap", "rank"))
+                             c("Huber", "wrap", "rank"),
+                             nomatch = 2)
   DDCpars$treetype <- as.integer(DDCpars$treetype == "bd")
   DDCpars$searchtype <- pmatch(DDCpars$searchtype,
-                               c("standard", "priority", "radius"))
-  DDCpars$combinRule <- pmatch(DDCpars$combinRule, c("wmean","wmedian","mean","median"))
-  # 
-  # Meaning of these options:
-  # fracNA     : only consider columns and rows with fewer NAs (missing
-  #              values) than this fraction (percentage).
-  # numDiscrete: a column that takes on numDiscrete or fewer values will
-  #              be considered discrete and not used in the analysis.
-  # precScale  : only consider columns whose scale is > precScale.
-  #              Here scale is measured by the median absolute deviation.  
-  # tolProb    : tolerance probability, with default 0.99, which
-  #              determines the cutoff values for flagging outliers.
-  #              Used in all the steps of the algorithm.
-  # corrlim    : when tring to estimate z_ij from other variables h, we 
-  #              will only use variables h with abs(corr(j,h)) >= corrlim.
-  #              Variables j without any correlated variables h satisfying 
-  #              this are considered standalone, and treated on their own.  
-  # combinRule : the operation to combine estimates of z_ij coming from
-  #              other variables h: can be wmean, wmedian, mean, median.
-  # includeSelf: whether or not the combination rule will include the
-  #              variable j itself.
-  # rowdetect   : whether the rule for flagging rows is to be applied.
-  # returnBigXimp : if TRUE, the imputed data matrix Ximp in the output
-  #                 will include the rows and columns that were not
-  #                 part of the analysis (and can still contain NAs).
-  #
+                               c("standard", "priority", "radius"),
+                               nomatch = 1)
+  DDCpars$combinRule <- pmatch(DDCpars$combinRule,
+                               c("wmean","wmedian","mean","median"),
+                               nomatch = 1)
+  
   # Retrieve parameters from the list:
   #
   fracNA        <- DDCpars$fracNA
@@ -128,8 +123,9 @@ DetectDeviatingCells <- function(X, DDCpars = list()){
   
   # Carry out the actual DetectDeviatingCells algorithm on
   # the remaining dataset out1$remX :
-  res <- tryCatch( .Call('_cellWise_DDC_cpp', checkedData, DDCpars$tolProb, DDCpars$corrlim,
-                         DDCpars$combinRule, DDCpars$rowdetect, DDCpars$includeSelf,
+  res <- tryCatch( .Call('_cellWise_DDC_cpp', checkedData, DDCpars$tolProbCell,
+                         DDCpars$tolProbRow, DDCpars$tolProbReg, DDCpars$tolProbCorr,
+                         DDCpars$corrlim, DDCpars$combinRule, DDCpars$rowdetect, DDCpars$includeSelf,
                          DDCpars$fastDDC, DDCpars$absCorr, DDCpars$qdim, DDCpars$transFun,
                          DDCpars$treetype, DDCpars$searchtype, DDCpars$radius, DDCpars$eps,
                          DDCpars$bruteForce, DDCpars$k, DDCpars$numiter,

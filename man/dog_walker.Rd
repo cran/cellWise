@@ -6,12 +6,12 @@
 }
 \description{
   A dataset containing the image sequence of a video. The sequence consists of 
-  400 frames of 162 by 288 pixels in Red/Geen/Blue (RGB) format.
+  54 frames of 144 by 180 pixels pixels in Red/Geen/Blue (RGB) format.
 }
 \usage{data("dog_walker")}
 
 \format{
-  An array of dimensions \eqn{400 \times 162 \times 288 \times 3}.
+  An array of dimensions \eqn{54 \times 144 \times 180 \times 3}.
 }
 
 \source{

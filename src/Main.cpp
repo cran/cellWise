@@ -1,31 +1,29 @@
-// #include <Rmath.h>
-#include "DDC.h"
 
-using namespace Rcpp;
-using namespace arma;
-using namespace std;
-using namespace DDC;
+#include "DDC.h"
 
 /*************************************/
 /*       Main DDCcore function       */
 /*************************************/
 // [[Rcpp::export]]
-Rcpp::List DDC_cpp(arma::mat & X, const double & tolProb, const double & corrlim,
-                   const int & combinRule,const int & rowdetect, const int & includeSelf, 
-                   const int & fastDDC, const int & absCorr,
-                   const int & qdim, const int & transFun,const int & treetype,
-                   const int & searchtype,const double & radius, const double & eps,
-                   const int & bruteForce, unsigned int & k, const unsigned int & numiter, 
-                   const double & precScale)
+Rcpp::List DDC_cpp(arma::mat & X, const double & tolProbCell,
+                   const double & tolProbRow, const double & tolProbReg,
+                   const double & tolProbCorr , const double & corrlim,
+                   const int & combinRule,const int & rowdetect,
+                   const int & includeSelf, const int & fastDDC,
+                   const int & absCorr, const int & qdim, const int & transFun,
+                   const int & treetype, const int & searchtype, 
+                   const double & radius, const double & eps,
+                   const int & bruteForce, unsigned int & k,
+                   const unsigned int & numiter, const double & precScale)
 {
   
   try
   {
     
-    const double qCell     = sqrt(R::qchisq(tolProb, 1,true,false));
-    const double qRegr     = sqrt(R::qchisq(tolProb, 1,true,false));
-    const double qRow      = sqrt(R::qchisq(tolProb, 1,true,false));
-    const double qCorr     = R::qchisq(tolProb, 2,true,false);
+    const double qCell     = std::sqrt(R::qchisq(tolProbCell, 1,true,false));
+    const double qRow      = std::sqrt(R::qchisq(tolProbRow, 1,true,false));
+    const double qRegr     = std::sqrt(R::qchisq(tolProbReg, 1,true,false));
+    const double qCorr     = R::qchisq(tolProbCorr, 2,true,false);
     
     LocScaleEstimators::Xlocscale locscaleX;
     arma::mat Z = X;
@@ -49,21 +47,24 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProb, const double & corrlim
     Z = Z.each_row() / locscaleX.scale.t();
     
  
-      
     /////////////////////////////////////
     //    STEP 2: UNIVARIATE ANALYSIS  //
     /////////////////////////////////////
     
-    uvec indNAs = find_nonfinite(X);
-    // Univariate analysis by column : replace outliers by NAs
-    mat U = Z;
+    arma::uvec indNAs = arma::find_nonfinite(X);
+    arma::mat U = Z;
+    // Univariate analysis : replace outliers by NAs
     
-    for (unsigned int i = 0; i < U.n_cols; i++)
-    {
-      U.col(i) = limitFilt(Z.col(i), qCell);
-    }
+    U.for_each([qCell](arma::mat::elem_type &value) {
+      value = std::abs(value) > qCell ? arma::datum::nan : value;
+    });
     
-    uvec UniIndex = vdiff(find_nonfinite(U), indNAs); //does not include original missings
+    // for (unsigned int i = 0; i < U.n_cols; i++)
+    // {
+    //   U.col(i) = limitFilt(Z.col(i), qCell);
+    // }
+    
+    arma::uvec UniIndex = DDC::vdiff(arma::find_nonfinite(U), indNAs); //does not include original missings
     
 
     
@@ -75,13 +76,13 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProb, const double & corrlim
     
     // For each column j of U, find the k columns h != j of U that
     // it has the highest absolute correlation robCorr with :
-    umat ngbrs(U.n_cols, k, fill::zeros);
-    mat robcors(U.n_cols, k, fill::zeros);
+    arma::umat ngbrs(U.n_cols, k, arma::fill::zeros);
+    arma::mat robcors(U.n_cols, k, arma::fill::zeros);
     
     if (fastDDC == 0) {
       for (unsigned int i = 0; i < U.n_cols; i++)
       {
-        kbestcorr tempresult = kBestCorr(U.col(i), U, i, k, qCorr, precScale);
+        DDC::kbestcorr tempresult = DDC::kBestCorr(U.col(i), U, i, k, qCorr, precScale);
         ngbrs.row(i) = tempresult.selected.t();
         robcors.row(i) = tempresult.corrs.t();
       }
@@ -100,33 +101,33 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProb, const double & corrlim
     }
     
    
-    mat corrweight = arma::abs(robcors); // should have no NAs
+   arma::mat corrweight = arma::abs(robcors); // should have no NAs
     
     if (corrlim > 0) {
       corrweight(arma::find(corrweight < corrlim)).zeros();
     }
     
-    umat ngb0 = ngbrs;
+    arma::umat ngb0 = ngbrs;
     
     ngb0.elem(find(corrweight == 0)).fill(U.n_cols); // out of bounds index for the unused ngbrs 
-    mat robslopes(U.n_cols, k, fill::zeros);
+    arma::mat robslopes(U.n_cols, k, arma::fill::zeros);
     
     for (unsigned int i = 0; i < U.n_cols; i++) 
     {
-      robslopes.row(i) = compSlopes(U.col(i), ngb0.row(i).t(), U, qRegr, precScale).t();
+      robslopes.row(i) = DDC::compSlopes(U.col(i), ngb0.row(i).t(), U, qRegr, precScale).t();
     }
     
-    uvec colStandalone = find(sum(corrweight, 1) == 0);
-    uvec colConnected = vdiff(regspace<uvec>(0, X.n_cols - 1), colStandalone);
-    uvec indexStandalone = col2cell(colStandalone, X.n_rows);
-    indexStandalone = vinter(indexStandalone, UniIndex);
+    arma::uvec colStandalone = arma::find(sum(corrweight, 1) == 0);
+    arma::uvec colConnected = DDC::vdiff(arma::regspace<arma::uvec>(0, X.n_cols - 1), colStandalone);
+    arma::uvec indexStandalone = DDC::col2cell(colStandalone, X.n_rows);
+    indexStandalone = DDC::vinter(indexStandalone, UniIndex);
     //= list of flagged cells in standalone variables.
     if (includeSelf == 1) {
       // if you want to include column j in its own prediction:
-      ngbrs = join_rows(regspace<uvec>(0, (X.n_cols - 1)), ngbrs);
-      robcors = join_rows(ones<vec>(X.n_cols), robcors);
-      corrweight = join_rows(ones<vec>(X.n_cols), corrweight);
-      robslopes = join_rows(ones<vec>(X.n_cols), robslopes);
+      ngbrs = arma::join_rows(arma::regspace<arma::uvec>(0, (X.n_cols - 1)), ngbrs);
+      robcors = arma::join_rows(arma::ones<arma::vec>(X.n_cols), robcors);
+      corrweight = arma::join_rows(arma::ones<arma::vec>(X.n_cols), corrweight);
+      robslopes = arma::join_rows(arma::ones<arma::vec>(X.n_cols), robslopes);
     }
     
     
@@ -142,7 +143,7 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProb, const double & corrlim
       // Estimation for connected variables :
       
       for (unsigned int i = 0; i < colConnected.size(); i++) {
-        Zest.col(colConnected(i)) = predictCol(U.col(colConnected(i)), U, colConnected(i),
+        Zest.col(colConnected(i)) = DDC::predictCol(U.col(colConnected(i)), U, colConnected(i),
                  ngbrs, corrweight, robslopes, combinRule);
       }
     
@@ -153,7 +154,7 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProb, const double & corrlim
       // Deshrinkage : rescale Zest[, j] using robSlope of Z[, j] on Zest[, j]
       
       for (unsigned int i = 0; i < colConnected.size(); i++) {
-        Zest.col(colConnected(i)) = deShrink(Zest.col(colConnected(i)),
+        Zest.col(colConnected(i)) = DDC::deShrink(Zest.col(colConnected(i)),
                  Z, colConnected(i), qRegr, precScale);
       }
       
@@ -168,7 +169,7 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProb, const double & corrlim
       Zres = Z - Zest; // original minus estimated
       Zres.cols(colStandalone) = Z.cols(colStandalone);
       
-      vec scalest(colConnected.size(), fill::zeros);
+      arma::vec scalest(colConnected.size(), arma::fill::zeros);
       
       for (unsigned int i = 0; i < colConnected.size(); i++)
       {
@@ -182,38 +183,38 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProb, const double & corrlim
       // were already standardized in the beginning.
       // Next, flag outlying cells by their large residuals :
       indcells = find(arma::abs(Zres) > qCell); // does not flag the NAs as cells
-      U(indcells).fill(datum::nan);
+      U(indcells).fill(arma::datum::nan);
       
     } // ends the iteration
     
-    indcells = vdiff(indcells, col2cell(colStandalone, X.n_cols));
+    indcells = DDC::vdiff(indcells, DDC::col2cell(colStandalone, X.n_cols));
     
     // are the indices of outlying cells in connected variables only
-    indcells = unique(sort(join_cols(indcells, indexStandalone)));
+    indcells = arma::unique(arma::sort(arma::join_cols(indcells, indexStandalone)));
     // are the indices of both types of outlying cells
     
     ////////////////////////////////////
     //    STEP 7 : FLAGGING ROWS      //
     ////////////////////////////////////
     
-    vec Ti(X.n_rows, fill::zeros);
-    uvec indrows;
-    uvec indall = indcells;
+    arma::vec Ti(X.n_rows, arma::fill::zeros);
+    arma::uvec indrows;
+    arma::uvec indall = indcells;
     
     if (rowdetect == 1) {
       
       for (unsigned int i = 0; i < X.n_rows; i++) {
-        vec tempres = arma::erf(arma::sqrt(arma::pow(Zres.row(i), 2) / 2)).t();
+        arma::vec tempres = arma::erf(arma::sqrt(arma::pow(Zres.row(i), 2) / 2)).t();
         //pchisq(x,1) = erf(sqrt(x/2))
-        Ti(i) = mean(tempres(find_finite(tempres))) - 0.5;
+        Ti(i) = arma::mean(tempres(arma::find_finite(tempres))) - 0.5;
       }
       
       // calculate the test value(outlyingness) of each row :
-      uvec finiteTi = find_finite(Ti);
-      double medTi = median(Ti(finiteTi));
+      arma::uvec finiteTi = arma::find_finite(Ti);
+      double medTi = arma::median(Ti(finiteTi));
       Ti = (Ti - medTi) / (1.4826 * median(arma::abs(Ti(finiteTi) - medTi)));
-      indrows = vinter(find_nonfinite(limitFilt(Ti, qRow)), find(Ti > 0));
-      indall = unique(join_cols(indcells, row2cell(indrows, X.n_rows, X.n_cols)));
+      indrows = DDC::vinter(find_nonfinite(DDC::limitFilt(Ti, qRow)), arma::find(Ti > 0));
+      indall = arma::unique(arma::join_cols(indcells, DDC::row2cell(indrows, X.n_rows, X.n_cols)));
     }
     
     /////////////////////////////////////////////
@@ -257,7 +258,7 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProb, const double & corrlim
   {
     ::Rf_error( "c++ exception " "(unknown reason)" );
   }
-  return wrap(NA_REAL);
+  return Rcpp::wrap(NA_REAL);
 }
 
 
@@ -279,7 +280,13 @@ Rcpp::List Wrap_cpp(arma::mat & X, arma::vec & loc, arma::vec & scale, double pr
       arma::uvec finiteinds = arma::find_finite(X.col(i));
       arma::vec u = X.col(i) - loc(i);
       u = u / scale(i);
-      u(finiteinds) = LocScaleEstimators::psiTanh(u(finiteinds)) * scale(i) + loc(i) ;
+      arma::vec ufin = u(finiteinds);
+      LocScaleEstimators::psiTanh(ufin);
+      u(finiteinds) = ufin * scale(i) + loc(i) ;
+      if (finiteinds.size() < X.n_rows) {
+        arma::uvec infiniteinds = DDC::vdiff(arma::regspace<arma::uvec>(0,(X.n_rows - 1)), finiteinds);
+        u(infiniteinds).fill(loc(i));
+      }
       Xw.col(i) = u;
     } 
     
@@ -292,7 +299,7 @@ Rcpp::List Wrap_cpp(arma::mat & X, arma::vec & loc, arma::vec & scale, double pr
     ::Rf_error( "c++ exception " "(unknown reason)" );
   }
   
-  return wrap(NA_REAL);
+  return Rcpp::wrap(NA_REAL);
 }
 
 
@@ -325,7 +332,7 @@ Rcpp::List estLocScale_cpp(arma::mat & X, int type,  double precScale) {
     ::Rf_error( "c++ exception " "(unknown reason)" );
   }
   
-  return wrap(NA_REAL);
+  return Rcpp::wrap(NA_REAL);
 }
 
 
