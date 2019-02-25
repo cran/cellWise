@@ -7,8 +7,8 @@
 using namespace Rcpp;
 
 // DDC_cpp
-Rcpp::List DDC_cpp(arma::mat& X, const double& tolProbCell, const double& tolProbRow, const double& tolProbReg, const double& tolProbCorr, const double& corrlim, const int& combinRule, const int& rowdetect, const int& includeSelf, const int& fastDDC, const int& absCorr, const int& qdim, const int& transFun, const int& treetype, const int& searchtype, const double& radius, const double& eps, const int& bruteForce, unsigned int& k, const unsigned int& numiter, const double& precScale);
-RcppExport SEXP _cellWise_DDC_cpp(SEXP XSEXP, SEXP tolProbCellSEXP, SEXP tolProbRowSEXP, SEXP tolProbRegSEXP, SEXP tolProbCorrSEXP, SEXP corrlimSEXP, SEXP combinRuleSEXP, SEXP rowdetectSEXP, SEXP includeSelfSEXP, SEXP fastDDCSEXP, SEXP absCorrSEXP, SEXP qdimSEXP, SEXP transFunSEXP, SEXP treetypeSEXP, SEXP searchtypeSEXP, SEXP radiusSEXP, SEXP epsSEXP, SEXP bruteForceSEXP, SEXP kSEXP, SEXP numiterSEXP, SEXP precScaleSEXP) {
+Rcpp::List DDC_cpp(arma::mat& X, const double& tolProbCell, const double& tolProbRow, const double& tolProbReg, const double& tolProbCorr, const double& corrlim, const int& combinRule, const int& includeSelf, const int& fastDDC, const int& qdim, const int& transFun, unsigned int& k, const unsigned int& numiter, const double& precScale, const int& standType, const int& corrType, const unsigned int& nCorr, const unsigned int& nLocScale, arma::uvec& goodCols);
+RcppExport SEXP _cellWise_DDC_cpp(SEXP XSEXP, SEXP tolProbCellSEXP, SEXP tolProbRowSEXP, SEXP tolProbRegSEXP, SEXP tolProbCorrSEXP, SEXP corrlimSEXP, SEXP combinRuleSEXP, SEXP includeSelfSEXP, SEXP fastDDCSEXP, SEXP qdimSEXP, SEXP transFunSEXP, SEXP kSEXP, SEXP numiterSEXP, SEXP precScaleSEXP, SEXP standTypeSEXP, SEXP corrTypeSEXP, SEXP nCorrSEXP, SEXP nLocScaleSEXP, SEXP goodColsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -19,21 +19,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type tolProbCorr(tolProbCorrSEXP);
     Rcpp::traits::input_parameter< const double& >::type corrlim(corrlimSEXP);
     Rcpp::traits::input_parameter< const int& >::type combinRule(combinRuleSEXP);
-    Rcpp::traits::input_parameter< const int& >::type rowdetect(rowdetectSEXP);
     Rcpp::traits::input_parameter< const int& >::type includeSelf(includeSelfSEXP);
     Rcpp::traits::input_parameter< const int& >::type fastDDC(fastDDCSEXP);
-    Rcpp::traits::input_parameter< const int& >::type absCorr(absCorrSEXP);
     Rcpp::traits::input_parameter< const int& >::type qdim(qdimSEXP);
     Rcpp::traits::input_parameter< const int& >::type transFun(transFunSEXP);
-    Rcpp::traits::input_parameter< const int& >::type treetype(treetypeSEXP);
-    Rcpp::traits::input_parameter< const int& >::type searchtype(searchtypeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type radius(radiusSEXP);
-    Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
-    Rcpp::traits::input_parameter< const int& >::type bruteForce(bruteForceSEXP);
     Rcpp::traits::input_parameter< unsigned int& >::type k(kSEXP);
     Rcpp::traits::input_parameter< const unsigned int& >::type numiter(numiterSEXP);
     Rcpp::traits::input_parameter< const double& >::type precScale(precScaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(DDC_cpp(X, tolProbCell, tolProbRow, tolProbReg, tolProbCorr, corrlim, combinRule, rowdetect, includeSelf, fastDDC, absCorr, qdim, transFun, treetype, searchtype, radius, eps, bruteForce, k, numiter, precScale));
+    Rcpp::traits::input_parameter< const int& >::type standType(standTypeSEXP);
+    Rcpp::traits::input_parameter< const int& >::type corrType(corrTypeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int& >::type nCorr(nCorrSEXP);
+    Rcpp::traits::input_parameter< const unsigned int& >::type nLocScale(nLocScaleSEXP);
+    Rcpp::traits::input_parameter< arma::uvec& >::type goodCols(goodColsSEXP);
+    rcpp_result_gen = Rcpp::wrap(DDC_cpp(X, tolProbCell, tolProbRow, tolProbReg, tolProbCorr, corrlim, combinRule, includeSelf, fastDDC, qdim, transFun, k, numiter, precScale, standType, corrType, nCorr, nLocScale, goodCols));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -52,23 +50,39 @@ BEGIN_RCPP
 END_RCPP
 }
 // estLocScale_cpp
-Rcpp::List estLocScale_cpp(arma::mat& X, int type, double precScale);
-RcppExport SEXP _cellWise_estLocScale_cpp(SEXP XSEXP, SEXP typeSEXP, SEXP precScaleSEXP) {
+Rcpp::List estLocScale_cpp(arma::mat& X, unsigned int nLocScale, int type, double precScale, const int center, const double alpha);
+RcppExport SEXP _cellWise_estLocScale_cpp(SEXP XSEXP, SEXP nLocScaleSEXP, SEXP typeSEXP, SEXP precScaleSEXP, SEXP centerSEXP, SEXP alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< unsigned int >::type nLocScale(nLocScaleSEXP);
     Rcpp::traits::input_parameter< int >::type type(typeSEXP);
     Rcpp::traits::input_parameter< double >::type precScale(precScaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(estLocScale_cpp(X, type, precScale));
+    Rcpp::traits::input_parameter< const int >::type center(centerSEXP);
+    Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
+    rcpp_result_gen = Rcpp::wrap(estLocScale_cpp(X, nLocScale, type, precScale, center, alpha));
+    return rcpp_result_gen;
+END_RCPP
+}
+// unimcd_cpp
+Rcpp::List unimcd_cpp(arma::vec& y, const double alpha);
+RcppExport SEXP _cellWise_unimcd_cpp(SEXP ySEXP, SEXP alphaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
+    rcpp_result_gen = Rcpp::wrap(unimcd_cpp(y, alpha));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_cellWise_DDC_cpp", (DL_FUNC) &_cellWise_DDC_cpp, 21},
+    {"_cellWise_DDC_cpp", (DL_FUNC) &_cellWise_DDC_cpp, 19},
     {"_cellWise_Wrap_cpp", (DL_FUNC) &_cellWise_Wrap_cpp, 4},
-    {"_cellWise_estLocScale_cpp", (DL_FUNC) &_cellWise_estLocScale_cpp, 3},
+    {"_cellWise_estLocScale_cpp", (DL_FUNC) &_cellWise_estLocScale_cpp, 6},
+    {"_cellWise_unimcd_cpp", (DL_FUNC) &_cellWise_unimcd_cpp, 2},
     {NULL, NULL, 0}
 };
 

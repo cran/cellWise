@@ -14,7 +14,6 @@
 
 namespace LocScaleEstimators // namespace for all univariate location/scale estimators
 {
-
 struct locscale {
   double loc;
   double scale;
@@ -22,6 +21,7 @@ struct locscale {
   double rawscale;
   double cfac1;
   double cfac2;
+  arma::uvec weights;
 };
 
 struct Xlocscale {
@@ -29,6 +29,11 @@ struct Xlocscale {
   arma::vec scale;
 };
 
+
+
+arma::uvec sample(const arma::uvec & sampleFrom,
+                  const unsigned int nbSamples,
+                  const bool replace); 
 
 //////////////
 // Location //
@@ -57,13 +62,15 @@ double scale1StepM(const arma::vec &x, std::function<void (arma::vec&)> rhoFunct
 // LOCSCALE //
 //////////////
 
-locscale uniMcd(arma::vec y);
+locscale uniMcd(arma::vec y, double alpha = 0.5);
 
 /////////////////////////
 // Vectorized LOCSCALE //
 /////////////////////////
 
-Xlocscale estLocScale(const arma::mat &X, int type, double precScale = 1e-12);
+Xlocscale estLocScale(const arma::mat &X,
+                      unsigned int nLocScale, int type, double precScale,
+                      const int center, double alpha = 0.5);
 
 ///////////
 // Ranks //

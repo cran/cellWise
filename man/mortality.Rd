@@ -5,7 +5,7 @@
 The mortality dataset
 }
 \description{
-This dataset contains the mortality by age for males in France, from 1816 to 2010
+This dataset contains the mortality by age for males in France, from 1816 to 2013
 as obtained from the Human Mortality Database.
 }
 \usage{data("mortality")}

@@ -24,7 +24,7 @@ arma::uvec selected;
 arma::vec corrs;
 };
 
-
+  
 arma::uvec vinter(const arma::uvec &first, const arma::uvec &second);
 
 arma::uvec vdiff(const arma::uvec &first, const arma::uvec &second);
@@ -58,7 +58,7 @@ arma::vec equiGYfilt(const arma::vec &v, double qCut, const int miter);
 kbestcorr kBestCorr(const arma::vec &colj, const arma::mat &U, const int coln,
                     const unsigned int k, double qCorr, double precScale);
 
-arma::vec deShrink(const arma::vec &colj, const arma::mat &Z, const int coln,
+double deShrink(const arma::vec &colj, const arma::mat &Z, const int coln,
                    double qRegr, double precScale);
 
 
@@ -74,9 +74,9 @@ arma::vec transClassic( arma::vec y, const double precScale = 1e-12);
 
 
 fastRobCorout FastRobCorActual(const arma::mat &X, const arma::vec &locX, const arma::vec &scaleX,
-                               unsigned int k, int qdim, int absCorr = 1,
-                               int transFun = 0,  double precScale = 1e-12,
-                               int bruteForce = 0, int treetype = 0,
+                               unsigned int k, int qdim, const unsigned int nCorr,
+                               int absCorr = 1,
+                               int transFun = 0,  double precScale = 1e-12, int treetype = 0,
                                int searchtype = 1,  double radius = 0,
                                double eps = 0, int includeSelf = 0);
 

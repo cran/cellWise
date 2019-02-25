@@ -24,16 +24,17 @@ arma::uvec DDC::vdiff(const arma::uvec &first, const arma::uvec &second)
 
 arma::uvec DDC::col2cell(const arma::uvec &colNrs, const int n) {
   // Transforms column indices to cellwise indices.
-  // Here colNrs is a vector with column numbers between 1 and d.
+  // Here colNrs is a vector with column numbers between 0 and d-1.
   arma::umat cindex(n, colNrs.size());
-  cindex.each_row() = ((colNrs - 1) * n).t();
+  // cindex.each_row() = ((colNrs - 1) * n).t();
+  cindex.each_row() = ((colNrs) * n).t();
   cindex.each_col() += arma::regspace<arma::uvec>(0, (n - 1));
   return(arma::vectorise(cindex));
 }
 
 arma::uvec DDC::row2cell(const arma::uvec &rowNrs, const int n, const int d) {
   // Transforms row indices to cellwise indices.
-  // Here rowNrs is a vector with row numbers between 1 and n.
+  // Here rowNrs is a vector with row numbers between 0 and n-1.
   
   arma::umat cindex(d, rowNrs.size(),arma::fill::zeros);
   cindex.each_row() = (rowNrs).t();
@@ -99,7 +100,7 @@ double DDC::weightedMedian(arma::vec x, arma::vec weights) {
   }
   
   /* Two special cases where more than half of the total weight is at
-  a) the first, or b) the last value */
+   a) the first, or b) the last value */
   if (half == 0 || half == x.size()) {
     wmed = x(half);
     return wmed;
@@ -115,8 +116,8 @@ double DDC::weightedMedian(arma::vec x, arma::vec weights) {
   double Dy = wcum(half) - wcum(half - 1);
   
   /* The width and the height of the triangle which upper corner touches
-  the level where the cumulative sum of weights *equals* half the
-  total weight. */
+   the level where the cumulative sum of weights *equals* half the
+   total weight. */
   double dy = 0.5 - wcum(half);
   dx = (dy / Dy) * dx;
   /*    printf("dx=%g, dy=%g\n", dx, dy); */
@@ -130,8 +131,8 @@ double DDC::weightedMedian(arma::vec x, arma::vec weights) {
 
 
 arma::vec DDC::predictCol(const arma::vec &colj, const arma::mat &U, const int coln,
-                     const arma::umat &ngbrs, const arma::mat &corrweight,
-                     const arma::mat &robslopes, const int combinRule) {
+                          const arma::umat &ngbrs, const arma::mat &corrweight,
+                          const arma::mat &robslopes, const int combinRule) {
   // Predicts the values in column colj using the set 'ngbrs' of
   // columns of U, by applying the combination rule 'combinRule' whose
   // inputs are the weights in 'corrweight' and the slopes in 'robslopes'.
@@ -187,7 +188,7 @@ arma::vec DDC::predictCol(const arma::vec &colj, const arma::mat &U, const int c
 }
 
 double DDC::slopeMedWLS(const arma::vec &xcol, const arma::vec &colj,
-                   double qRegr, double precScale) {
+                        double qRegr, double precScale) {
   // Computes the slope of a robust regression without intercept
   // of the column colj on the column xcol.
   // The computation starts by Median regression, followed by
@@ -212,7 +213,7 @@ double DDC::slopeMedWLS(const arma::vec &xcol, const arma::vec &colj,
       rawb = rawb < -2 ? -2 : rawb;
       // Now compute weighted LS slope :
       arma::vec r = colj - rawb * xcol; // raw residuals
-      double cutoff = qRegr * LocScaleEstimators::scale1StepM(r, LocScaleEstimators::rhoHuber15,
+      double cutoff = qRegr * LocScaleEstimators::scale1StepM(r, LocScaleEstimators::rhoHuber25,
                                                               arma::datum::nan, precScale);
       // cutoff can be zero, which is okay.
       arma::uvec rowSel = find(arma::abs(r) <= cutoff); // selects the inliers
@@ -232,7 +233,7 @@ double DDC::slopeMedWLS(const arma::vec &xcol, const arma::vec &colj,
 }
 
 arma::vec DDC::compSlopes(const arma::vec &colj, arma::uvec ngbrs, const arma::mat &U,
-                     double qRegr, double precScale) {
+                          double qRegr, double precScale) {
   // For a given column colj this computes the slopes(obtained by
   // robSlope) of regressing colj on each of k given columns of
   // the matrix U.
@@ -271,9 +272,9 @@ double DDC::corrGKWLS(arma::vec xcol, double qCorr, arma::vec colj, double precS
   }
   else {
     arma::vec difvec = xcol - colj;
-    corr = (std::pow(LocScaleEstimators::scale1StepM(sumvec, LocScaleEstimators::rhoHuber15,
+    corr = (std::pow(LocScaleEstimators::scale1StepM(sumvec, LocScaleEstimators::rhoHuber25,
                                                      arma::datum::nan, precScale), 2) - 
-                                                       std::pow(LocScaleEstimators::scale1StepM(difvec, LocScaleEstimators::rhoHuber15,
+                                                       std::pow(LocScaleEstimators::scale1StepM(difvec, LocScaleEstimators::rhoHuber25,
                                                                                                 arma::datum::nan, precScale), 2)) / 4;
     // This corr should not be NA since data columns with too many NAs
     // have already been taken out.But just in case someone increases
@@ -395,19 +396,18 @@ DDC::kbestcorr DDC::kBestCorr(const arma::vec &colj, const arma::mat &U, const i
   return result;
 }
 
-arma::vec DDC::deShrink(const arma::vec &colj, const arma::mat &Z,
-                        const int coln, double qRegr, double precScale) {
+double DDC::deShrink(const arma::vec &colj, const arma::mat &Z,
+                     const int coln, double qRegr, double precScale) {
   // Deshrinks the column colj by multiplying it by the robSlope
   // of column j of the matrix Z on colj.
   // Assumes that the first entry of colj is the number of the column.
   // Assumes the remainder of colj is a vector with same length as the
   // columns of Z, and that both columns were already centered.
-  //	colj(1) = 0; // take out first entry
   
   arma::vec zj = Z.col(coln);   // column with response(from Z)
   double a = slopeMedWLS(colj, zj, qRegr, precScale);
-  arma::vec deshrunk = a * colj;
-  return(deshrunk);
+  // arma::vec deshrunk = a * colj;
+  return(a);
 }
 
 
@@ -523,11 +523,13 @@ arma::vec DDC::transClassic(arma::vec y, const double precScale) {
 
 
 
-DDC::fastRobCorout DDC::FastRobCorActual(const arma::mat &X, const arma::vec &locX, const arma::vec &scaleX,
-                                    unsigned int k, int qdim, int absCorr,
-                                    int transFun,  double precScale, int bruteForce,
-                                    int treetype, int searchtype,  double radius,
-                                    double eps, int includeSelf) {
+DDC::fastRobCorout DDC::FastRobCorActual(const arma::mat &X, const arma::vec &locX,
+                                         const arma::vec &scaleX,
+                                         unsigned int k, int qdim,
+                                         const unsigned int nCorr, int absCorr,
+                                         int transFun,  double precScale,
+                                         int treetype, int searchtype,  double radius,
+                                         double eps, int includeSelf) {
   // Finds k(approximate) nearest neighbors of each column of X
   // in the sense of(absolute value of) robust correlation.
   // Assumes the data is such that checkDataSet(X) equals X.
@@ -547,8 +549,6 @@ DDC::fastRobCorout DDC::FastRobCorActual(const arma::mat &X, const arma::vec &lo
   // transFun Function tansforming each standardized column, which
   //          determines the type of robust correlation used, e.g.
   //          transRank yields Spearman rank correlation.
-  // bruteForce  T means actually compute all d ^ 2 correlations.
-  //             F means use nn2, which has the following options :
   //  treetype    standard 'kd' tree, or a 'bd' (box - decomposition, AMNSW98)
   //             tree which may perform better for larger point sets.
   // searchtype 'priority' visits cells in increasing order of distance
@@ -571,20 +571,20 @@ DDC::fastRobCorout DDC::FastRobCorActual(const arma::mat &X, const arma::vec &lo
   
   fastRobCorout result;
   arma::imat ngbrs ;
-  arma::mat eucdists ;
   arma::mat robcors;
+  arma::mat Ufull = X;
+  arma::mat U;
+  
   
   ///////////////////////////////////////////////////////
   //    STEP 1: TRANSFORM COLUMNS TO REMOVE OUTLIERS   //
   ///////////////////////////////////////////////////////
   
-  arma::mat U = X;
-  
   
   switch(transFun) {
   case 1: //transHuber
-    for (unsigned int i = 0; i < X.n_cols; i++) {
-      arma::vec y = X.col(i);
+    for (unsigned int i = 0; i < Ufull.n_cols; i++) {
+      arma::vec y = Ufull.col(i);
       arma::uvec finiteinds = arma::find_finite(y);
       arma::vec u = y(finiteinds) - locX(i);
       double ycap = 1.5 * scaleX(i);
@@ -595,31 +595,119 @@ DDC::fastRobCorout DDC::FastRobCorActual(const arma::mat &X, const arma::vec &lo
           return(val);
         }
       });
-      y(finiteinds) = u + locX(i);
-      U.col(i) = y;
+      y(finiteinds) = u;
+      Ufull.col(i) = y;
     }
     break;
   case 2: //transWrap
-    for (unsigned int i = 0; i < X.n_cols; i++) {
-      arma::uvec finiteinds = arma::find_finite(X.col(i));
-      arma::vec u = X.col(i) - locX(i);
+    for (unsigned int i = 0; i < Ufull.n_cols; i++) {
+      arma::uvec finiteinds = arma::find_finite(Ufull.col(i));
+      arma::vec u = Ufull.col(i) - locX(i);
       u = u / scaleX(i);
       arma::vec ufin = u(finiteinds);
       LocScaleEstimators::psiTanh(ufin);
-      u(finiteinds) = ufin * scaleX(i) + locX(i);
-      U.col(i) = u;
-    } 
+      u(finiteinds) = ufin * scaleX(i);
+      Ufull.col(i) = u;
+    }
     break;
-  case 3:
-    for (unsigned int i = 0; i < X.n_cols; i++) {
-      arma::uvec finiteinds = arma::find_finite(X.col(i));
-      arma::vec u = X.col(i);
+  case 3: // transRank
+    for (unsigned int i = 0; i < Ufull.n_cols; i++) {
+      arma::uvec finiteinds = arma::find_finite(Ufull.col(i));
+      arma::vec u = Ufull.col(i);
       arma::vec ufin = u(finiteinds);
       u(finiteinds) = LocScaleEstimators::rank(ufin);
-      U.col(i) = u;
+      u(finiteinds) = u(finiteinds) - arma::mean(u(finiteinds));
+      Ufull.col(i) = u;
     }
     break;
   }
+  
+  /////////////////////////////////////////////////
+  //    STEP 0: SELECT rows TO CALCULATE NGBRS   //
+  /////////////////////////////////////////////////
+  
+  // 
+  
+  arma::uvec rowNAs(Ufull.n_rows, arma::fill::zeros);
+  arma::uvec selectedInds;
+  
+  for (unsigned int i = 0; i < Ufull.n_rows; i++) {
+    arma::uvec nonFiniteElem = arma::find_nonfinite(Ufull.row(i).t());
+    rowNAs(i) = nonFiniteElem.size();
+  }
+ 
+  if ((unsigned int) std::count(rowNAs.begin(), rowNAs.end(), 0) >= nCorr) {
+    // in this case we have enough NA-free rows
+    // select nCorr rows randomly 
+    arma::uvec indices = arma::find(rowNAs == 0);
+    
+    if (indices.size() == nCorr) {
+      U = Ufull;
+    } else {
+      selectedInds = LocScaleEstimators::sample(indices, nCorr, false);
+      U = Ufull.rows(selectedInds);
+    }
+  } else { // select nCorr rows with lowest number of NAs
+    
+    // Determine max number of missings in the nCorr rows with lowest nb of NAs
+    selectedInds = arma::sort_index(rowNAs);
+    unsigned int nbMisCut = rowNAs(selectedInds(nCorr - 1)); 
+    
+    // now decide how many rows have exactly nbMiscut missings
+    // those are the ones we still have to sample to get nCorr rows in total
+    
+    arma::uvec sortNAs = rowNAs(selectedInds); // sorted nb of NAs, increasing
+    auto it_lo = std::lower_bound(sortNAs.begin(),
+                                  sortNAs.end(), nbMisCut); //iterator pointing to first element in range greater or equal to nbMisCut
+    unsigned int nFixed = std::distance(sortNAs.begin(), it_lo); // index of that first element == number of 'fixed' rows, i.e. rows with #NAs < nbMisCut
+    auto it_hi = std::upper_bound(sortNAs.begin(),
+                                  sortNAs.end(), nbMisCut);//iterator pointing to first element in range GREATER than nbMisCut
+    unsigned int nVariable = std::distance(sortNAs.begin(), it_hi);// first element with > nbMisCut NAs, which is equal to nb of rows with #NAs <= nbMiscut
+    nVariable = nVariable - nFixed;
+
+    // Now take all the rows with < nCorr missings, and sample the remaining
+    // from the rows with precisely nCorr missings
+    arma::uvec fixedSelection = selectedInds.head(nFixed);
+    arma::uvec sampleFrom = selectedInds.subvec(nFixed, nFixed + nVariable - 1);
+    arma::uvec variableSelection =  LocScaleEstimators::sample(sampleFrom, nCorr - nFixed, false);
+    selectedInds = arma::join_cols(fixedSelection, variableSelection);
+    
+    U = Ufull.rows(selectedInds); // now we have selected nCorr rows
+    
+    // generate extra NAs so that each VARIABLE has same number of NAs!
+    // this is needed to make the ANN procedure work after replacing
+    // the NAs by zeroes, assuming the NAs are MCAR
+    
+    arma::uvec colFins(U.n_cols, arma::fill::zeros); // # finite elements in columns of U
+    for (unsigned int i = 0; i < U.n_cols; i++) {
+      arma::uvec finiteElem = arma::find_finite(U.col(i));
+      colFins(i) = finiteElem.size();
+    }
+
+    
+    unsigned int nbFinCut = arma::min(colFins); // min number of finite elements in column of our reduced dataset U
+    // here we need a safety check: if nbFincut < 0.5 * nCorr, we consider the columns as standAlone and recalculate nbFincut
+    if (nbFinCut < 0.5 * nCorr) {
+      arma::uvec standAlonecols = arma::find(colFins < 0.5 * nCorr);
+   
+      if (standAlonecols.size() < colFins.size()) {
+        nbFinCut = arma::min(colFins(DDC::vdiff(arma::regspace<arma::uvec>(0, colFins.size() - 1),
+                                                standAlonecols)));
+      }
+    }
+    
+    for (unsigned int i = 0; i < U.n_cols; i++) {
+      arma::vec colTemp = U.col(i);
+      arma::uvec finiteElem = arma::find_finite(colTemp);
+      if (finiteElem.size() > nbFinCut) { // generate extra NAs, not that it doesn't do so for standAlone cols
+        arma::uvec makeNA = LocScaleEstimators::sample(finiteElem, finiteElem.size() - nbFinCut, false);
+        colTemp(makeNA).fill(arma::datum::nan);
+        U.col(i) = colTemp;
+      }
+    }
+
+  }
+  
   
   /////////////////////////////////
   //    STEP 2: STANDARDIZE U    //
@@ -628,16 +716,16 @@ DDC::fastRobCorout DDC::FastRobCorActual(const arma::mat &X, const arma::vec &lo
   // Set NA's to zero in u. This is needed for the relation between
   // correlation and euclidean distance.As a side effect, variables
   // with many NA's are less likely to be selected as neighbors.
+  // it makes sense since the transformations above leave U with centered
+  // variables
+  
   U(arma::find_nonfinite(U)).zeros();
   // round(U, 2)
   
   // standardize the columns of U.This must be done the classical way.
-  for (unsigned int i = 0; i < X.n_cols; i++) {
+  for (unsigned int i = 0; i < U.n_cols; i++) {
     U.col(i) = transClassic(U.col(i), precScale);
   }
-  
-  //round(U, 2)
-  // round(cor(U), 2) 
   
   arma::mat tU = U.t(); // has d rows and n columns
   
@@ -649,13 +737,13 @@ DDC::fastRobCorout DDC::FastRobCorActual(const arma::mat &X, const arma::vec &lo
   
   // tU has d rows and n columns
   
-  int lowdim = X.n_cols < X.n_rows ? X.n_cols : X.n_rows;
+  int lowdim = U.n_cols < U.n_rows ? U.n_cols : U.n_rows;
   
   if (qdim != 0) {
     lowdim = lowdim < qdim ? lowdim : qdim; 
   }
   
-  if ( (unsigned int) lowdim < X.n_cols) {
+  if ( (unsigned int) lowdim < U.n_cols) {
     // reducing the dimension from n to lowdim :
     // pca through svd: can't use the built-in pca,
     // because we don't need centering
@@ -672,8 +760,11 @@ DDC::fastRobCorout DDC::FastRobCorActual(const arma::mat &X, const arma::vec &lo
   ///////////////////////////////////////////////////////////  
   
   // Find approximate k nearest neighbors of each variable
+  // we look for 2*k +1 nearest neighbors, and then select the k + 1 closest ones
+  // 
   
-  int ktemp = (int) ((k + 1) < X.n_cols ? k + 1 : X.n_cols); // max number of nearest neighbours
+  int ktemp = (int) ((2 * k + 1) < X.n_cols ? 2 * k + 1 : X.n_cols); // max number of nearest neighbours
+  
   
   
   if (absCorr == 1) {
@@ -688,24 +779,12 @@ DDC::fastRobCorout DDC::FastRobCorActual(const arma::mat &X, const arma::vec &lo
                 &ntu, &ktemp, &eps, &searchtype, &treetype, &radius,
                 &nn_index[0], &distances[0]);
                 
-                eucdists = arma::mat(&distances[0], ktemp, X.n_cols,true,false).t();
-                eucdists = eucdists.tail_cols(k);
                 ngbrs = arma::imat(&nn_index[0], ktemp, X.n_cols,true,false).t();
-                ngbrs = ngbrs.tail_cols(k);
-                robcors = 1 - pow(eucdists,2) / (2 * X.n_rows);
+                ngbrs = ngbrs.tail_cols(ktemp - 1); // exclude self
                 
                 //correct row
-                for (unsigned int i = 0; i < X.n_cols;  i++) {
-                  for (unsigned int j = 0; j <  k;  j++) {
-                    if( (unsigned int) ngbrs(i,j) > (X.n_cols - 1) ){
-                      ngbrs(i,j) = ngbrs(i,j)-X.n_cols;
-                      robcors(i,j) = -robcors(i,j);
-                    }
-                  }
-                }
-                
+                ngbrs.elem(arma::find(ngbrs > (X.n_cols - 1))) -= X.n_cols;
   } else {
-    
     int dtu = tU.n_cols;
     int ntu = tU.n_rows;
     arma::ivec nn_index(X.n_cols * ktemp);
@@ -715,12 +794,37 @@ DDC::fastRobCorout DDC::FastRobCorActual(const arma::mat &X, const arma::vec &lo
                 &ntu, &ktemp, &eps, &searchtype, &treetype, &radius,
                 &nn_index[0], &distances[0]);
                 
-                eucdists = arma::mat(&distances[0],ktemp,X.n_cols,true,false).t();
-                eucdists = eucdists.tail_cols(k);
                 ngbrs = arma::imat(&nn_index[0],ktemp,X.n_cols,true,false).t();
-                ngbrs = ngbrs.tail_cols(k);
-                robcors = 1 - pow(eucdists,2) / (2 * X.n_rows);
+                ngbrs = ngbrs.tail_cols(ktemp - 1); //exclude self
   }
+  
+  // now select the k nearest neighbors among the 2k calculated ones
+  // after recalculation of the 2k true correlations on FULL dataset
+  
+  
+  
+  robcors = arma::zeros<arma::mat>(ngbrs.n_rows, ngbrs.n_cols);
+  
+  for (unsigned int i = 0; i < X.n_cols; i++) {
+    arma::ivec tempngbrs = ngbrs.row(i).t(); // ngbrs of variable colNumber
+    arma::vec temprobcors(tempngbrs.size(), arma::fill::zeros);
+    arma::vec coli = Ufull.col(i);
+    arma::uvec finiteIndsi = arma::find_finite(coli);
+    
+    for (unsigned int j = 0; j < tempngbrs.size(); j++) {
+      arma::vec colj = Ufull.col(tempngbrs(j));
+      arma::uvec finiteIndsj = arma::find_finite(colj);
+      arma::uvec finiteIndsij = DDC::vinter(finiteIndsi, finiteIndsj);
+      temprobcors(j) = arma::as_scalar(arma::cor(coli(finiteIndsij),
+                                       colj(finiteIndsij)));
+    }
+    arma::uvec highestCors = arma::sort_index(arma::abs(temprobcors), "descend");
+  
+    ngbrs.row(i) = tempngbrs(highestCors).t();
+    robcors.row(i) = temprobcors(highestCors).t();
+  }
+  ngbrs = ngbrs.head_cols(k);
+  robcors = robcors.head_cols(k);
   
   if (includeSelf == 1) {
     // If you really want to include column j among its own neighbors :

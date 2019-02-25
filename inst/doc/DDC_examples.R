@@ -1,95 +1,146 @@
 ## ---- echo = FALSE-------------------------------------------------------
 knitr::opts_chunk$set(
- fig.width= 5 ,
+ fig.width  = 5 ,
  fig.height = 3.5,
- fig.align='center'
+ fig.align  = 'center'
 )
 
 ## ------------------------------------------------------------------------
 library("cellWise")
+library("gridExtra") # has grid.arrange()
 
-# Default options for DetectDeviatingCells:
-DDCpars = list(fracNA = 0.5,numDiscrete = 3,precScale = 1e-12,
-             tolProb = 0.99, corrlim = 0.5, combinRule = "wmean",
-             includeSelf = TRUE, rowdetect = TRUE, returnBigXimp = F,
-             fastDDC = FALSE)
-fastDDCpars = list(fracNA = 0.5,numDiscrete = 3,precScale = 1e-12,
-             tolProb = 0.99, corrlim = 0.5, combinRule = "wmean",
-             includeSelf = TRUE, rowdetect = TRUE, returnBigXimp = F,
-             fastDDC = TRUE)
+# Default options for DDC:
+DDCpars = list(fracNA = 0.5, numDiscrete = 3, precScale = 1e-12,
+               cleanNAfirst = "automatic", tolProb = 0.99, 
+               corrlim = 0.5, combinRule = "wmean",
+               returnBigXimp = FALSE, silent = FALSE,
+               nLocScale = 25000, fastDDC = FALSE,
+               standType = "1stepM", corrType = "gkwls",
+               transFun = "wrap", nbngbrs = 100)
+
+# A small list giving the same results:
+DDCpars = list(fastDDC = FALSE)
 
 
 ## ------------------------------------------------------------------------
-set.seed(12345) # reproducible
-n = 100; d = 10
-A = matrix(0.9, d, d); diag(A) = 1
-A # true covariance matrix
-library(MASS) # only needed for the function mvrnorm in the next line:
-xclean = mvrnorm(n, rep(0,d), A)
-round(xclean[1:3,1:5],2)
 
-DDCxclean = DetectDeviatingCells(xclean,DDCpars)
-# TRUE # OK, all parts of the output match
+i = c(1,2,3,4,5,6,7,8,9) 
+name = c("aa","bb","cc","dd","ee","ff","gg","hh","ii") 
+logic = c(TRUE, FALSE, TRUE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE) 
+V1 = c(1.3,NaN,4.5,2.7,20.0,4.4,-2.1,1.1,-5)
+V2 = c(2.3,NA,5,6,7,8,4,-10,0.5)
+V3 = c(2,Inf,3,-4,5,6,7,-2,8)
+Vna = c(1,-4,2,NaN,3,-Inf,NA,6,5)
+Vdis = c(1,1,2,2,3,3,3,1,2)
+V0s = c(1,1.5,2,2,2,2,2,3,2.5) 
+datafr = data.frame(i,name,logic,V1,V2,V3,Vna,Vdis,V0s) 
+datafr
 
-summary(DDCxclean)
-round(DDCxclean$Z[1:12,],2)# robustly standardized data:
-# Due to the high correlations, cells in the same row look similar
+DDCdatafr = DDC(datafr,DDCpars)
 
+remX = DDCdatafr$remX; dim(remX)
+cellMap(D=remX, R=DDCdatafr$stdResid, rowlabels = 1:nrow(remX), 
+        columnlabels = colnames(remX))
+# Red cells have higher value than predicted, blue cells lower,
+# white cells are missing values, all other cells are yellow.
 
-DDCxclean$k 
-# The code looked for up to 9 non-self neighbors of each variable.
-# (It goes through all of them, unless d is huge.)
+## ----fig.height=10,fig.width=7-------------------------------------------
+set.seed(12345) # for reproducibility
+n <- 50; d <- 20
+A <- matrix(0.9, d, d); diag(A) = 1
+round(A[1:10,1:10],1) # true covariance matrix
+library(MASS) # only needed for the following line:
+x <- mvrnorm(n, rep(0,d), A)
+x[sample(1:(n * d), 50, FALSE)] <- NA
+x[sample(1:(n * d), 50, FALSE)] <- 10
+x[sample(1:(n * d), 50, FALSE)] <- -10
 
+# When not specifying DDCpars in the call to DDC
+# all defaults are used:
+DDCx <- DDC(x)
 
-DDCxclean$ngbrs # show the neighbors:
-# i.e. the nearest non-self neighbor of X10 is X4, then X1,...
+cellMap(D=DDCx$remX, R=DDCx$stdResid, columnlabels = 1:d, 
+        rowlabels = 1:n)
+# Red cells have higher value than predicted, blue cells lower,
+# white cells are missing values, all other cells are yellow.
 
-round(DDCxclean$robcors,2) # correlations with these neighbors:
-# Per row, the correlation are sorted by decreasing absolute value.
+## ------------------------------------------------------------------------
+DDCx$DDCpars # These are the default options:
 
-round(DDCxclean$robslopes,2) # slope of each neighbor predicting the column:
-# For instance, X10 is predicted by its first neighbor with slope 0.94
-# and by its second neighbor with slope 0.90 .
+names(DDCx)
 
-round(DDCxclean$Xest[1:12,],2) # the estimated cells:
+# We will now go through these outputs one by one:
 
-round(DDCxclean$stdResid[1:12,],1) # the standardized residuals:
+DDCx$colInAnalysis # all columns X1,...,X20 remain:
+DDCx$rowInAnalysis # all rows 1,...,50 remain:
+DDCx$namesNotNumeric # no non-numeric columns:
+DDCx$namesCaseNumber # no column was the case number:
+DDCx$namesNAcol # no columns with too many NA's:
+DDCx$namesNArow # no columns with too many NA's:
+DDCx$namesDiscrete # no discrete columns:
+DDCx$namesZeroScale # no columns with scale = 0:
+dim(DDCx$remX) # remaining data matrix
+round(DDCx$locX,2) # robust location estimates of all 20 columns:
+round(DDCx$scaleX,2) # robust scale estimates of all 20 columns:
 
+round(DDCx$Z[1:10,1:10],1)
+# Robustly standardized dataset. Due to the high correlations,
+# cells in the same row look similar (except for outlying cells).
 
-DDCxclean$indcells # indices of the cells that were flagged:
-d
+DDCx$nbngbrs
+# For each column the code looked for up to 19 non-self neighbors (highly correlated columns).
+# It goes through all of them, unless fastDDC is set to TRUE.
 
-# The standardized residuals of the flagged cells:
-round(DDCxclean$stdResid[DDCxclean$indcells],1)
-# They are just barely larger in absolute value than 
-# sqrt(qchisq(0.99,1)) = 2.576 and there are not many,
-# given that there are 1000 cells here.
+DDCx$ngbrs[1:3,]
+# Shows the neighbors, e.g. the nearest non-self neighbor of X1 is X11, then X2,...
 
+round(DDCx$robcors[1:3,],2)
+# Robust correlations with these neighbors. In each row the correlations
+# are sorted by decreasing absolute value. 
 
-# the standardized residuals are roughly standard gaussian:
-qqnorm(as.vector(DDCxclean$stdResid)) 
-# is a straight line through 0 with slope about 1.
-# So, nothing stands out in this clean dataset.
+round(DDCx$robslopes[1:3,],2)
+# For each column, the slope of each neighbor predicting it.
+# For instance, X1 is predicted by its first neighbor with 
+# slope 0.91 and by its second neighbor with slope 1.02 .
 
-# outlyingness of the rows:
-qqnorm(DDCxclean$Ti) # looks fairly gaussian too
+round(DDCx$deshrinkage,2)
+# For each column, the factor by which its prediction is multiplied.
 
-DDCxclean$indrows # no rows are flagged:
+## ------------------------------------------------------------------------
+round(DDCx$Xest[1:12,1:10],2) # the estimated cells of remX:
 
-DDCxclean$indall # flagged cells including those in flagged rows:
+round(DDCx$stdResid[1:12,1:10],1)
+# The standardized residuals of the cells. Note the NA's and some
+# large positive and negative cell residuals.
 
+qqnorm(as.vector(DDCx$stdResid)) # Note the far outliers on both sides:
 
-round(DDCxclean$Ximp[1:12,],2) # the imputed matrix:
+as.vector(DDCx$indcells) # indices of the cells that were flagged by DDC:
 
+plot(DDCx$Ti) # the Ti values of the rows. None are high.
+qqnorm(DDCx$Ti) # no outliers
+DDCx$medTi # median of the raw Ti (used to standardize Ti):
+DDCx$madTi # median absolute deviation of the raw Ti (used to standardize Ti):
 
-round((DDCxclean$Ximp - xclean)[1:12,],2)
-# Only a few cells were imputed in this example.
+DDCx$indrows # numeric(0) means no rows are flagged:
+
+as.vector(DDCx$indall) # indices of the flagged cells, including those in flagged rows:
+
+as.vector(DDCx$indNAs) # indices of the missing cells:
+
+round(DDCx$Ximp[1:10,1:10],2)
+# The imputed matrix. Both the cellwise outliers and the missing values
+# are replaced by their predicted values.
+
+round((DDCx$Ximp - DDCx$remX)[1:10,1:10],2)
+# The nonzero values and the NA's correspond to imputed cells.
+
 
 ## ----results='hide',message=FALSE,warning=FALSE--------------------------
- library(robustHD)
- data(TopGear)
+library(robustHD)
+data(TopGear)
 
-## ----fig.height=10,fig.width=10------------------------------------------
+## ------------------------------------------------------------------------
 dim(TopGear)
 rownames(TopGear)[1:13] # "1" to "297" are not useful names
 rownames(TopGear) = paste(TopGear[,1],TopGear[,2]) 
@@ -105,24 +156,60 @@ transTG$BHP = log(myTopGear$BHP)
 transTG$Torque = log(myTopGear$Torque)
 transTG$TopSpeed = log(myTopGear$TopSpeed)
 
+# Run the DDC method:
+DDCpars = list(fastDDC = FALSE, silent = TRUE)
+DDCtransTG = DDC(transTG,DDCpars)
+# With DDCpars = list(fastDDC = FALSE, silent = FALSE) we obtain more information:
+# 
+# The input data has 297 rows and 31 columns.
+# 
+# The input data contained 19 non-numeric columns (variables).
+# Their column names are:
+#   
+#  [1] Maker         Model              Type               Fuel              
+#  [5] DriveWheel    AdaptiveHeadlights AdjustableSteering AlarmSystem       
+#  [9] Automatic     Bluetooth          ClimateControl     CruiseControl     
+# [13] ElectricSeats Leather            ParkingSensors     PowerSteering     
+# [17] SatNav        ESP                Origin            
+# 
+# These columns will be ignored in the analysis.
+# We continue with the remaining 12 numeric columns:
+#   
+# [1] Price Cylinders Displacement BHP   Torque Acceleration TopSpeed    
+# [8] MPG   Weight    Length       Width Height      
+# 
+# The data contained 1 rows with over 50% of NAs.
+# Their row names are:
+#   
+#   [1] Citroen C5 Tourer
+# 
+# These rows will be ignored in the analysis.
+# We continue with the remaining 296 rows:
+#   
+#   [1] Alfa Romeo Giulietta             Alfa Romeo MiTo                 
+# .......
+# [295] Volvo XC70                       Volvo XC90                      
+# 
+# The data contained 1 columns with zero or tiny median absolute deviation.
+# Their column names are:
+# 
+# [1] Cylinders
+# 
+# These columns will be ignored in the analysis.
+# We continue with the remaining 11 columns:
+# 
+# [1] Price  Displacement BHP   Torque Acceleration TopSpeed MPG         
+# [8] Weight Length       Width Height      
+# 
+# The final data set we will analyze has 296 rows and 11 columns.
 
-# Run the method:
-DDCtransTG = DetectDeviatingCells(transTG,DDCpars)
 
-# the remaining part of the dataset:
-remX = DDCtransTG$remX 
+
+## ----fig.height=10,fig.width=8-------------------------------------------
+remX = DDCtransTG$remX # the remaining part of the dataset
 dim(remX)
 
-
-colSums(is.na(remX))
-
-# We have NAs left, mainly in `Weight'.
-
-n = nrow(remX)
-d = ncol(remX)
-indexDDCcells = matrix(FALSE,nrow=n,ncol=d) 
-indexDDCcells[DDCtransTG$indcells] = TRUE
-dim(indexDDCcells)
+colSums(is.na(remX)) # There are still NAs, mainly in `Weight':
 
 # Analyze the data by column:
 standX = scale(remX,apply(remX,2,median,na.rm = TRUE), 
@@ -131,74 +218,131 @@ dim(standX)
 round(standX[1:5,],1) # has NAs where remX does
 transTGcol = remX
 transTGcol[abs(standX) > sqrt(qchisq(0.99,1))] = NA
-round(transTGcol[1:5,],1) # also has NAs in outlying cells
+round(transTGcol[1:5,],1) # has NAs in outlying cells as well:
 
 # Make untransformed submatrix of X for labeling the cells in the plot:
 tempX = myTopGear[DDCtransTG$rowInAnalysis,DDCtransTG$colInAnalysis]
-dim(tempX)
 tempX$Price = tempX$Price/1000 # to avoid printing long numbers
+dim(tempX)
 
-xlabels = colnames(tempX)
-ylabels = rownames(tempX)
-# select the following cars for the cellmap:
-yshowindex = c(12,42,56,73,81,94,99,135,150,164,176,198,209,215,234,241,277)
-# make two ggplot2 objects:
+columnlabels = colnames(tempX)
+rowlabels = rownames(tempX)
+# Show the following 17 cars in the cellmap:
+showrows = c(12,42,56,73,81,94,99,135,150,164,176,198,209,215,234,241,277)
 
+# Make two ggplot2 objects:
 ggpcol = cellMap(D=tempX,
                  R=standX,
                  indcells=which(is.na(transTGcol)),
                  indrows=integer(0),
-                 xlabels=xlabels,
-                 ylabels=ylabels,
+                 columnlabels=columnlabels,
+                 rowlabels=rowlabels,
                  mTitle="By column",
-                 yshowindex=yshowindex,
+                 showrows=showrows,
                  showVals="D",
-                 hjustYlabels=0.5) 
+                 adjustrowlabels=0.5) 
 plot(ggpcol)
 
+## ----fig.height=10,fig.width=8-------------------------------------------
 ggpDDC = cellMap(D=tempX,
                  R=DDCtransTG$stdResid, 
-                 indcells=which(indexDDCcells==TRUE),
+                 indcells=DDCtransTG$indcells,
                  indrows=DDCtransTG$indrows,
-                 xlabels=xlabels,
-                 ylabels=ylabels,
+                 columnlabels=columnlabels,
+                 rowlabels=rowlabels,
                  mTitle="DetectDeviatingCells",
-                 yshowindex=yshowindex,
+                 showrows=showrows,
                  showVals="D",
-                 hjustYlabels=0.5)
+                 adjustrowlabels=0.5)
 plot(ggpDDC)
 
 # Creating the pdf:
-pdfName = "cellmap_TopGear.pdf"
-pdf(pdfName, width = 20, height = 15 )
-gridExtra::grid.arrange(ggpcol,ggpDDC,nrow=1) # arranges ggplot2,.. on a page
-dev.off()
+# pdf("cellMap_TopGear.pdf", width = 20, height = 15 )
+# gridExtra::grid.arrange(ggpcol,ggpDDC,nrow=1) # combines 2 plots in a figure
+# dev.off()
 
+
+## ----fig.height=10,fig.width=8-------------------------------------------
+# Top Gear dataset: prediction of "new" data
+############################################
+# For comparison we first remake the cell map of the entire dataset, but now 
+# showing the values of the residuals instead of the data values:
+
+dim(remX) # 296 11
+rowlabels = rownames(remX)
+columnlabels = colnames(remX)
+
+ggpDDC = cellMap(D=remX,
+                 R=DDCtransTG$stdResid,
+                 indcells=DDCtransTG$indcells,
+                 indrows=DDCtransTG$indrows,
+                 standOD=NULL,
+                 showVals="R",
+                 rowlabels=rowlabels,
+                 columnlabels=columnlabels,
+                 mTitle="DDC",
+                 showrows=showrows, 
+                 adjustrowlabels=0.5, 
+                 outlyingGrad = 1)
+plot(ggpDDC)
+
+## ------------------------------------------------------------------------
+initX = remX[-showrows,]
+dim(initX) # 279 11
+
+# Fit initX:
+DDCinitX = DDC(initX,DDCpars=DDCpars) 
+
+## ------------------------------------------------------------------------
+newX = remX[showrows,]
+dim(newX) # 17  11 
+
+# Make predictions by DDCpredict. 
+# Its inputs are:
+#   Xnew       : the new data (test data)
+#   InitialDDC : Must be provided.
+#   DDCpars    : the input options to be used for the prediction.
+#                By default the options of InitialDDC are used. 
+
+predictDDC = DDCpredict(newX,DDCinitX)
+
+names(DDCinitX)
+# For comparison with:
+
+names(predictDDC) # Fewer, since DDCpredict does not call checkDataSet:
+
+# If you specify the parameters the result is the same:
+predictDDC2 = DDCpredict(newX,DDCinitX,DDCpars=DDCpars)
+all.equal(predictDDC,predictDDC2) # TRUE
+
+## ----fig.height=10,fig.width=8-------------------------------------------
+
+ggpnew = cellMap(D=newX,
+                 R=predictDDC$stdResid,
+                 indcells=predictDDC$indcells,
+                 indrows=predictDDC$indrows,
+                 standOD=NULL,
+                 showVals="R",
+                 rowlabels=rowlabels[showrows],
+                 columnlabels=columnlabels,
+                 mTitle="DDCpredict",
+                 adjustrowlabels=0.5, 
+                 outlyingGrad = 1)
+plot(ggpnew) # Looks quite similar to the result using the entire dataset:
+
+# Creating the pdf:
+# pdf("TopGear_DDCpredict.pdf",width=20,height=15)
+# gridExtra::grid.arrange(ggpDDC,ggpnew,nrow=1) 
+# dev.off()
 
 ## ------------------------------------------------------------------------
 data(philips)
 dim(philips) 
 colnames(philips) = c("X1","X2","X3","X4","X5","X6","X7","X8","X9")
 
-## ----results='hide',message=FALSE,warning=FALSE--------------------------
-library(robustbase) # for covMcd
+DDCphilips = DDC(philips,DDCpars)
 
-## ------------------------------------------------------------------------
-MCDphilips = covMcd(philips)
-pdfName = "figure_philips_left.pdf"
-pdf(pdfName, width = 10, height = 4)
-plot(sqrt(mahalanobis(philips,MCDphilips$center,MCDphilips$cov)),
-     main="Philips data",ylab="Robust distances",xlab="",pch=20)
-abline(h=sqrt(qchisq(0.975,df=9)))
-dev.off()
-
-## ------------------------------------------------------------------------
-DDCphilips = DetectDeviatingCells(philips,DDCpars)
-
-summary(DDCphilips)
-
-qqnorm(as.vector(DDCphilips$Z)) 
-# rather gaussian, here we only see 2 outliers
+qqnorm(as.vector(DDCphilips$Z)) # rather gaussian, here we only see 2 outliers:
 
 round(DDCphilips$stdResid[1:12,],1) # the standardized residuals:
 
@@ -206,195 +350,234 @@ DDCphilips$indcells # indices of the cells that were flagged:
 
 DDCphilips$indrows # flagged rows:
 
-## ----fig.height=10,fig.width=10------------------------------------------
-# cellmaps with rectangular blocks:
 
-xblocksize = 1
-yblocksize = 15 # 20
-xlabels = colnames(philips)
-ylabels = 1:dim(philips)[1] #rownames(philips)
+## ----results='hide',message=FALSE,warning=FALSE--------------------------
+library(robustbase) # for covMcd
+
+## ----fig.height=4,fig.width=8--------------------------------------------
+MCDphilips = robustbase::covMcd(philips)
+indrowsMCD = which(mahalanobis(philips,MCDphilips$center,
+                               MCDphilips$cov) > qchisq(0.975,df=d))
+
+plot(sqrt(mahalanobis(philips,MCDphilips$center,MCDphilips$cov)),
+     main="Philips data",ylab="Robust distances",xlab="",pch=20)
+abline(h=sqrt(qchisq(0.975,df=9))) # this horizontal line is the cutoff.
+# dev.copy(pdf,"Figure_philips_left.pdf",width=10,height=4)
+# dev.off()
+
+## ----fig.height=10,fig.width=8-------------------------------------------
+# cellMaps with rectangular blocks:
+
 n = nrow(philips)
+nrowsinblock = 15
+rowlabels = 1:n
+
 d = ncol(philips)
+ncolumnsinblock = 1
+columnlabels = colnames(philips)
 
-indrows=which(mahalanobis(philips,MCDphilips$center,MCDphilips$cov) >
-                qchisq(0.975,df=d))
-
-ggpMCDphilips = cellMap(D=philips,R=matrix(0,n,d),
+ggpMCDphilips = cellMap(D=philips,
+                        R=matrix(0,n,d),
                         indcells=integer(0),
-                        indrows=indrows,
-                        xlabels=xlabels,
-                        ylabels=ylabels,
+                        indrows=indrowsMCD,
+                        rowlabels=rowlabels,
+                        columnlabels=columnlabels,                        
                         mTitle="MCD",
-                        xblocksize=xblocksize,
-                        yblocksize=yblocksize,
+                        nrowsinblock=nrowsinblock,
+                        ncolumnsinblock=ncolumnsinblock,                        
                         autolabel=T)
 plot(ggpMCDphilips)
 
-ggpDDCphilips = cellMap(D=philips, R=DDCphilips$stdResid,
+ggpDDCphilips = cellMap(D=philips, 
+                        R=DDCphilips$stdResid,
                         indcells=DDCphilips$indcells,
-                        indrows=integer(0), #DDCphilips$indrows,
-                        xlabels=xlabels,
-                        ylabels=ylabels,
+                        indrows=DDCphilips$indrows,
+                        rowlabels=rowlabels,
+                        columnlabels=columnlabels,                        
                         mTitle="DetectDeviatingCells",
-                        xblocksize=xblocksize,
-                        yblocksize=yblocksize,
+                        nrowsinblock=nrowsinblock,
+                        ncolumnsinblock=ncolumnsinblock,
                         autolabel=T,
-                        hjustYlabels=1)
+                        adjustrowlabels=1)
 plot(ggpDDCphilips)
-
-pdfName = "figure_philips_right.pdf"
-pdf(pdfName, width = 6, height = 12)
-plot(ggpDDCphilips) 
-dev.off()
+# dev.copy(pdf,"Figure_philips_right.pdf",width=6,height=12)
+# dev.off()
 
 ## ------------------------------------------------------------------------
 data(mortality)
 dim(mortality)
 # 198  91
-rownames(mortality) 
-colnames(mortality) 
+rownames(mortality)[1:5] 
+colnames(mortality)[1:5] 
 
-DDCmortality = DetectDeviatingCells(mortality,DDCpars) # 3 seconds
-
+DDCmortality = DDC(mortality,DDCpars) # 1 second
 
 remX = DDCmortality$remX
 dim(remX)
 
 ## ----results='hide',message=FALSE,warning=FALSE--------------------------
-library(rrcov) # for robust PCA
+library(rrcov) # contains ROBPCA
 
-## ----fig.height=10,fig.width=10------------------------------------------
-PCAmortality = PcaHubert(mortality,alpha=0.75,scale=FALSE)
+## ----fig.height=10,fig.width=8-------------------------------------------
+PCAmortality = rrcov::PcaHubert(mortality,alpha=0.75,scale=FALSE)
 
-xblocksize = 5
-yblocksize = 5
-xlabels = colnames(remX) # the _columns_ are in the x-direction
-ylabels = rownames(remX)
 n = nrow(remX)
-d = ncol(remX)
+nrowsinblock = 5
+rowlabels = rownames(remX)
 
-ggpROBPCA = cellMap(D=remX,R=matrix(0,n,d),
-                           indcells=integer(0),
-                           indrows=which(PCAmortality@flag==FALSE),
-                           xlabels=xlabels,
-                           ylabels=ylabels,
-                           mTitle="By row",
-                           xblocksize=xblocksize,
-                           yblocksize=yblocksize,
-                           autolabel=T)
+d = ncol(remX)
+ncolumnsinblock = 5
+columnlabels = colnames(remX)
+
+ggpROBPCA = cellMap(D=remX,
+                    R=matrix(0,n,d),
+                    indrows=which(PCAmortality@flag==FALSE),
+                    rowlabels=rowlabels,
+                    columnlabels=columnlabels,                    
+                    mTitle="By row",
+                    nrowsinblock=nrowsinblock,
+                    ncolumnsinblock=ncolumnsinblock, 
+                    rowtitle = "Years",
+                    columntitle = "Age",
+                    sizetitles = 2.0,
+                    autolabel=T)
 plot(ggpROBPCA)
 
-ggpDDC = cellMap(D=remX, R=DDCmortality$stdResid,
-                        indcells=DDCmortality$indcells,
-                        indrows=DDCmortality$indrows,
-                        xlabels=xlabels,
-                        ylabels=ylabels,
-                        mTitle="DetectDeviatingCells",
-                        xblocksize=xblocksize,
-                        yblocksize=yblocksize,
-                        autolabel=T)
-plot(ggpDDC)
+ggpDDC = cellMap(D=remX, 
+                 R=DDCmortality$stdResid,
+                 indcells=DDCmortality$indcells,
+                 indrows=DDCmortality$indrows,
+                 rowlabels=rowlabels,
+                 columnlabels=columnlabels,                 
+                 mTitle="DetectDeviatingCells",
+                 nrowsinblock=nrowsinblock,
+                 ncolumnsinblock=ncolumnsinblock,
+                 rowtitle = "Years",
+                 columntitle = "Age",
+                 sizetitles = 2.0,
+                 autolabel=T)
+plot(ggpDDC) # Leads to a detailed interpretation:
 
-pdf(paste("cellmap_mortality_",xblocksize,".pdf",sep=""),width=14,height=12)
-gridExtra::grid.arrange(ggpROBPCA,ggpDDC,nrow=1)
-dev.off()
+# pdf("cellmap_mortality.pdf",width=14,height=12)
+# gridExtra::grid.arrange(ggpROBPCA,ggpDDC,nrow=1)
+# dev.off()
 
 ## ------------------------------------------------------------------------
 data(glass)
-DDCglass = DetectDeviatingCells(glass,DDCpars) # takes 1 or 2 minutes
+DDCglass = DDC(glass,DDCpars) # takes 8 seconds
 remX = DDCglass$remX
+# With DDCpars$silent = FALSE we obtain more information:
+#
+#  The input data has 180 rows and 750 columns.
+#
+#  The data contained 11 discrete columns with 3 or fewer values.
+#  Their column names are:
+#
+#  [1] V1  V2  V3  V4  V5  V6  V7  V8  V9  V10 V11
+#
+#  These columns will be ignored in the analysis.
+#  We continue with the remaining 739 columns:
+#  
+#   [1] V12  V13  V14  V15  V16  V17  V18  V19  V20  V21  V22  V23  V24  V25
+#    ......
+# [729] V740 V741 V742 V743 V744 V745 V746 V747 V748 V749 V750
+#
+#  The data contained 2 columns with zero or tiny median absolute deviation.
+#  Their column names are:
+#
+# [1] V12 V13
+#
+#  These columns will be ignored in the analysis.
+#  We continue with the remaining 737 columns:
+#
+#   [1] V14  V15  V16  V17  V18  V19  V20  V21  V22  V23  V24  V25  V26  V27
+#    ......
+# [729] V742 V743 V744 V745 V746 V747 V748 V749 V750
+#
+#  The final data set we will analyze has 180 rows and 737 columns.
+
 dim(remX)
-fastDDCglass = DetectDeviatingCells(glass, fastDDCpars)
+
+## ------------------------------------------------------------------------
+
+fastDDCpars = list(fastDDC = TRUE, silent = TRUE)
+fastDDCglass = DDC(glass, fastDDCpars) # takes 2 seconds
 remXfast = fastDDCglass$remX
-dim(remX)
+all.equal(remX,remXfast) # The remaining data is the same:
 
 ## ----results='hide',message=FALSE,warning=FALSE--------------------------
-library(rrcov) # for robust PCA:
+library(rrcov) # contains ROBPCA
 
-## ------------------------------------------------------------------------
-PCAglass = PcaHubert(glass,alpha=0.75,scale=FALSE)
+## ----fig.height=4,fig.width=8--------------------------------------------
+PCAglass = rrcov::PcaHubert(remX,alpha=0.75,scale=FALSE)
 
-xblocksize = 5
-yblocksize = 5
 n = nrow(remX)
-d = ncol(remX)
-xlabels = rep("",floor(d/xblocksize));
-xlabels[1] = "1";
-xlabels[floor(d/xblocksize)] = "d"
-xlabels
-ylabels = rep("",floor(n/yblocksize));
-ylabels[1] = "1"
-ylabels[floor(n/yblocksize)] = "n";
-ylabels
-xtitle = "wavelengths"
-ytitle = "glass samples"
+nrowsinblock = 5
+rowtitle = "glass samples"
+rowlabels = rep("",floor(n/nrowsinblock));
+rowlabels[1] = "1"
+rowlabels[floor(n/ncolumnsinblock)] = "n";
+# rowlabels
 
-ggpROBPCA = cellMap(D=remX, R=matrix(0,n,d),
-                           indcells=integer(0),
-                           indrows=which(PCAglass@flag==FALSE),
-                           xlabels=xlabels,
-                           ylabels=ylabels,
-                           mTitle="By row",
-                           xblocksize=xblocksize,
-                           yblocksize=yblocksize,
-                           anglex=0,
-                           xtitle=xtitle,
-                           ytitle=ytitle,
-                           sizexy=1.5,
-                           autolabel=F)
+d = ncol(remX)
+ncolumnsinblock = 5
+columntitle = "wavelengths"
+columnlabels = rep("",floor(d/ncolumnsinblock));
+columnlabels[1] = "1";
+columnlabels[floor(d/nrowsinblock)] = "d"
+# columnlabels
+
+ggpROBPCA = cellMap(D=remX, 
+                    R=matrix(0,n,d),
+                    indcells=integer(0),
+                    indrows=which(PCAglass@flag==FALSE),
+                    rowlabels=rowlabels,
+                    columnlabels=columnlabels,
+                    mTitle="By row",
+                    nrowsinblock=nrowsinblock,
+                    ncolumnsinblock=ncolumnsinblock,
+                    columnangle=0,
+                    rowtitle=rowtitle,
+                    columntitle=columntitle,
+                    sizetitles=1.5,
+                    autolabel=F)
 plot(ggpROBPCA)
 
-ggpDDC = cellMap(D=remX, R=DDCglass$stdResid,
-                        indcells=DDCglass$indcells,
-                        indrows=integer(0), # DDCglass$indrows,
-                        xlabels=xlabels,
-                        ylabels=ylabels,
-                        mTitle="DetectDeviatingCells",
-                        xblocksize=xblocksize,
-                        yblocksize=yblocksize,
-                        anglex=0,
-                        xtitle=xtitle,
-                        ytitle=ytitle,
-                        sizexy=1.5,
-                        autolabel=F)
+ggpDDC = cellMap(D=remX, 
+                 R=DDCglass$stdResid,
+                 indcells=DDCglass$indcells,
+                 indrows=DDCglass$indrows,
+                 rowlabels=rowlabels,
+                 columnlabels=columnlabels,
+                 mTitle="DDC",
+                 nrowsinblock=nrowsinblock,
+                 ncolumnsinblock=ncolumnsinblock,
+                 columnangle=0,
+                 rowtitle=rowtitle,
+                 columntitle=columntitle,
+                 sizetitles=1.5,
+                 autolabel=F)
 plot(ggpDDC)
+# pdf("cellmap_glass_ROBPCA_DDC.pdf",width=16,height=10)
+# gridExtra::grid.arrange(ggpROBPCA,ggpDDC,ncol=1)
+# dev.off()
 
-
-ggpfastDDC = cellMap(D=remXfast, R=fastDDCglass$stdResid,
-                        indcells=fastDDCglass$indcells,
-                        indrows=integer(0), # DDCglass$indrows,
-                        xlabels=xlabels,
-                        ylabels=ylabels,
-                        mTitle="fast DetectDeviatingCells",
-                        xblocksize=xblocksize,
-                        yblocksize=yblocksize,
-                        anglex=0,
-                        xtitle=xtitle,
-                        ytitle=ytitle,
-                        sizexy=1.5,
-                        autolabel=F)
+ggpfastDDC = cellMap(D=remXfast, 
+                     R=fastDDCglass$stdResid,
+                     indcells=fastDDCglass$indcells,
+                     indrows=fastDDCglass$indrows,
+                     rowlabels=rowlabels,
+                     columnlabels=columnlabels,
+                     mTitle="fast DDC",
+                     nrowsinblock=nrowsinblock,
+                     ncolumnsinblock=ncolumnsinblock,
+                     columnangle=0,
+                     rowtitle=rowtitle,
+                     columntitle=columntitle,    
+                     sizetitles=1.5,
+                     autolabel=F)
 plot(ggpfastDDC)
-
-pdf(paste("cellmap_glass2_",xblocksize,".pdf",sep=""),width=16,height=10)
-gridExtra::grid.arrange(ggpROBPCA,ggpDDC,ncol=1)
-dev.off()
-
-## ------------------------------------------------------------------------
-
-i = c(1,2,3,4,5,6,7,8,9) 
-name = c("aa","bb","cc","dd","ee","ff","gg","hh","ii") 
-logic = c(TRUE, FALSE, TRUE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE) 
-V1 = c(1.3,NaN,4.5,2.7,-3.3,4.4,-2.1,1.1,-5)
-V2 = c(2.3,NA,5,6,7,8,4,3,0.5)
-V3 = c(2,Inf,3,-4,5,6,7,-2,8)
-Vna = c(1,-4,2,NaN,3,-Inf,NA,6,5)
-Vdis = c(1,1,2,2,3,3,3,1,2)
-V0s = c(1,1.5,2,2,2,2,2,3,2.5) 
-datafr = data.frame(i,name,logic,V1,V2,V3,Vna,Vdis,V0s) 
-datafr
-
-DDCdatafr=DetectDeviatingCells(datafr,DDCpars)
-
-DDCdatafr
-
+# pdf("cellmap_glass_DDC_fastDDC.pdf",width=16,height=10)
+# gridExtra::grid.arrange(ggpDDC,ggpfastDDC,ncol=1)
+# dev.off()
 

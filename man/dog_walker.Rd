@@ -2,7 +2,7 @@
 \alias{dog_walker}
 \docType{data}
 \title{
-  The dog walker dataset
+  Dog walker dataset
 }
 \description{
   A dataset containing the image sequence of a video. The sequence consists of 
@@ -19,7 +19,7 @@
 }
 
 \examples{
-  data(dog_walker)
-  # For more examples, we refer to the vignette:
+data(dog_walker)
+# For more examples, we refer to the vignette:
 vignette("Wrap_examples")
 }

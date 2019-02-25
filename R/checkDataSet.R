@@ -1,6 +1,6 @@
 
 checkDataSet <- function(X, fracNA = 0.5, numDiscrete = 3, precScale = 1e-12, 
-                        silent = FALSE) {
+                        silent = FALSE, cleanNAfirst = "automatic") {
   # This function checks the dataset X, and sets aside certain
   # columns and rows that do not satisfy the conditions.
   #
@@ -9,7 +9,24 @@ checkDataSet <- function(X, fracNA = 0.5, numDiscrete = 3, precScale = 1e-12,
   #               will be considered discrete and not used in the analysis.
   # precScale   : only consider columns whose scale is > precScale.
   #               Here scale is measured by the median absolute deviation.
-  #
+  # cleanNAfirst: takes "rows", "columns" or "automatic"
+  
+  
+  if (is.null(fracNA)) {
+    fracNA <- 0.5
+  }
+  if (is.null(numDiscrete)) {
+    numDiscrete <- 3
+  }
+  if (is.null(precScale)) {
+    precScale <- 1e-12
+  }
+  if (is.null(silent)) {
+    silent <- FALSE
+  }
+  if (is.null(cleanNAfirst)) {
+    cleanNAfirst <- "automatic"
+  }
   
   wnq <- function(string, qwrite = 1) { # auxiliary function
     # writes a line without quotes
@@ -53,7 +70,7 @@ checkDataSet <- function(X, fracNA = 0.5, numDiscrete = 3, precScale = 1e-12,
       wnq(" Their column names are:")
       wnq(" ")
     }
-    namesNotNumeric <- colnames(remX)[vecNotNumeric]  
+    namesNotNumeric <- colnames(remX)[vecNotNumeric]
     if (!silent) {
       pnq(namesNotNumeric)   
       wnq(" ")    
@@ -126,88 +143,183 @@ checkDataSet <- function(X, fracNA = 0.5, numDiscrete = 3, precScale = 1e-12,
   }
   
   
-  # 3. Deselect variables with over fracNA% of missing values
-  #    (e.g. fracNA=0.20). Then update the vector colInAnalysis.
-  #
-  remX[!is.finite(remX)] <- NA # sets NA, NaN, Inf, -Inf all to NA
-  acceptNA <- nrow(remX) * fracNA
-  NAcounts   <- colSums(is.na(remX))
-  goodcol    <- (NAcounts <= acceptNA)
-  numgoodcol <- sum(goodcol)
-  vecNAcol   <- (goodcol == FALSE)
-  numNAcol   <- sum(vecNAcol)
-  namesNAcol <- NULL
-  if (numNAcol > 0) {
-    if (!silent) {
-      wnq(" ")
-      wnq(paste(" The data contained ", numNAcol, " columns with over ",
-                round(100 * fracNA, 2), "% of NAs.", sep = ""))
-      wnq(" Their column names are:")
-      wnq(" ")    
-    }
-    namesNAcol <- colnames(remX)[vecNAcol]
-    if (!silent) {
-      pnq(namesNAcol)    
-      wnq(" ")    
-    }
-    if (numgoodcol > 1) {
-      if (!silent) {
-        wnq(" These columns will be ignored in the analysis.")
-        wnq(paste(" We continue with the remaining ", numgoodcol,
-                  " columns:", sep = ""))
-      }
-      remX <- remX[, goodcol, drop = FALSE]
-    } else { 
-      if (numgoodcol == 0) stop(" No columns remain, so we stop.")
-      if (numgoodcol == 1) stop(" Only 1 column remains, so we stop.")
-    }    
-    colInAnalysis[colInAnalysis == TRUE] <- goodcol
-    if (!silent) {
-      wnq(" ")
-      pnq(names(which(colInAnalysis)))
+  if (cleanNAfirst == "automatic") {
+    if (dim(remX)[2] >=  5 * dim(remX)[1]) { # more variables than observations
+      cleanNAfirst = "columns"
+    } else {
+      cleanNAfirst = "rows"
     }
   }
   
-  
-  # 4. Deselect rows with too many NAs.
-  #    Create the vector rowInAnalysis.
-  #
-  acceptNA   <- ncol(remX) * fracNA
-  NAcounts   <- rowSums(is.na(remX))
-  goodrow    <- (NAcounts <= acceptNA)
-  numgoodrow <- sum(goodrow)
-  vecNArow   <- (goodrow == FALSE)
-  numNArow   <- sum(vecNArow)
-  rowInAnalysis <- goodrow # in case we need to remove more rows later.
-  namesNArow <- NULL
-  if (numNArow > 0) {
-    if (!silent) {
-      wnq(" ")
-      wnq(paste(" The data contained ", numNArow, " rows with over ",
-                round(100 * fracNA, 2), "% of NAs.", sep = ""))
-      wnq(" Their row names are:")
-      wnq(" ")
-    }
-    namesNArow <- rownames(remX)[vecNArow]
-    if (!silent) {
-      pnq(namesNArow)    
-      wnq(" ")
-    }
-    if (numgoodrow > 2) {
+  if (cleanNAfirst == "columns") {
+    # 3. Deselect variables with over fracNA% of missing values
+    #    (e.g. fracNA=0.20). Then update the vector colInAnalysis.
+    #
+    remX[!is.finite(remX)] <- NA # sets NA, NaN, Inf, -Inf all to NA
+    acceptNA <- nrow(remX) * fracNA
+    NAcounts   <- colSums(is.na(remX))
+    goodcol    <- (NAcounts <= acceptNA)
+    numgoodcol <- sum(goodcol)
+    vecNAcol   <- (goodcol == FALSE)
+    numNAcol   <- sum(vecNAcol)
+    namesNAcol <- NULL
+    if (numNAcol > 0) {
       if (!silent) {
-        wnq(" These rows will be ignored in the analysis.")
-        wnq(paste(" We continue with the remaining ", numgoodrow,
-                  " rows:", sep = "")) 
+        wnq(" ")
+        wnq(paste(" The data contained ", numNAcol, " columns with over ",
+                  round(100 * fracNA, 2), "% of NAs.", sep = ""))
+        wnq(" Their column names are:")
+        wnq(" ")    
       }
-      remX <- remX[goodrow, , drop = FALSE]
-    } else { 
-      if (numgoodrow == 0) stop(" No rows remain, so we stop.")
-      if (numgoodrow == 1) stop(" Only 1 row remains, so we stop.")
-      if (numgoodrow == 2) stop(" Only 2 rows remain, so we stop.")      
+      namesNAcol <- colnames(remX)[vecNAcol]
+      if (!silent) {
+        pnq(namesNAcol)    
+        wnq(" ")    
+      }
+      if (numgoodcol > 1) {
+        if (!silent) {
+          wnq(" These columns will be ignored in the analysis.")
+          wnq(paste(" We continue with the remaining ", numgoodcol,
+                    " columns:", sep = ""))
+        }
+        remX <- remX[, goodcol, drop = FALSE]
+      } else { 
+        if (numgoodcol == 0) stop(" No columns remain, so we stop.")
+        if (numgoodcol == 1) stop(" Only 1 column remains, so we stop.")
+      }    
+      colInAnalysis[colInAnalysis == TRUE] <- goodcol
+      if (!silent) {
+        wnq(" ")
+        pnq(names(which(colInAnalysis)))
+      }
     }
-    if (!silent) {
-      wnq(" ")    
-      pnq(names(which(rowInAnalysis)))
+    
+    
+    # 4. Deselect rows with too many NAs.
+    #    Create the vector rowInAnalysis.
+    #
+    acceptNA   <- ncol(remX) * fracNA
+    NAcounts   <- rowSums(is.na(remX))
+    goodrow    <- (NAcounts <= acceptNA)
+    numgoodrow <- sum(goodrow)
+    vecNArow   <- (goodrow == FALSE)
+    numNArow   <- sum(vecNArow)
+    rowInAnalysis <- goodrow # in case we need to remove more rows later.
+    namesNArow <- NULL
+    if (numNArow > 0) {
+      if (!silent) {
+        wnq(" ")
+        wnq(paste(" The data contained ", numNArow, " rows with over ",
+                  round(100 * fracNA, 2), "% of NAs.", sep = ""))
+        wnq(" Their row names are:")
+        wnq(" ")
+      }
+      namesNArow <- rownames(remX)[vecNArow]
+      if (!silent) {
+        pnq(namesNArow)    
+        wnq(" ")
+      }
+      if (numgoodrow > 2) {
+        if (!silent) {
+          wnq(" These rows will be ignored in the analysis.")
+          wnq(paste(" We continue with the remaining ", numgoodrow,
+                    " rows:", sep = "")) 
+        }
+        remX <- remX[goodrow, , drop = FALSE]
+      } else { 
+        if (numgoodrow == 0) stop(" No rows remain, so we stop.")
+        if (numgoodrow == 1) stop(" Only 1 row remains, so we stop.")
+        if (numgoodrow == 2) stop(" Only 2 rows remain, so we stop.")      
+      }
+      if (!silent) {
+        wnq(" ")    
+        pnq(names(which(rowInAnalysis)))
+      }
+    }
+    
+  } else {
+    
+    # 3. Deselect rows with too many NAs.
+    #    Create the vector rowInAnalysis.
+    remX[!is.finite(remX)] <- NA # sets NA, NaN, Inf, -Inf all to NA
+    acceptNA   <- ncol(remX) * fracNA
+    NAcounts   <- rowSums(is.na(remX))
+    goodrow    <- (NAcounts <= acceptNA)
+    numgoodrow <- sum(goodrow)
+    vecNArow   <- (goodrow == FALSE)
+    numNArow   <- sum(vecNArow)
+    rowInAnalysis <- goodrow # in case we need to remove more rows later.
+    namesNArow <- NULL
+    if (numNArow > 0) {
+      if (!silent) {
+        wnq(" ")
+        wnq(paste(" The data contained ", numNArow, " rows with over ",
+                  round(100 * fracNA, 2), "% of NAs.", sep = ""))
+        wnq(" Their row names are:")
+        wnq(" ")
+      }
+      namesNArow <- rownames(remX)[vecNArow]
+      if (!silent) {
+        pnq(namesNArow)    
+        wnq(" ")
+      }
+      if (numgoodrow > 2) {
+        if (!silent) {
+          wnq(" These rows will be ignored in the analysis.")
+          wnq(paste(" We continue with the remaining ", numgoodrow,
+                    " rows:", sep = "")) 
+        }
+        remX <- remX[goodrow, , drop = FALSE]
+      } else { 
+        if (numgoodrow == 0) stop(" No rows remain, so we stop.")
+        if (numgoodrow == 1) stop(" Only 1 row remains, so we stop.")
+        if (numgoodrow == 2) stop(" Only 2 rows remain, so we stop.")      
+      }
+      if (!silent) {
+        wnq(" ")    
+        pnq(names(which(rowInAnalysis)))
+      }
+    }
+    
+    # 4. Deselect variables with over fracNA% of missing values
+    #    (e.g. fracNA=0.20). Then update the vector colInAnalysis.
+    #
+    acceptNA <- nrow(remX) * fracNA
+    NAcounts   <- colSums(is.na(remX))
+    goodcol    <- (NAcounts <= acceptNA)
+    numgoodcol <- sum(goodcol)
+    vecNAcol   <- (goodcol == FALSE)
+    numNAcol   <- sum(vecNAcol)
+    namesNAcol <- NULL
+    if (numNAcol > 0) {
+      if (!silent) {
+        wnq(" ")
+        wnq(paste(" The data contained ", numNAcol, " columns with over ",
+                  round(100 * fracNA, 2), "% of NAs.", sep = ""))
+        wnq(" Their column names are:")
+        wnq(" ")    
+      }
+      namesNAcol <- colnames(remX)[vecNAcol]
+      if (!silent) {
+        pnq(namesNAcol)    
+        wnq(" ")    
+      }
+      if (numgoodcol > 1) {
+        if (!silent) {
+          wnq(" These columns will be ignored in the analysis.")
+          wnq(paste(" We continue with the remaining ", numgoodcol,
+                    " columns:", sep = ""))
+        }
+        remX <- remX[, goodcol, drop = FALSE]
+      } else { 
+        if (numgoodcol == 0) stop(" No columns remain, so we stop.")
+        if (numgoodcol == 1) stop(" Only 1 column remains, so we stop.")
+      }    
+      colInAnalysis[colInAnalysis == TRUE] <- goodcol
+      if (!silent) {
+        wnq(" ")
+        pnq(names(which(colInAnalysis)))
+      }
     }
   }
   
@@ -300,14 +412,13 @@ checkDataSet <- function(X, fracNA = 0.5, numDiscrete = 3, precScale = 1e-12,
   
   # check whether we have reduced the size of X
   if (nrow(remX) < n | ncol(remX) < d) {
-    if (!silent) {
       wnq(" ")
       wnq(paste(" The final data set we will analyze has ",
                 nrow(remX), " rows and ", ncol(remX),
                 " columns.", sep = ""))
       wnq(" ")
-    }
   }
+  
   
   return(list(colInAnalysis = which(colInAnalysis),
               rowInAnalysis = which(rowInAnalysis),
