@@ -209,7 +209,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   else h <- h.alpha.n(alpha, n, k)
   
   
-
+  
   ##########################
   ##  Detect deviating cells
   ##########################
@@ -474,7 +474,9 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
     Xcih.SVD <- truncPC(Xfi[Hstar, ], ncomp = k)
     k <- min(Xcih.SVD$rank, k)
   } else {
-    Hstar <- H0
+    Hstar     <- rep(0, dim(Xci)[1])
+    Hstar[H0] <- 1
+    Hstar     <- as.logical(Hstar)
   }
   # Hstar is the final set of rowwise inliers.  
   
@@ -870,13 +872,18 @@ truncPC <- function(X, ncomp = NULL, scale = FALSE, center = TRUE,
   if (isTRUE(center))
     center <- attr(Y, "scaled:center")
   if (is.null(ncomp)) {
-    SvdY <- svd::propack.svd(Y, neig = min(n, d))
-  }
-  else {
+    SvdY <- try(svd::propack.svd(Y, neig = min(n, d)), silent = TRUE)
+    if (class(SvdY) == "try-error") {
+      SvdY <- svd(Y, nu = min(n, d), nv = min(n, d))
+    }
+  } else {
     if (!(ncomp >= 1)) 
       stop(" ncomp must be at least 1")
     ncomp <- min(ncomp, n, d)
-    SvdY  <- svd::propack.svd(Y, neig = ncomp)
+    SvdY <- try(svd::propack.svd(Y, neig = ncomp), silent = TRUE)
+    if (class(SvdY) == "try-error") {
+      SvdY <- svd(Y, nu = ncomp, nv = ncomp)
+    }
   }
   eigvals <- SvdY$d
   rank <- sum(eigvals > 1e-10)
@@ -890,8 +897,7 @@ truncPC <- function(X, ncomp = NULL, scale = FALSE, center = TRUE,
     flipcolumn <- function(x) {
       if (x[which.max(abs(x))] < 0) {
         -x
-      }
-      else {
+      } else {
         x
       }
     }

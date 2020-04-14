@@ -32,8 +32,7 @@ wrap(X, locX, scaleX, precScale = 1e-12)
 }
 }
 \references{
- Raymaekers, J., Rousseeuw P.J. (2018). Fast robust correlation for high dimensional data.
- \emph{arXiv:1712.05151}
+  Raymaekers, J., Rousseeuw P.J. (2019). Fast robust correlation for high dimensional data. \emph{Technometrics}, published online.
 }
 \author{
  Raymaekers, J. and Rousseeuw P.J.

@@ -1,11 +1,11 @@
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo = FALSE------------------------------------------------------------
 knitr::opts_chunk$set(
  fig.width  = 5 ,
  fig.height = 3.5,
  fig.align  = 'center'
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library("cellWise")
 library("gridExtra") # has grid.arrange()
 
@@ -22,7 +22,7 @@ DDCpars = list(fracNA = 0.5, numDiscrete = 3, precScale = 1e-12,
 DDCpars = list(fastDDC = FALSE)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 
 i = c(1,2,3,4,5,6,7,8,9) 
 name = c("aa","bb","cc","dd","ee","ff","gg","hh","ii") 
@@ -44,7 +44,7 @@ cellMap(D=remX, R=DDCdatafr$stdResid, rowlabels = 1:nrow(remX),
 # Red cells have higher value than predicted, blue cells lower,
 # white cells are missing values, all other cells are yellow.
 
-## ----fig.height=10,fig.width=7-------------------------------------------
+## ----fig.height=10,fig.width=7------------------------------------------------
 set.seed(12345) # for reproducibility
 n <- 50; d <- 20
 A <- matrix(0.9, d, d); diag(A) = 1
@@ -64,7 +64,7 @@ cellMap(D=DDCx$remX, R=DDCx$stdResid, columnlabels = 1:d,
 # Red cells have higher value than predicted, blue cells lower,
 # white cells are missing values, all other cells are yellow.
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 DDCx$DDCpars # These are the default options:
 
 names(DDCx)
@@ -106,7 +106,7 @@ round(DDCx$robslopes[1:3,],2)
 round(DDCx$deshrinkage,2)
 # For each column, the factor by which its prediction is multiplied.
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 round(DDCx$Xest[1:12,1:10],2) # the estimated cells of remX:
 
 round(DDCx$stdResid[1:12,1:10],1)
@@ -136,11 +136,11 @@ round((DDCx$Ximp - DDCx$remX)[1:10,1:10],2)
 # The nonzero values and the NA's correspond to imputed cells.
 
 
-## ----results='hide',message=FALSE,warning=FALSE--------------------------
+## ----results='hide',message=FALSE,warning=FALSE-------------------------------
 library(robustHD)
 data(TopGear)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 dim(TopGear)
 rownames(TopGear)[1:13] # "1" to "297" are not useful names
 rownames(TopGear) = paste(TopGear[,1],TopGear[,2]) 
@@ -205,7 +205,7 @@ DDCtransTG = DDC(transTG,DDCpars)
 
 
 
-## ----fig.height=10,fig.width=8-------------------------------------------
+## ----fig.height=10,fig.width=8------------------------------------------------
 remX = DDCtransTG$remX # the remaining part of the dataset
 dim(remX)
 
@@ -243,7 +243,7 @@ ggpcol = cellMap(D=tempX,
                  adjustrowlabels=0.5) 
 plot(ggpcol)
 
-## ----fig.height=10,fig.width=8-------------------------------------------
+## ----fig.height=10,fig.width=8------------------------------------------------
 ggpDDC = cellMap(D=tempX,
                  R=DDCtransTG$stdResid, 
                  indcells=DDCtransTG$indcells,
@@ -262,7 +262,7 @@ plot(ggpDDC)
 # dev.off()
 
 
-## ----fig.height=10,fig.width=8-------------------------------------------
+## ----fig.height=10,fig.width=8------------------------------------------------
 # Top Gear dataset: prediction of "new" data
 ############################################
 # For comparison we first remake the cell map of the entire dataset, but now 
@@ -286,14 +286,14 @@ ggpDDC = cellMap(D=remX,
                  outlyingGrad = 1)
 plot(ggpDDC)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 initX = remX[-showrows,]
 dim(initX) # 279 11
 
 # Fit initX:
 DDCinitX = DDC(initX,DDCpars=DDCpars) 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 newX = remX[showrows,]
 dim(newX) # 17  11 
 
@@ -315,7 +315,7 @@ names(predictDDC) # Fewer, since DDCpredict does not call checkDataSet:
 predictDDC2 = DDCpredict(newX,DDCinitX,DDCpars=DDCpars)
 all.equal(predictDDC,predictDDC2) # TRUE
 
-## ----fig.height=10,fig.width=8-------------------------------------------
+## ----fig.height=10,fig.width=8------------------------------------------------
 
 ggpnew = cellMap(D=newX,
                  R=predictDDC$stdResid,
@@ -335,7 +335,7 @@ plot(ggpnew) # Looks quite similar to the result using the entire dataset:
 # gridExtra::grid.arrange(ggpDDC,ggpnew,nrow=1) 
 # dev.off()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data(philips)
 dim(philips) 
 colnames(philips) = c("X1","X2","X3","X4","X5","X6","X7","X8","X9")
@@ -351,10 +351,10 @@ DDCphilips$indcells # indices of the cells that were flagged:
 DDCphilips$indrows # flagged rows:
 
 
-## ----results='hide',message=FALSE,warning=FALSE--------------------------
+## ----results='hide',message=FALSE,warning=FALSE-------------------------------
 library(robustbase) # for covMcd
 
-## ----fig.height=4,fig.width=8--------------------------------------------
+## ----fig.height=4,fig.width=8-------------------------------------------------
 MCDphilips = robustbase::covMcd(philips)
 indrowsMCD = which(mahalanobis(philips,MCDphilips$center,
                                MCDphilips$cov) > qchisq(0.975,df=d))
@@ -365,7 +365,7 @@ abline(h=sqrt(qchisq(0.975,df=9))) # this horizontal line is the cutoff.
 # dev.copy(pdf,"Figure_philips_left.pdf",width=10,height=4)
 # dev.off()
 
-## ----fig.height=10,fig.width=8-------------------------------------------
+## ----fig.height=10,fig.width=8------------------------------------------------
 # cellMaps with rectangular blocks:
 
 n = nrow(philips)
@@ -403,7 +403,7 @@ plot(ggpDDCphilips)
 # dev.copy(pdf,"Figure_philips_right.pdf",width=6,height=12)
 # dev.off()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data(mortality)
 dim(mortality)
 # 198  91
@@ -415,10 +415,10 @@ DDCmortality = DDC(mortality,DDCpars) # 1 second
 remX = DDCmortality$remX
 dim(remX)
 
-## ----results='hide',message=FALSE,warning=FALSE--------------------------
+## ----results='hide',message=FALSE,warning=FALSE-------------------------------
 library(rrcov) # contains ROBPCA
 
-## ----fig.height=10,fig.width=8-------------------------------------------
+## ----fig.height=10,fig.width=8------------------------------------------------
 PCAmortality = rrcov::PcaHubert(mortality,alpha=0.75,scale=FALSE)
 
 n = nrow(remX)
@@ -462,7 +462,7 @@ plot(ggpDDC) # Leads to a detailed interpretation:
 # gridExtra::grid.arrange(ggpROBPCA,ggpDDC,nrow=1)
 # dev.off()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data(glass)
 DDCglass = DDC(glass,DDCpars) # takes 8 seconds
 remX = DDCglass$remX
@@ -498,17 +498,17 @@ remX = DDCglass$remX
 
 dim(remX)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 
 fastDDCpars = list(fastDDC = TRUE, silent = TRUE)
 fastDDCglass = DDC(glass, fastDDCpars) # takes 2 seconds
 remXfast = fastDDCglass$remX
 all.equal(remX,remXfast) # The remaining data is the same:
 
-## ----results='hide',message=FALSE,warning=FALSE--------------------------
+## ----results='hide',message=FALSE,warning=FALSE-------------------------------
 library(rrcov) # contains ROBPCA
 
-## ----fig.height=4,fig.width=8--------------------------------------------
+## ----fig.height=4,fig.width=8-------------------------------------------------
 PCAglass = rrcov::PcaHubert(remX,alpha=0.75,scale=FALSE)
 
 n = nrow(remX)

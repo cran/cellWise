@@ -165,10 +165,9 @@ to allow to deal with high dimensions. Defaults to \code{TRUE} for \eqn{d > 750}
 }
 
 \references{
-Rousseeuw, P.J., Van den Bossche W. (2018). Detecting Deviating Data Cells. \emph{Technometrics}, \bold{60}, 135-145.
+Rousseeuw, P.J., Van den Bossche W. (2018). Detecting Deviating Data Cells. \emph{Technometrics}, \bold{60}(2), 135-145.
 
-  Raymaekers, J., Rousseeuw P.J. (2018). Fast robust correlation for high dimensional data.
- \emph{arXiv:1712.05151}
+  Raymaekers, J., Rousseeuw P.J. (2019). Fast robust correlation for high dimensional data. \emph{Technometrics}, published online.
 }
 
 \author{

@@ -1,15 +1,15 @@
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo = FALSE------------------------------------------------------------
 knitr::opts_chunk$set(
  fig.width  = 5 ,
  fig.height = 3.5,
  fig.align  = 'center'
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library("cellWise")
 library("gridExtra") # has grid.arrange()
 
-## ----fig.height=3,fig.width=7--------------------------------------------
+## ----fig.height=3,fig.width=7-------------------------------------------------
 set.seed(12345) # for reproducibility
 n <- 50; d <- 10
 A <- matrix(0.9, d, d); diag(A) = 1 
@@ -25,18 +25,18 @@ MacroPCA.out <- MacroPCA(x, k = 0)
 
 MacroPCA.out <- MacroPCA(x, k = 1)
 
-## ----fig.height=11,fig.width=7-------------------------------------------
+## ----fig.height=11,fig.width=7------------------------------------------------
 cellMap(D = MacroPCA.out$remX, R = MacroPCA.out$stdResid,
         columnlabels = 1:d, rowlabels = 1:n)
 # Red cells have higher value than predicted, blue cells lower,
 # white cells are missing values, and all other cells are yellow.
 
-## ----results='hide',message=FALSE,warning=FALSE--------------------------
+## ----results='hide',message=FALSE,warning=FALSE-------------------------------
 library(robustHD)
 data(TopGear)
 dim(TopGear)
 
-## ----fig.height=3,fig.width=7--------------------------------------------
+## ----fig.height=3,fig.width=7-------------------------------------------------
 myTopGear = TopGear
 rownames(myTopGear) = paste(myTopGear[,1],myTopGear[,2]) 
 # These rownames are make and model of the cars.
@@ -127,7 +127,7 @@ MacroPCAtransTG$cutoffSD # cutoff value for score distances OD:
 length(MacroPCAtransTG$indrows) # list of flagged rows
 length(MacroPCAtransTG$indcells) # list of flagged cells
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ICPCAtransTG <- ICPCA(remTG,k=2,scale=TRUE,tolProb=0.99)
 names(ICPCAtransTG)
 
@@ -137,7 +137,7 @@ ICPCAtransTG$X.NAimp[c(94,176),8]
 # CAR MAGAZINE: Ford Kuga Kuga 2.0 TDCi weighs 1605kg 
 # CAR MAGAZINE: MINI Coupe 1.6T Cooper  weighs 1165kg
 
-## ----fig.height=14,fig.width=8-------------------------------------------
+## ----fig.height=14,fig.width=8------------------------------------------------
 # Make untransformed submatrix of X for labeling the cells 
 # in the residual plot:
 tempTG = myTopGear[checkData$rowInAnalysis,checkData$colInAnalysis]
@@ -182,7 +182,7 @@ plot(ggpMacroPCA)
 # dev.copy(pdf,file="TopGear_IPCA_MacroPCA_residualMap.pdf",width=20,height=16)
 # dev.off()
 
-## ----fig.height=6,fig.width=6--------------------------------------------
+## ----fig.height=6,fig.width=6-------------------------------------------------
 ### Creating the outlier maps
 
 outlierMap(MacroPCAtransTG,title="MacroPCA outlier map",
@@ -257,7 +257,7 @@ text(textPos,plotLabs, cex=0.8, pos=4)
 # dev.copy(pdf,"TopGear_ICPCA_outlierMap.pdf",width=6,height=6)
 # dev.off()
 
-## ----fig.height=14,fig.width=8-------------------------------------------
+## ----fig.height=14,fig.width=8------------------------------------------------
 
 # For comparison, remake the residual map of the entire dataset, but now showing 
 # the values of the residuals instead of the data values:
@@ -331,13 +331,13 @@ plot(ggpMacroPCApredict) # is very similar to that based on all the data!
 # gridExtra::grid.arrange(ggpMacroPCAres,ggpMacroPCApredict,ncol=2) 
 # dev.off()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data(glass)
 
-## ----results='hide',message=FALSE,warning=FALSE--------------------------
+## ----results='hide',message=FALSE,warning=FALSE-------------------------------
 library(rrcov) # for robust PCA:
 
-## ----fig.height=6,fig.width=7--------------------------------------------
+## ----fig.height=6,fig.width=7-------------------------------------------------
 dim(glass) 
 
 # Do not scale the spectra in the glass data:
@@ -435,7 +435,7 @@ grid.arrange(ggpMacroPCA,ggpICPCA,nrow=2)
 # dev.off()
 
 
-## ----fig.height=6,fig.width=7--------------------------------------------
+## ----fig.height=6,fig.width=7-------------------------------------------------
 
 library(rrcov) # only needed for PcaHubert()
 ROBPCAglass = PcaHubert(remglass,k=4,alpha=0.5)
@@ -472,7 +472,7 @@ grid.arrange(ggpMacroPCA,ggpROBPCA,nrow=2)
 # dev.off()
 
 
-## ----fig.height=6,fig.width=7--------------------------------------------
+## ----fig.height=6,fig.width=7-------------------------------------------------
 
 fastDDCpars = list(fastDDC=TRUE, silent=TRUE)
 fastMacroPCApars = list(DDCpars=fastDDCpars, scale=FALSE, silent=TRUE)
@@ -500,10 +500,10 @@ grid.arrange(ggpMacroPCA,ggpfastMacroPCA,nrow=2) # The results are similar:
 # dev.copy(pdf,pdfName,width=20,height=12)
 # dev.off()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data(dposs)
 
-## ----fig.height=3,fig.width=7--------------------------------------------
+## ----fig.height=3,fig.width=7-------------------------------------------------
 
 colnames(dposs); dim(dposs) 
 n = nrow(dposs); n
@@ -542,7 +542,7 @@ barplot(MacroPCAdposs$eigenvalues,
 # dev.copy(pdf,"DPOSS_MacroPCA_screeplot.pdf",width=6,height=6)
 # dev.off()
 
-## ----fig.height=5,fig.width=5--------------------------------------------
+## ----fig.height=5,fig.width=5-------------------------------------------------
 ## LOADINGS
 ICPCAdposs$loadings[,2] = -ICPCAdposs$loadings[,2]
 
@@ -562,7 +562,7 @@ abline(v=14.5,col="red")
 # dev.copy(pdf,"DPOSS_MacroPCA_loadings.pdf",width=5,height=5)
 # dev.off()
 
-## ----fig.height=5,fig.width=5--------------------------------------------
+## ----fig.height=5,fig.width=5-------------------------------------------------
 # Select the 150 rows with highest OD from MacroPCA
 dpossOD = MacroPCAdposs$OD
 summary(dpossOD) 
@@ -593,7 +593,7 @@ outlierMap(MacroPCAdposs,title="MacroPCA outlier map",
 
 
 
-## ----fig.height=5,fig.width=5--------------------------------------------
+## ----fig.height=5,fig.width=5-------------------------------------------------
 ## ICPCA SCORE PLOTS
 ICPCAdposs$scores[,2] = -ICPCAdposs$scores[,2]
 
@@ -624,7 +624,7 @@ plot(MacroPCAdposs$scores[,2:3],main="MacroPCA scores",xlab="PC2",ylab="PC3")
 points(MacroPCAdposs$scores[indHighOD,2:3],pch=16,col="red")
 
 
-## ----fig.height=6,fig.width=6--------------------------------------------
+## ----fig.height=6,fig.width=6-------------------------------------------------
 # RESIDUAL MAPS
 
 dpossH = na.omit(indHighOD)

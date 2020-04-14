@@ -99,7 +99,7 @@ cellMap(D, R, indcells = NULL, indrows = NULL,
 
 
 \references{
-Rousseeuw, P.J., Van den Bossche W. (2018). Detecting Deviating Data Cells. \emph{Technometrics}, \bold{60}, 135-145.
+Rousseeuw, P.J., Van den Bossche W. (2018). Detecting Deviating Data Cells. \emph{Technometrics}, \bold{60}(2), 135-145.
 }
 
 \author{

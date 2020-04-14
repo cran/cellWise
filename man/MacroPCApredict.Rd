@@ -57,7 +57,7 @@ options see the function \code{\link{MacroPCA}}.}
 
 
 \references{
-Hubert, M., Rousseeuw, P.J., Van den Bossche W. (2019). MacroPCA: An all-in-one PCA method allowing for missing values as well as cellwise and rowwise outliers. \emph{Technometrics}, to appear.
+Hubert, M., Rousseeuw, P.J., Van den Bossche W. (2019). MacroPCA: An all-in-one PCA method allowing for missing values as well as cellwise and rowwise outliers. \emph{Technometrics}, \bold{61}(4), 459-473.
 }
 
 \author{

@@ -17,7 +17,7 @@ as obtained from the Human Mortality Database.
 \source{
 Human Mortality Database. University of California, Berkeley (USA), and
 Max Planck Institute for Demographic Research (Germany). Available at
- \url{www.mortality.org} (data downloaded in November 2015).
+ \url{https://www.mortality.org} (data downloaded in November 2015).
 }
 \references{
 Hyndman, R.J., and Shang, H.L. (2010), Rainbow plots, bagplots, and boxplots for
