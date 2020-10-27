@@ -5,7 +5,8 @@ cellMap = function(D, R, indcells = NULL, indrows = NULL,
                    nrowsinblock=1, ncolumnsinblock=1,autolabel=TRUE,
                    columnangle=90,sizetitles=1.1,adjustrowlabels=1,
                    adjustcolumnlabels=1, colContrast=1,outlyingGrad=TRUE,
-                   darkestColor = sqrt(qchisq(0.999,1))) {
+                   darkestColor = sqrt(qchisq(0.999,1)), 
+                   drawCircles = TRUE) {
   # Draws a cellmap, possibly of a subset of rows and columns of the data,
   # and possibly combining cells into blocks. 
   # The inputs are:
@@ -34,6 +35,7 @@ cellMap = function(D, R, indcells = NULL, indrows = NULL,
   # adjustrowlabels : adjust y-labels: 0=left, 0.5=centered, 1=right
   # colContrast  : adjust color contrast
   # outlyingGrad : use gradient colors for outlyingness
+  # drawCircles: whether or not to draw the circles indicating casewise outliers
   
   funcSqueeze = function(Xin,n,d,ncolumnsinblock,nrowsinblock,colContrast) {
     # function to combine cells into blocks
@@ -302,59 +304,76 @@ cellMap = function(D, R, indcells = NULL, indrows = NULL,
   base_size = 10
   columnlabels = c(columnlabels,"","")
   
-  circleFun <- function(centerx, centery, r, npoints){
-    tt <- seq(0,2*pi,length.out = npoints)
-    xx <- centerx + r * cos(tt)
-    yy <- centery + r * sin(tt)
+  circleFun = function(centerx, centery, r, npoints) {
+    tt = seq(0, 2 * pi, length.out = npoints)
+    xx = centerx + r * cos(tt)
+    yy = centery + r * sin(tt)
     return(c(xx, yy))
   }
+  if (drawCircles) {
+    centerx = d + 1
+    centery = n:1
+    radius = 0.4
+    npoints = 100
+    circlePoints = mapply(circleFun, centerx, centery, radius,
+                          npoints)
+    positions = data.frame(rownr = rep(1:n, each = npoints),
+                           x = c(circlePoints[1:npoints, ]), 
+                           y = c(circlePoints[(npoints +1):(2*npoints), ]))
+    datapoly = merge(mXrow, positions, by = c("rownr"))
+  }
   
-  centerx = d+1;centery = n:1 ;radius = 0.4 ;npoints = 100.0 
-  circlePoints = mapply(circleFun,centerx,centery,radius,npoints)
-  
-  positions <- data.frame(
-    rownr = rep(1:n, each = npoints),
-    x = c(circlePoints[1:npoints,]),
-    y = c(circlePoints[(npoints+1):(2*npoints),])
-  )
-  
-  datapoly <- merge(mXrow, positions, by = c("rownr"))
-  
-  ggp = ggplot(data=mX, aes(variable,rownr)) + 
-  {if(blockMap) geom_tile(aes(fill=rescale(rescaleoffset,
-                                           from= range(gradientends)) ),color="white")} + 
-                                           {if(!blockMap & outlyingGrad) geom_tile(aes(fill=rescale(rescaleoffset,
-                                                                                                    from= range(gradientends) )),color="white")} + 
-                                                                                                    {if(!blockMap & !outlyingGrad) geom_tile(aes(fill=rescale(rescaleoffset,
-                                                                                                                                                              from= range(gradientends) )), colour="white")  } +
-    geom_polygon(data=datapoly,aes( x = x, y = y,
-                                    fill=rescale(rescaleoffset,from = range(gradientends)), group = rownr),
-                 colour = "black") +
-    scale_fill_gradientn(colours=colorends,values=rescale(gradientends),
-                         rescaler=function(x, ...) x,oob=scales::squish) +  #oob: Update 11/2018
-    ggtitle(mTitle) +
-    coord_fixed() + 
-    theme_classic(base_size = base_size*1) + 
-    labs(x=columntitle,y=rowtitle) + 
-    scale_x_discrete(expand=c(0,0),limits=seq(1,d+2,1),labels=columnlabels) + 
-    scale_y_discrete(expand=c(0,0),labels=rowlabels) + 
-    theme(legend.position="none",axis.ticks=element_blank(), 
-          plot.title=element_text(size=base_size*2,hjust=0.5,
-                                  vjust=1,face="bold"),
-          axis.text.x=element_text(size=base_size*1.8,angle=columnangle,
-                                   hjust=adjustcolumnlabels,vjust=0.5,
-                                   colour="black"),
-          axis.text.y=element_text(size=base_size*1.8,angle=0,
-                                   hjust=adjustrowlabels,colour="black"),
-          axis.title.x=element_text(colour="black",
-                                    size=base_size*sizetitles,vjust=1),
-          axis.title.y=element_text(colour="black",
-                                    size=base_size*sizetitles,vjust=0),
-          axis.line.x = element_blank(),panel.border = element_blank()) +
-    annotate(geom = "segment",x=0.5,xend = d+0.5,y = 0.5,yend = 0.5) +
-    annotate(geom = "segment",x=0.5,xend = d+0.5,y = n+0.5,yend = n+0.5) +
-    annotate(geom = "segment",x=d+0.5,xend = d+0.5,y = 0.5,yend = n+0.5)
-  
+  ggp = ggplot(data = mX, aes(variable, rownr)) + {
+    if (blockMap) 
+      geom_tile(aes(fill = rescale(rescaleoffset, 
+                                   from = range(gradientends))), 
+                color = "white")
+  } + {
+    if (!blockMap & outlyingGrad) 
+      geom_tile(aes(fill = rescale(rescaleoffset, 
+                                   from = range(gradientends))), 
+                color = "white")
+  } + {
+    if (!blockMap & !outlyingGrad) 
+      geom_tile(aes(fill = rescale(rescaleoffset, 
+                                   from = range(gradientends))), 
+                colour = "white")
+  } + {
+    if (drawCircles)
+      geom_polygon(data = datapoly,
+                   aes(x = x, y = y,
+                       fill = rescale(rescaleoffset, from = range(gradientends)),
+                       group = rownr), colour = "black") } + 
+    scale_fill_gradientn(colours = colorends, 
+                         values = rescale(gradientends), 
+                         rescaler = function(x, ...) x, oob = scales::squish) + 
+    ggtitle(mTitle) + coord_fixed() +
+    theme_classic(base_size = base_size * 1) +
+    labs(x = columntitle, y = rowtitle) + 
+    scale_x_discrete(expand = c(0, 0), 
+                     limits = as.factor(seq(1, d + 2, 1)), 
+                     labels = columnlabels) + 
+    scale_y_discrete(expand = c(0, 0), labels = rowlabels) + 
+    theme(legend.position = "none", axis.ticks = element_blank(), 
+          plot.title = element_text(size = base_size * 2, hjust = 0.5, 
+                                    vjust = 1, face = "bold"), 
+          axis.text.x = element_text(size = base_size * 1.8, 
+                                     angle = columnangle, hjust = adjustcolumnlabels,
+                                     vjust = 0.5, colour = "black"), 
+          axis.text.y = element_text(size = base_size * 1.8, 
+                                     angle = 0, hjust = adjustrowlabels, colour = "black"), 
+          axis.title.x = element_text(colour = "black", size = 
+                                        base_size * sizetitles, vjust = 1), 
+          axis.title.y = element_text(colour = "black", size = 
+                                        base_size * sizetitles, vjust = 0), 
+          axis.line.x = element_blank(),
+          panel.border = element_blank()) + 
+    annotate(geom = "segment", x = 0.5, xend = d + 0.5, 
+             y = 0.5, yend = 0.5) + 
+    annotate(geom = "segment", x = 0.5, xend = d + 0.5,
+             y = n + 0.5, yend = n + 0.5) +
+    annotate(geom = "segment", x = d + 0.5, xend = d + 0.5, 
+             y = 0.5, yend = n + 0.5)
   if (!is.null(showVals)) {
     txtcol = mX$CatNr
     txtcol[txtcol==0] = "black"

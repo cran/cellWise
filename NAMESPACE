@@ -12,6 +12,7 @@ importFrom("rrcov","CovMcd")
 importFrom("robustbase","classPC", "rankMM")
 importFrom("svd","propack.svd")
 importFrom("graphics", "abline", "plot", "points", "barplot")
+importFrom("stats", "optimize")
 
 export(checkDataSet)
 export(DDC)
@@ -26,3 +27,5 @@ export(DDCpredict)
 export(outlierMap)
 export(truncPC)
 export(ICPCA)
+
+export(transfo)

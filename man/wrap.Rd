@@ -7,7 +7,7 @@ Wrap the data.
 Transforms multivariate data X using the wrapping function with b = 1.5 and c = 4 and the location and scale given in locX and scaleX. 
 }
 \usage{
-wrap(X, locX, scaleX, precScale = 1e-12)
+wrap(X, locX, scaleX, precScale = 1e-12, imputeNA = TRUE)
 }
 
 \arguments{
@@ -18,6 +18,9 @@ wrap(X, locX, scaleX, precScale = 1e-12)
   \item{scaleX}{The scale estimates of the columns of the input data \code{X}. Must be a vector of length \eqn{d}.
 }
   \item{precScale}{The precision scale used throughout the algorithm. Defaults to \eqn{1e-12}
+}
+\item{imputeNA}{Whether or not to impute the \code{NA}s with the location estimate
+of the corresponding variable. Defaults to \code{TRUE}.
 }
 }
 

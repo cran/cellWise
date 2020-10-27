@@ -1,43 +1,70 @@
 
-outlierMap <- function(res,title="Robust PCA",col="black",
-                             pch=16,labelOut=TRUE,id=3){
+outlierMap <- function(res, title = "Robust PCA", col = "black", 
+                       pch = 16, labelOut = TRUE, id = 3, 
+                       xlim = NULL, ylim = NULL, cex = 1,
+                       cex.main=1.2, cex.lab=NULL, cex.axis=NULL){
   
   
-  SD <- res$SD
-  OD <- res$OD
-  cutoffSD <- res$cutoffSD
-  cutoffOD <- res$cutoffOD
+  if(is.null(res$sd)) { SD = res$SD } else { SD = res$sd }
+  if(is.null(res$cutoff.sd)) { cutoffSD = res$cutoffSD } else {
+    cutoffSD = res$cutoff.sd }
+  if(is.null(res$od)) { OD = res$OD } else { OD = res$od }  
+  if(is.null(res$cutoff.od)) { cutoffOD = res$cutoffOD } else {
+    cutoffOD = res$cutoff.od }
+  if(is.null(SD)) stop(" No score distances are given.")
+  if(is.null(cutoffSD)) stop(
+    " No cutoff for score distances is given.")
+  if(is.null(OD)) stop(" No orthogonal distances are given.")
+  if(is.null(cutoffOD)) stop(
+    " No cutoff for orthogonal distances is given.")
+  if (is.null(xlim)) {
+    xlim <- c(0, max(SD) * 1.1)
+  }
+  if (is.null(ylim)) {
+    ylim <- c(0, max(OD) * 1.1)
+  }
   if (is.null(pch)) {
     pch <- ifelse(is.null(col), 1, 16)
   }
   if (is.null(col)) {
     col <- "black"
   }
+  mycex = cex
+  mycex.main = 1
+  if(!is.null(cex.main)) { mycex.main = cex.main }
+  mycex.lab = 1
+  if(!is.null(cex.lab)) { mycex.lab = cex.lab }
+  mycex.axis = 1
+  if(!is.null(cex.axis)) { mycex.axis = cex.axis }
   if (is.list(col)) {
     for (i in 1:length(col)) {
       if (i == 1) {
-        plot(SD[col[[i]]$index],OD[col[[i]]$index],
-             xlab="Score distance",ylab="Orthogonal distance", 
-             main=title,pch=pch,col=col[[i]]$col,
-             xlim = c(0, max(SD)*1.1),ylim=c(0,max(OD)*1.1))
+        plot(SD[col[[i]]$index], OD[col[[i]]$index], 
+             xlab = "", ylab = "", main = "", pch = pch, 
+             col = col[[i]]$col, xlim = xlim, ylim = ylim, 
+             cex=mycex, cex.axis = mycex.axis)
       }
       points(SD[col[[i]]$index], OD[col[[i]]$index], pch = pch, 
-             col = col[[i]]$col)  
+             col = col[[i]]$col, cex=mycex)
     }
-  } else {
-    plot(SD,OD,xlab="Score distance",ylab="Orthogonal distance", 
-         main=title,pch=pch,col=col,xlim=c(0, max(SD)*1.1), 
-         ylim=c(0,max(OD)*1.1))
   }
+  else {
+    plot(SD, OD, xlab = "", ylab = "", main = "", pch = pch, 
+         col = col, xlim = xlim, ylim = ylim, cex=mycex, 
+         cex.axis = mycex.axis)
+  }
+  title(main = title, line = 1, cex.main = mycex.main)
+  title(ylab = "Orthogonal distance", line = 2.3, cex.lab = mycex.lab)
+  title(xlab = "Score distance", line = 2.3, cex.lab = mycex.lab)  
   abline(v = cutoffSD)
   abline(h = cutoffOD)
-  if (labelOut) {
-    labelDD(SD,OD,id.n.SD=id,id.n.OD=id)
+  if (labelOut) { # had to add cellWise::: to make next line work:
+    labelDD_cw(SD, OD, id.n.SD = id, id.n.OD = id)
   }
 }
 
 
-labelDD <- function(x,y,id.n.SD=3,id.n.OD=3,off=0.02) 
+labelDD_cw <- function(x,y,id.n.SD=3,id.n.OD=3,off=0.02) 
 { # used in OutlierMap
   xrange <- graphics::par("usr")
   xrange <- xrange[2] - xrange[1]

@@ -447,7 +447,7 @@ Xresid = remglass - Xhat
 scaleRes = estLocScale(Xresid,type="1stepM",center=F)$scale
 stdResidROBPCA = sweep(Xresid,2,scaleRes,"/")
 # Univariate outlier detection indicates outlying cells:
-cutoffResid = sqrt(qchisq(0.95,df=1))
+cutoffResid = sqrt(qchisq(0.99,df=1))
 ROBPCAindcells = which(abs(stdResidROBPCA) > cutoffResid)
 
 ggpROBPCA <- cellMap(D=remglass,

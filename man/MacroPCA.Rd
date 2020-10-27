@@ -37,9 +37,9 @@ MacroPCA(X, k = 0, MacroPCApars = NULL)
       0.50.}
       
       \item{\code{scale} \cr A value indicating whether and how the original variables should
-      be scaled. If \code{scale = FALSE} (default) or \code{scale = NULL} no scaling is
+      be scaled. If \code{scale = FALSE} or \code{scale = NULL} no scaling is
       performed (and a vector of 1s is returned in the \code{$scaleX slot}).
-      If \code{scale = TRUE} the data are scaled by a 1-step M-estimator of scale with the Tukey biweight weight function to have a robust scale of 1.
+      If \code{scale = TRUE} (default) the data are scaled by a 1-step M-estimator of scale with the Tukey biweight weight function to have a robust scale of 1.
       Alternatively scale can be a vector of length
       equal to the number of columns of \code{x}. The resulting scale estimates are
       returned in the \code{$scaleX} slot of the MacroPCA output.}

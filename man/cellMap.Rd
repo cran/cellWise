@@ -18,7 +18,8 @@ cellMap(D, R, indcells = NULL, indrows = NULL,
                    nrowsinblock=1, ncolumnsinblock=1,autolabel=TRUE,
                    columnangle=90,sizetitles=1.1,adjustrowlabels=1,
                    adjustcolumnlabels=1, colContrast=1,outlyingGrad=TRUE,
-                   darkestColor = sqrt(qchisq(0.999,1)))
+                   darkestColor = sqrt(qchisq(0.999,1)),
+                   drawCircles = TRUE)
 }
 
 \arguments{
@@ -94,6 +95,9 @@ cellMap(D, R, indcells = NULL, indrows = NULL,
   }
   \item{darkestColor}{
   Standardized residuals bigger than this will get the darkest color.
+  }
+  \item{drawCircles}{
+  Whether or not to draw black circles indicating the outlying rows.
   }
 }
 

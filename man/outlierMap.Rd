@@ -9,8 +9,8 @@ The outlier map is a diagnostic plot for the output of \code{\link{MacroPCA}}.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-outlierMap(res,title="Robust PCA",col="black",
-                             pch=16,labelOut=TRUE,id=3)
+outlierMap(res,title="Robust PCA",col="black", pch=16,labelOut=TRUE,id=3,
+xlim = NULL, ylim = NULL, cex = 1, cex.main=1.2, cex.lab=NULL, cex.axis=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,7 +22,7 @@ A list containing the orthogonal distances (\code{OD}), the score distances (\co
   Title of the plot, default is "Robust PCA".
 }
   \item{col}{
-Colour of the points in the plot, this can be a single colour for all points or a vector specifying the colour for each point. The default is "black".
+Colour of the points in the plot, this can be a single colour for all points or a vector or list specifying the colour for each point. The default is "black".
 }
   \item{pch}{
 Plotting characters or symbol used in the plot, see points for more details. The default is 16 which corresponds to filled circles.
@@ -32,6 +32,24 @@ Logical indicating if outliers should be labelled on the plot, default is \code{
 }
   \item{id}{
 Number of OD outliers and number of SD outliers to label on the plot, default is 3.
+}
+\item{xlim}{
+Optional argument to set the limits of the \code{x}-axis.
+}
+\item{ylim}{
+Optional argument to set the limits of the \code{y}-axis.
+}
+\item{cex}{
+Optional argument determining the size of the plotted points. See \code{\link[graphics]{plot.default}} for details.
+}
+\item{cex.main}{
+Optional argument determining the size of the main title. See \code{\link[graphics]{plot.default}} for details.
+}
+\item{cex.lab}{
+Optional argument determining the size of the labels. See \code{\link[graphics]{plot.default}} for details.
+}
+\item{cex.axis}{
+Optional argument determining the size of the axes. See \code{\link[graphics]{plot.default}} for details.
 }
 }
 \details{
