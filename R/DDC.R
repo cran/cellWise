@@ -6,6 +6,13 @@ DDC <- function(X, DDCpars = list()){
   # DDCpars contains all the options chosen by the user, but has
   # a default:
   #
+  
+  if (!is.data.frame(X) & !is.matrix(X)) {
+    stop("The input data must be a matrix or a data frame.")
+  }
+  if (ncol(X) < 2) stop("The input data must have at least 2 columns.")
+  
+  
   if (is.null(DDCpars)) {
     DDCpars <- list()
   }

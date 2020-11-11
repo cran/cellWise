@@ -1,6 +1,8 @@
 
 
-wrap <- function(X, locX, scaleX, precScale = 1e-12, imputeNA = TRUE) {
+wrap <- function(X, locX = NULL, scaleX = NULL,
+                 precScale = 1e-12, imputeNA = TRUE,
+                 checkPars = list()) {
   # Transforms multivariate data X using wrapping function
   # with b = 1.5 and c = 4 and loc&scale in
   # the input arguments locX and scaleX
@@ -17,26 +19,68 @@ wrap <- function(X, locX, scaleX, precScale = 1e-12, imputeNA = TRUE) {
   #
   
   # Check inputs
+  
   if (!is.data.frame(X) & !is.matrix(X) & !is.vector(X)) {
     stop("The input data must be a vector, matrix or a data frame")
   }
-  isVec = F
-  if (is.vector(X)) { X = matrix(X, ncol = 1); isVec = T } else {
-    X <- as.matrix(X) }
-  if (length(locX) != dim(X)[2] || length(scaleX) != dim(X)[2]) {
-    stop(paste0("The arguments \"locX\" and \"scaleX\" should both be of length ",dim(X)[2]))
+  isVec = FALSE
+  if (is.vector(X)) {
+    X = matrix(X, ncol = 1)
+    isVec = TRUE
+  } else {
+    X <- as.matrix(X)
   }
-  colInWrap <- which(scaleX > precScale)
-  if (length(colInWrap) == 0) {
-    stop(paste("No columns with scale > precScale were found."))
-  }
+  
+  
   if (precScale < 1e-12) {
     precScale <- 1e-12
     warning("The \"precScale\" argument was changed to 1e-12.")
   }
   
+  # parameters for checkDataSet
+  if (!"coreOnly" %in% names(checkPars)) {
+    checkPars$coreOnly <- FALSE
+  }
+  if (!"silent" %in% names(checkPars)) {
+    checkPars$silent <- FALSE
+  }
+  if (!"numDiscrete" %in% names(checkPars)) {
+    checkPars$numDiscrete <- 5
+  }
+  if (!"precScale" %in% names(checkPars)) {
+    checkPars$precScale <- 1e-12
+  }
+  
+  if (!is.null(locX) & !is.null(scaleX)) { # custom loc/scale provided
+    if (length(locX) != dim(X)[2] || length(scaleX) != dim(X)[2]) {
+      stop(paste0("The arguments \"locX\" and \"scaleX\" should both be of length ",dim(X)[2]))
+    }
+    colInWrap <- which(scaleX > precScale)
+    if (length(colInWrap) == 0) {
+      stop(paste("No columns with scale > precScale were found."))
+    }
+  } else {
+    # Start with checkDataSet to avoid transforming too discrete variables
+    if (!checkPars$coreOnly) {
+      # Check the data set and set aside columns and rows that do
+      # not satisfy the conditions:
+      out <- checkDataSet(X,
+                          fracNA = 1,
+                          numDiscrete = checkPars$numDiscrete,
+                          precScale = checkPars$precScale,
+                          silent = checkPars$silent)
+      
+      colInWrap <- out$colInAnalysis 
+    } 
+    locScale.out <- estLocScale(X[, , drop = FALSE], silent = TRUE)
+    locX   <- locScale.out$loc
+    scaleX <- locScale.out$scale
+  }
+ 
+  
   res <- tryCatch(.Call("_cellWise_Wrap_cpp", X[, colInWrap, drop = FALSE], 
-                        locX, scaleX, precScale, PACKAGE = "cellWise"), 
+                        locX[colInWrap], scaleX[colInWrap], precScale,
+                        PACKAGE = "cellWise"), 
                   `std::range_error` = function(e) {
                     conditionMessage(e)
                   })
@@ -50,5 +94,5 @@ wrap <- function(X, locX, scaleX, precScale = 1e-12, imputeNA = TRUE) {
     }
   }
   if (isVec) { res$Xw = as.vector(res$Xw) }
-  return(list(Xw = res$Xw, colInWrap = colInWrap))
+  return(list(Xw = res$Xw, colInWrap = colInWrap, loc = locX, scale = scaleX))
 }

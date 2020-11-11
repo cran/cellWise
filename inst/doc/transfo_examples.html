@@ -231,7 +231,13 @@ values, Yeo-Johnson is chosen automatically. First, the classical MLE transforma
 is fit, indicated by the <code>robust = FALSE</code> argument:</p>
 
 <pre><code class="r">ML.out &lt;- transfo(X, type = &quot;bestObj&quot;, robust=FALSE)
-ML.out$lambdahat
+</code></pre>
+
+<pre><code>##  
+##  The input data has 100 rows and 1 columns.
+</code></pre>
+
+<pre><code class="r">ML.out$lambdahat
 </code></pre>
 
 <pre><code>## [1] 1.033255
@@ -298,7 +304,13 @@ too much from the classical MLE estimates on this dataset, since there are no
 outliers.</p>
 
 <pre><code class="r">RewML.out &lt;- transfo(X, type = &quot;bestObj&quot;, robust=TRUE)
-RewML.out$lambdahat 
+</code></pre>
+
+<pre><code>##  
+##  The input data has 100 rows and 1 columns.
+</code></pre>
+
+<pre><code class="r">RewML.out$lambdahat 
 </code></pre>
 
 <pre><code>## [1] 1.099335
@@ -371,7 +383,13 @@ transformation parameter close to 0, which corresponds with the logarithmic
 transformation.</p>
 
 <pre><code class="r">ML.out &lt;- transfo(X, type = &quot;BC&quot;, robust=FALSE)
-ML.out$lambdahat 
+</code></pre>
+
+<pre><code>##  
+##  The input data has 100 rows and 1 columns.
+</code></pre>
+
+<pre><code class="r">ML.out$lambdahat 
 </code></pre>
 
 <pre><code>## [1] 0.01965332
@@ -419,7 +437,13 @@ ML.out$lambdahat
 transformation parameter is again fairly close to 0, as expected.</p>
 
 <pre><code class="r">RewML.out &lt;- transfo(X, type = &quot;bestObj&quot;, robust=TRUE)
-RewML.out$lambdahat 
+</code></pre>
+
+<pre><code>##  
+##  The input data has 100 rows and 1 columns.
+</code></pre>
+
+<pre><code class="r">RewML.out$lambdahat 
 </code></pre>
 
 <pre><code>## [1] 0.1143505
@@ -552,7 +576,17 @@ classical MLE as well as the reweighted MLE which is much more robust. </p>
 
 <pre><code class="r">lambdarange &lt;- c(-4, 6) # for illustration, is the default anyway
 ML.out    &lt;- transfo(X, lambdarange = lambdarange, type = &quot;BC&quot;, robust=F)
-RewML.out &lt;- transfo(X, lambdarange = lambdarange, type = &quot;BC&quot;, robust=T)
+</code></pre>
+
+<pre><code>##  
+##  The input data has 296 rows and 11 columns.
+</code></pre>
+
+<pre><code class="r">RewML.out &lt;- transfo(X, lambdarange = lambdarange, type = &quot;BC&quot;, robust=T)
+</code></pre>
+
+<pre><code>##  
+##  The input data has 296 rows and 11 columns.
 </code></pre>
 
 <p>Now consider the transformation of the variable <code>MPG</code>.</p>
@@ -661,7 +695,17 @@ classical MLE as well as the reweighted MLE which is much more robust.
 This only takes a few seconds for the 500 variables.</p>
 
 <pre><code class="r">ML.out    &lt;- transfo(Z, type = &quot;YJ&quot;, robust=F)
-RewML.out &lt;- transfo(Z, type = &quot;YJ&quot;, robust=T)
+</code></pre>
+
+<pre><code>##  
+##  The input data has 180 rows and 500 columns.
+</code></pre>
+
+<pre><code class="r">RewML.out &lt;- transfo(Z, type = &quot;YJ&quot;, robust=T)
+</code></pre>
+
+<pre><code>##  
+##  The input data has 180 rows and 500 columns.
 </code></pre>
 
 <p>We now construct the cellmaps:</p>
@@ -838,7 +882,13 @@ lambdas larger than 1 and smaller than 1, corresponding with the skewness in
 both directions.</p>
 
 <pre><code class="r">transfoJ_YJ &lt;- transfo(dpossJ, type = &quot;YJ&quot;, robust = T)
-plot(transfoJ_YJ$lambdahat) 
+</code></pre>
+
+<pre><code>##  
+##  The input data has 11478 rows and 7 columns.
+</code></pre>
+
+<pre><code class="r">plot(transfoJ_YJ$lambdahat) 
 </code></pre>
 
 <p><img src="data:image/png;base64,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" title="plot of chunk unnamed-chunk-27" alt="plot of chunk unnamed-chunk-27" style="display: block; margin: auto;" /></p>

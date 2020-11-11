@@ -94,6 +94,10 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   }
   
   # Check input parameters:
+  if (!is.data.frame(X) & !is.matrix(X)) {
+    stop("The input data must be a matrix or a data frame.")
+  }
+  if (ncol(X) < 2) stop("The input data must have at least 2 columns.")
   
   
   if (is.null(MacroPCApars)) {

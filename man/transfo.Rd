@@ -7,11 +7,12 @@ Robustly fit the Box-Cox or Yeo-Johnson transformation
 \description{
 This function uses reweighted maximum likelihood to robustly fit the 
 Box-Cox or Yeo-Johnson transformation to each variable in a dataset. 
+Note that this function first calls \code{\link{checkDataSet}} to ensure that the variables to be transformed are not too discrete.
 }
 \usage{
 transfo(X, type = "bestObj", robust = TRUE, lambdarange = NULL,
-                    prestandardize = TRUE, prescaleBC = F, scalefac = 1,
-                    quant = 0.99, nbsteps = 2)
+        prestandardize = TRUE, prescaleBC = F, scalefac = 1,
+        quant = 0.99, nbsteps = 2, checkPars = list())
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -61,7 +62,27 @@ For YJ and \code{robust = TRUE} this subtracts its median and divides by its mad
  \item{nbsteps}{number of reweighting steps (ignored when 
    \code{robust=FALSE}).
    }
-
+ \item{checkPars}{Optional list of parameters used in the call to
+ \code{\link{checkDataSet}}. The options are:
+  \itemize{
+  \item{ \code{coreOnly} \cr
+      If \code{TRUE}, skip the execution of checkDataset. Defaults to \code{FALSE}}
+       \item{\code{numDiscrete}\cr
+  A column that takes on numDiscrete or fewer values
+  will be considered discrete and not retained in the cleaned data.
+  Defaults to \eqn{5}.
+}
+  \item{\code{precScale} \cr
+  Only consider columns whose scale is larger than precScale.
+  Here scale is measured by the median absolute deviation.
+  Defaults to \eqn{1e-12}.
+}
+ \item{\code{silent}\cr
+  Whether or not the function progress messages should be printed.
+  Defaults to \code{FALSE}.
+}
+      }
+   }
 }
 \value{
 A list with components: \cr
@@ -98,7 +119,7 @@ A list with components: \cr
 }
 \references{
 J. Raymaekers and P.J. Rousseeuw (2020). Transforming variables to 
-central normality. \emph{Arxiv: 2005.07946}.
+central normality. \emph{Arxiv: 2005.07946}. \href{https://arxiv.org/abs/2005.07946}{(link to open access pdf)}
 }
 \author{
 J. Raymaekers and P.J. Rousseeuw
@@ -124,7 +145,7 @@ transfo.out$ttypes
 qqnorm(transfo.out$Zt); abline(0,1)
 
 # For more examples, we refer to the vignette:
-vignette("TVCN_examples")
+vignette("transfo_examples")
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):

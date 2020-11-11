@@ -76,7 +76,7 @@ A list with components: \cr
   }
 }
 \references{
-Rousseeuw, P.J., Van den Bossche W. (2018). Detecting Deviating Data Cells. \emph{Technometrics}, \bold{60}, 135-145.
+Rousseeuw, P.J., Van den Bossche W. (2018). Detecting Deviating Data Cells. \emph{Technometrics}, \bold{60}(2), 135-145. \href{https://www.tandfonline.com/doi/full/10.1080/00401706.2017.1340909}{(link to open access pdf)}
 }
 
 \author{
@@ -84,7 +84,7 @@ Rousseeuw, P.J., Van den Bossche W. (2018). Detecting Deviating Data Cells. \emp
 }
 
 \seealso{
-\code{\link{DDC}}
+\code{\link{DDC}}, \code{\link{MacroPCA}}, \code{\link{transfo}}, \code{\link{wrap}}
 }
 
 \examples{

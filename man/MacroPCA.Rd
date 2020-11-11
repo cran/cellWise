@@ -97,7 +97,7 @@ MacroPCA(X, k = 0, MacroPCApars = NULL)
 
 
 \references{
-Hubert, M., Rousseeuw, P.J., Van den Bossche W. (2019). MacroPCA: An all-in-one PCA method allowing for missing values as well as cellwise and rowwise outliers. \emph{Technometrics}, \bold{61}(4), 459-473.
+Hubert, M., Rousseeuw, P.J., Van den Bossche W. (2019). MacroPCA: An all-in-one PCA method allowing for missing values as well as cellwise and rowwise outliers. \emph{Technometrics}, \bold{61}(4), 459-473. \href{https://www.tandfonline.com/doi/full/10.1080/00401706.2018.1562989}{(link to open access pdf)}
 }
 
 \author{
@@ -122,4 +122,6 @@ x <- cbind(1:n, x)
 MacroPCA.out <- MacroPCA(x, 2)
 cellMap(MacroPCA.out$remX, MacroPCA.out$stdResid,
 columnlabels = 1:d, rowlabels = 1:n)
+# For more examples, we refer to the vignette:
+vignette("MacroPCA_examples")
 }

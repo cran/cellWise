@@ -1,7 +1,7 @@
 
 transfo <- function(X, type = "bestObj", robust = TRUE, lambdarange = NULL,
                     prestandardize = TRUE, prescaleBC = F, scalefac = 1,
-                    quant = 0.99, nbsteps = 2) {
+                    quant = 0.99, nbsteps = 2, checkPars = list()) {
   #
   # Function for fitting the Box-Cox (BC) or Yeo-Johnson (YJ) 
   # transformation to the columns of X, as described in:
@@ -60,10 +60,39 @@ transfo <- function(X, type = "bestObj", robust = TRUE, lambdarange = NULL,
   #   weights     : the final weights from the reweighting.
   #   ttypes      : the type of transform used in each column.
   
-  # The code of the main function starts here.
-  #
+  
   if (is.vector(X)) {X <- matrix(X, ncol = 1)}
   X <- as.matrix(X)
+  
+  # parameters for checkDataSet
+  if (!"coreOnly" %in% names(checkPars)) {
+    checkPars$coreOnly <- FALSE
+  }
+  if (!"silent" %in% names(checkPars)) {
+    checkPars$silent <- FALSE
+  }
+  if (!"numDiscrete" %in% names(checkPars)) {
+    checkPars$numDiscrete <- 5
+  }
+  if (!"precScale" %in% names(checkPars)) {
+    checkPars$precScale <- 1e-12
+  }
+  
+  # Start with checkDataSet to avoid transforming too discrete variables
+  if (!checkPars$coreOnly) {
+    # Check the data set and set aside columns and rows that do
+    # not satisfy the conditions:
+    out <- checkDataSet(X,
+                        fracNA = 1,
+                        numDiscrete = checkPars$numDiscrete,
+                        precScale = checkPars$precScale,
+                        silent = checkPars$silent)
+    
+    X <- out$remX 
+  } 
+  
+  # The code of the main function starts here.
+  #
   n <- nrow(X)
   d <- ncol(X)
   n ; d
@@ -164,9 +193,9 @@ transfo <- function(X, type = "bestObj", robust = TRUE, lambdarange = NULL,
     } # ends classical ML
   } # ends loop over columns of X
   Zt <- scale(Xt, center = muhat, scale = sigmahat)
-  return(list(lambdahats = lambdahats, objective = objective,
+  return(c(list(lambdahats = lambdahats, objective = objective,
               Xt = Xt, Zt = Zt, weights = weights, ttypes = ttypes, 
-              muhat = muhat, sigmahat = sigmahat))
+              muhat = muhat, sigmahat = sigmahat), out))
 }
 
 

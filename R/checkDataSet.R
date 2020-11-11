@@ -44,7 +44,7 @@ checkDataSet <- function(X, fracNA = 0.5, numDiscrete = 3, precScale = 1e-12,
   n <- nrow(X)
   if (n < 3) stop(" The input data must have at least 3 rows (cases)")  
   d <- ncol(X)
-  if (d < 2) stop(" The input data must have at least 2 columns (variables)") 
+  # if (d < 2) stop(" The input data must have at least 2 columns (variables)") 
   
   if (!silent) {
     wnq(" ")

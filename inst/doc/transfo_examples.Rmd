@@ -1,10 +1,10 @@
 ---
-title: "TVCN examples"
+title: "transfo examples"
 author: "Raymaekers, J. and Rousseeuw, P.J."
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{TVCN examples}
+  %\VignetteIndexEntry{transfo examples}
   %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---

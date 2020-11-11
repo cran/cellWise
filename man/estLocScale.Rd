@@ -63,7 +63,7 @@ A list with components: \cr
 }
 
 \references{
-  Raymaekers, J., Rousseeuw P.J. (2019). Fast robust correlation for high dimensional data. \emph{Technometrics}, published online.
+Raymaekers, J., Rousseeuw P.J. (2019). Fast robust correlation for high dimensional data. \emph{Technometrics}, published online. \href{https://www.tandfonline.com/doi/full/10.1080/00401706.2019.1677270}{(link to open access pdf)}
 }
 \author{
  Raymaekers, J. and Rousseeuw P.J.
@@ -79,4 +79,6 @@ set.seed(12345)
 n = 100; d = 10
 X = mvrnorm(n, rep(0, 10), diag(10))
 locScale = estLocScale(X)
+# For more examples, we refer to the vignette:
+vignette("wrap_examples")
 }
