@@ -1,10 +1,10 @@
 ---
-title: "Wrap examples"
+title: "wrap examples"
 author: "Raymaekers, J."
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Wrap examples}
+  %\VignetteIndexEntry{wrap examples}
   %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---

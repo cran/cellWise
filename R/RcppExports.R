@@ -17,3 +17,7 @@ unimcd_cpp <- function(y, alpha) {
     .Call(`_cellWise_unimcd_cpp`, y, alpha)
 }
 
+findCellPath_cpp <- function(predictors, response, weights, Sigmai, naMask) {
+    .Call(`_cellWise_findCellPath_cpp`, predictors, response, weights, Sigmai, naMask)
+}
+

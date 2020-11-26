@@ -150,11 +150,11 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProbCell,
       case 3: {// gkwls
         arma::mat Ugood = U.cols(goodCols);
         for (unsigned int i = 0; i < goodCols.size(); i++) {
-        DDC::kbestcorr tempresult = DDC::kBestCorr(Ugood.col(i), Ugood, i,
-                                                   k, qCorr, precScale);
-        ngbrs.row(goodCols(i)) = goodCols(tempresult.selected).t();
-        robcors.row(goodCols(i)) = tempresult.corrs.t();
-      }
+          DDC::kbestcorr tempresult = DDC::kBestCorr(Ugood.col(i), Ugood, i,
+                                                     k, qCorr, precScale);
+          ngbrs.row(goodCols(i)) = goodCols(tempresult.selected).t();
+          robcors.row(goodCols(i)) = tempresult.corrs.t();
+        }
         
       }
       }
@@ -295,19 +295,19 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProbCell,
     double medTi = 0;
     double madTi = 1;
     
-      
-      for (unsigned int i = 0; i < X.n_rows; i++) {
-        arma::vec tempres = arma::erf(arma::sqrt(arma::pow(Zres.row(i), 2) / 2)).t();
-        Ti(i) = arma::mean(tempres(arma::find_finite(tempres))) - 0.5;
-      }
-      
-      // calculate the test value(outlyingness) of each row :
-      arma::uvec finiteTi = arma::find_finite(Ti);
-      medTi = arma::median(Ti(finiteTi));
-      madTi = (1.482602218505602 * median(arma::abs(Ti(finiteTi) - medTi)));
-      Ti = (Ti - medTi) / madTi;
-      indrows = DDC::vinter(find_nonfinite(DDC::limitFilt(Ti, qRow)), arma::find(Ti > 0));
-      indall = arma::unique(arma::join_cols(indcells, DDC::row2cell(indrows, X.n_rows, X.n_cols)));
+    
+    for (unsigned int i = 0; i < X.n_rows; i++) {
+      arma::vec tempres = arma::erf(arma::sqrt(arma::pow(Zres.row(i), 2) / 2)).t();
+      Ti(i) = arma::mean(tempres(arma::find_finite(tempres))) - 0.5;
+    }
+    
+    // calculate the test value(outlyingness) of each row :
+    arma::uvec finiteTi = arma::find_finite(Ti);
+    medTi = arma::median(Ti(finiteTi));
+    madTi = (1.482602218505602 * median(arma::abs(Ti(finiteTi) - medTi)));
+    Ti = (Ti - medTi) / madTi;
+    indrows = DDC::vinter(find_nonfinite(DDC::limitFilt(Ti, qRow)), arma::find(Ti > 0));
+    indall = arma::unique(arma::join_cols(indcells, DDC::row2cell(indrows, X.n_rows, X.n_cols)));
     
     
     /////////////////////////////////////////////
@@ -409,7 +409,8 @@ Rcpp::List Wrap_cpp(arma::mat & X, arma::vec & loc, arma::vec & scale, double pr
 
 
 // [[Rcpp::export]]
-Rcpp::List estLocScale_cpp(arma::mat & X, unsigned int nLocScale, int type,  double precScale,
+Rcpp::List estLocScale_cpp(arma::mat & X, unsigned int nLocScale,
+                           int type,  double precScale,
                            const int center, const double alpha) {
   // type 0 = biweight location + huber 1.5 scale
   // type 1 = huber location + huber scale
@@ -464,4 +465,388 @@ Rcpp::List unimcd_cpp(arma::vec & y, const double alpha) {
   return Rcpp::wrap(NA_REAL);
 }
 
+/******************************************/
+/*       Development Hidden export        */
+/******************************************/
 
+// [[Rcpp::export]]
+Rcpp::List findCellPath_cpp(arma::mat & predictors,
+                            arma::vec & response,
+                            arma::vec & weights,
+                            arma::mat & Sigmai,
+                            const arma::uvec & naMask) {
+  
+  try
+  {
+   
+// prepare input to lar ols by scaling the predictors/response
+// with the weights in w
+    arma::mat x = predictors;
+    x = x.each_row() / weights.t();
+    arma::vec y = response;
+    arma::mat Gram = Sigmai;
+    Gram = Gram.each_row() / weights.t();
+    Gram = Gram.each_col() / weights;
+    
+    // Rcpp::Rcout << "gram" << Gram << std::endl;
+    
+    //// start of lar_ols
+    
+    const double precScale = 1e-10;
+    arma::uvec inactive =  arma::regspace<arma::uvec>(0, y.size() - 1);
+    arma::uvec ignores  =  arma::uvec();
+    
+    arma::vec Cvec = (y.t() * x).t();
+    arma::vec residuals = y;
+    const int maxSteps = std::min(x.n_rows, x.n_cols);
+    
+    // arma::mat beta = arma::mat(maxSteps + 1, x.n_cols);
+    
+    // containers for used output
+    arma::mat beta = arma::mat(maxSteps + 1, x.n_cols, arma::fill::zeros);
+    arma::vec RSS(maxSteps + 1 , arma::fill::zeros);
+    RSS(0) = arma::conv_to<double>::from(arma::sum(arma::pow(residuals, 2))); // initial MD^2
+    arma::cube bmat  = arma::cube(maxSteps + 1, x.n_cols, x.n_cols, arma::fill::zeros);
+    arma::uvec path;
+    arma::rowvec betaOLS(x.n_cols);
+    
+    //others
+    arma::uvec active;
+    arma::ivec actions = arma::ivec(maxSteps);
+    int totactions = 0;
+    int totPosactions = 0;
+    // to indicate multiple variables entering the model at once:
+    arma::uvec nbactions = arma::uvec(maxSteps, arma::fill::ones);
+    arma::vec Sign;
+    
+    // matrix holding R of Cholesky decomposition of Sigmai[active, active]
+    arma::mat R(x.n_cols,x.n_cols, arma::fill::zeros); 
+    int rankR = 0;
+    int dimR = 0;
+    int k = 0;
+    double Cmax = 1;
+    double normXnew;
+    arma::uvec newVars;
+    arma::uvec oldVars;
+   // arma::cube biasMat  = arma::cube(maxSteps + 1, x.n_cols, x.n_cols, arma::fill::zeros);
+    // Rcpp::Rcout << "check1" << std::endl;
+    
+    
+    while ((k < maxSteps) && (active.size() < x.n_cols - ignores.size())) {
+      arma::ivec action;
+      arma::uvec Posaction;
+      arma::vec C = Cvec(inactive);//correlations of the inactive variables
+      Cmax = arma::max(arma::abs(C));
+      
+      
+      if (Cmax < 1e-12) {
+        // correlation of zero, exit the while loop
+        break; 
+      }
+      
+      // Rcpp::Rcout << "check2" << std::endl;
+      // select variables going active and staying inactive
+      if ((k == 0) && (arma::sum(naMask)) > 0) { 
+        newVars = arma::find(naMask == 1);
+      } else {
+        newVars = arma::find(arma::abs(C) >= Cmax - precScale);
+      }
+      
+      oldVars = DDC::vdiff(arma::regspace<arma::uvec>(0, C.size() - 1), newVars);
+      
+      
+      // Rcpp::Rcout << "C" << C << std::endl;
+      // Rcpp::Rcout << "newVars" << newVars << std::endl;
+      // Rcpp::Rcout << "oldVars" << oldVars << std::endl;
+      C = C(oldVars);
+      // Rcpp::Rcout << "C" << C << std::endl;
+      // Rcpp::Rcout << "inactive" << inactive << std::endl;
+      // Rcpp::Rcout << "active" << active.t() << std::endl;
+      
+      newVars = inactive(newVars);
+      // Rcpp::Rcout << "newVars: " << newVars << std::endl;
+      
+      for(unsigned int i = 0; i < newVars.size(); i++) {
+        // update R, the Cholesky decomposition of Sigmai[active, active]
+
+        double xtx = Gram(newVars(i), newVars(i));
+        normXnew = std::sqrt(xtx);
+        // Rcpp::Rcout << "normXnew: " << normXnew << std::endl;
+        // Rcpp::Rcout << "xtx: " << xtx << std::endl;
+        // Rcpp::Rcout << "check3" << std::endl;
+        if (dimR == 0) {
+          R(0,0) = normXnew;
+          rankR = 1;
+          dimR = 1;
+        } else {
+          arma::vec Xtx = Gram.row(newVars(i)).t();
+          Xtx = Xtx.elem(active);
+          // Rcpp::Rcout << "Xtx: " << Xtx << std::endl;
+          // Rcpp::Rcout << "dimR: " << dimR << std::endl;
+          // Rcpp::Rcout << "Rsubmat: " << R.submat(0, 0,dimR - 1, dimR - 1) << std::endl;
+          arma::mat r = arma::solve(arma::trimatl((R.submat(0, 0,dimR - 1,
+                                                           dimR - 1)).t()), Xtx);
+          
+          // Rcpp::Rcout << "check3a" << std::endl;
+          // Rcpp::Rcout << "r: " << r << std::endl;
+          // Rcpp::Rcout << "normXnew: " << normXnew << std::endl;
+          double rpp;
+          rpp = std::pow(normXnew,2) - arma::as_scalar(arma::sum(arma::pow(r,2)));
+          
+          // Rcpp::Rcout << "rpp" << rpp << std::endl;
+          if (rpp <= precScale){
+            rpp = precScale;
+          } else {
+            rpp = std::sqrt(rpp);
+            rankR = rankR + 1;
+          }
+          dimR = dimR + 1;
+          // Rcpp::Rcout << "dimR: " << dimR << std::endl;
+          // Rcpp::Rcout << "R " << R << std::endl;
+          // Rcpp::Rcout << "check3b" << std::endl;
+          arma::vec newcol(x.n_cols, arma::fill::zeros);
+          // Rcpp::Rcout << "dimR " << dimR << std::endl;
+          // Rcpp::Rcout << "r " << r << std::endl;
+          // Rcpp::Rcout << "rpp " << rpp << std::endl;
+          newcol.head(dimR - 1) = r;
+          newcol(dimR - 1) = rpp;
+          R.col(dimR - 1) = newcol;
+          // Rcpp::Rcout << "R " << R << std::endl;
+         
+        }
+        // Rcpp::Rcout << "Rsubmat: " << R.submat(0, 0,dimR - 1, dimR - 1) << std::endl;
+        // 
+        
+        // Rcpp::Rcout << "check3c" << std::endl;
+        // Rcpp::Rcout << "newVars: " << newVars(i) << std::endl;
+        // Rcpp::Rcout << "ignores: " << ignores << std::endl;
+        // Rcpp::Rcout << "action: " << action << std::endl;
+        // Rcpp::Rcout << "action nrows: " << action.n_rows << std::endl;
+        if (rankR == active.size()) { // an ignore variable has entered
+          dimR = dimR - 1;
+          ignores.insert_rows(ignores.n_rows, newVars.row(i));
+          // Rcpp::Rcout << "ignores: " << ignores << std::endl;
+          // Rcpp::Rcout << "newadd2 : " << newAdd2 << std::endl;
+          action.insert_rows(action.n_rows, arma::conv_to<arma::ivec>::from(newVars.row(i) * (-1)));
+          // Rcpp::Rcout << "action: " << action << std::endl;
+        } else {
+          active.insert_rows(active.n_rows, newVars.row(i));
+          Posaction.insert_rows(Posaction.n_rows, newVars.row(i));
+          path.insert_rows(path.n_rows, newVars.row(i));
+          // Sign.insert_rows(Sign.n_rows, Cvec(newVars(i)));
+          Sign.insert_rows(Sign.n_rows, arma::sign(Cvec.row(newVars(i))));
+          action.insert_rows(action.n_rows, arma::conv_to<arma::ivec>::from(newVars.row(i)));
+        }
+      }
+      // Rcpp::Rcout << "active" << active <<std::endl;
+      // Rcpp::Rcout << "ignores" << ignores <<std::endl;
+      
+      
+      // Rcpp::Rcout << "check4" << std::endl;
+      // Rcpp::Rcout << "Rmat: " << R.submat(0, 0,dimR - 1, dimR - 1) <<std::endl;
+      // Rcpp::Rcout << "Sign: " << Sign <<std::endl;
+      // 
+      // Rcpp::Rcout << arma::solve(arma::trimatu(R.submat(0, 0,dimR - 1, dimR - 1)),
+      //             Sign) << std::endl;
+      
+      // Rcpp::Rcout << "check4a" << std::endl;
+      
+      arma::mat Gi1 = arma::solve(arma::trimatu(R.submat(0, 0,dimR - 1, dimR - 1)),
+                                  (arma::solve(arma::trimatl((R.submat(0, 0,dimR - 1,
+                                                                       dimR - 1)).t()),
+                                               Sign)));
+     
+      // Rcpp::Rcout << "check5" << std::endl;
+      // Rcpp::Rcout << "Gi1" << Gi1 << std::endl;
+      
+      double A = 1 / std::sqrt(arma::sum(Gi1 % Sign));
+      // Rcpp::Rcout << "A" << A << std::endl;
+      // Rcpp::Rcout << "gi1" << Gi1 << std::endl;
+      arma::vec  w = A * Gi1; // need to cast matrix to vector
+      double gamhat;
+
+      // construct the inactive set by taking out actives and ignores
+      // inactive = DDC::vdiff(arma::regspace<arma::uvec>(0, C.size() - 1), active);
+      // inactive = DDC::vdiff(arma::regspace<arma::uvec>(0, C.size() - 1), ignores);
+      
+      // Rcpp::Rcout << "check5a" << std::endl;
+      arma::uvec actAndIgn = active;
+      actAndIgn.insert_rows(actAndIgn.n_rows, ignores);
+      // Rcpp::Rcout << "actAndIgn" << actAndIgn << std::endl;
+      inactive = DDC::vdiff(arma::regspace<arma::uvec>(0, x.n_cols - 1),
+                            arma::sort(actAndIgn));
+      
+      // Rcpp::Rcout << "inactive" << inactive << std::endl;
+      
+      if ((active.size() >= x.n_cols - ignores.size())) {
+        gamhat = Cmax / A;
+      } else {
+        arma::vec a;
+        // Rcpp::Rcout << "w " << w << std::endl;
+        // Rcpp::Rcout << "C " << C << std::endl;
+        // Rcpp::Rcout << "Gram(active,inactive) " << Gram(active,inactive) << std::endl;
+        a = (w.t() * Gram(active,inactive)).t();
+        // Rcpp::Rcout << "a " << a << std::endl;
+        
+        // Rcpp::Rcout << "gam1 " << gam1 << std::endl;
+        // Rcpp::Rcout << "gam2 " << gam2 << std::endl;
+        // Rcpp::Rcout << "Cmax/A " << Cmax/A << std::endl;
+        arma::vec gam(2* C.size());
+        // gam.head(C.size()) = gam1;
+        // gam.tail(C.size()) = gam2;
+        
+        gam.head(C.size()) = (Cmax - C) / (A - a);
+        gam.tail(C.size()) = (Cmax + C) / (A + a);
+        
+        gam = gam.elem(find(gam > precScale));
+        if (gam.size() > 0) {
+          gamhat = std::min(Cmax/A, arma::min(gam)); 
+        } else {
+          gamhat = Cmax/A;
+        }
+      }
+      
+      // Rcpp::Rcout << "check6" << std::endl;
+      // Rcpp::Rcout << "Cvec" << Cvec << std::endl;
+      // Rcpp::Rcout << "gamhat" << gamhat << std::endl;
+      // Rcpp::Rcout << "w" << w << std::endl;
+      // Rcpp::Rcout << "Gram.cols(active)" << Gram.cols(active) << std::endl;
+      Cvec = Cvec - gamhat * Gram.cols(active) * w;
+      
+      // Rcpp::Rcout << "Cvec" << Cvec << std::endl;
+      // Rcpp::Rcout << "action" << action << std::endl;
+      
+      // Can we construct the needed output here?
+      
+      // Rcpp::Rcout << "check6" << std::endl;
+      
+      
+      betaOLS.zeros();
+      betaOLS(active) =  (arma::solve(arma::trimatu(R.submat(0, 0,dimR - 1, dimR - 1)),
+              (arma::solve(arma::trimatl((R.submat(0, 0,dimR - 1,
+                                                   dimR - 1)).t()),
+                                                   (x.cols(active)).t()))) * y).t();
+      // Rcpp::Rcout << "check6a" << std::endl;
+      residuals = y -  (betaOLS.cols(active) *  (x.cols(active)).t()).t();
+      // Rcpp::Rcout << "check6b" << std::endl;
+      
+      arma::mat Ip(dimR, dimR);
+      Ip.eye();
+      arma::mat RI = arma::solve(arma::trimatu(R.submat(0, 0, dimR - 1, dimR - 1)), Ip); //inverse
+      arma::mat bmat_replacement(x.n_cols, x.n_cols, arma::fill:: zeros);
+      bmat_replacement(active, active) =  RI * RI.t();
+      
+      bmat_replacement = bmat_replacement.each_row() / weights.t();
+      bmat_replacement = bmat_replacement.each_col() / weights;
+      for(unsigned int i = 0; i < Posaction.size(); i++) {
+        bmat.row(totPosactions + i + 1) = bmat_replacement; // the first one is a zero matrix
+        beta.row(totPosactions + i + 1) = betaOLS;
+        RSS(totPosactions + i + 1) = arma::conv_to<double>::from(arma::sum(arma::pow(residuals, 2)));
+      }
+      
+      actions.subvec(totactions, totactions+action.size() - 1) = action;
+      nbactions(k) = action.size();
+      totactions = totactions + action.size();
+      totPosactions = totPosactions + Posaction.size();
+      
+      
+      
+      // Rcpp::Rcout << "check7" << std::endl;
+      
+      // Now return the biasmat. 
+      // we return the R of the cholesky decomposition instead
+      // can be used to construct bias may through Rinverse * Rinverse.t();
+      // arma::mat Ip(dimR - 1, dimR - 1);
+      // Ip.eye();
+      // arma::mat RI = arma::solve(arma::trimatu(R.submat(0, 0, dimR - 1, dimR - 1)), Ip); //inverse
+      // arma::mat bmat_replacement(x.n_cols, x.n_cols, arma::fill:: zeros);
+      // bmat_replacement(active, active) =  RI * RI.t();
+      
+      // arma::mat bmat_replacement(x.n_cols, x.n_cols, arma::fill:: zeros);
+      // bmat_replacement.submat(0, 0, dimR - 1, dimR - 1) = R.submat(0, 0, dimR - 1, dimR - 1);
+      // Rcpp::Rcout << "R" << R << std::endl;
+      // Rcpp::Rcout << "bmat_replacement" << bmat_replacement << std::endl;
+      // biasMat.row(k+1) = bmat_replacement; // the first one is a zero matrix
+      // biasMat.row(k + 1) = R; // the first one is a zero matrix
+      k = k + 1;
+      
+    }
+    
+    // now need to check whether beta matrices etc. are complete
+    
+    arma::uvec missingInds;
+    missingInds = DDC::vdiff(arma::regspace<arma::uvec>(0, x.n_cols - 1),
+                             arma::sort(path));
+    // Rcpp::Rcout << "check: " <<  std::endl;
+    // Rcpp::Rcout << "path: " << path << std::endl;
+    // Rcpp::Rcout << "missingInds: " << missingInds << std::endl;
+    if (missingInds.size() > 0) {
+      path.insert_rows(path.size(), missingInds);
+      betaOLS.zeros();
+      // Rcpp::Rcout << "betaOLS: " << betaOLS << std::endl;
+      // Rcpp::Rcout << "x: " << x << std::endl;
+      // Rcpp::Rcout << "y: " << y << std::endl;
+      betaOLS   = arma::solve(x, y, arma::solve_opts::likely_sympd).t();
+      // Rcpp::Rcout << "betaOLS: " << betaOLS << std::endl;
+      residuals = y -  (betaOLS *  x.t()).t();
+      // Rcpp::Rcout << "check: " <<  std::endl;
+      
+      for (unsigned int i = 0; i < missingInds.size(); i++) {
+        // bmat.row(bmat.n_rows - i - 1)  = solve(Sigmai); // maybe we don't need these?
+        beta.row(beta.n_rows - i - 1) = betaOLS;
+        RSS(RSS.size() - i - 1) = arma::conv_to<double>::from(arma::sum(arma::pow(residuals, 2)));
+      }
+    }
+    // Rcpp::Rcout << "check: " <<  std::endl;
+    //// End of lar_ols
+    // Now start constructing the output
+    
+    // arma::mat beta = arma::mat(maxSteps + 1, x.n_cols);
+    // arma::vec RSS(maxSteps, arma::fill::zeros);
+    // RSS_sw(0) = arma::conv_to<double>::from(arma::sum(arma::pow(residuals, 2))); // initial MD^2
+    // arma::cube bmat  = arma::cube(maxSteps + 1, x.n_cols, x.n_cols, arma::fill::zeros);
+    // arma::vec ordering;
+    // 
+    // int nbignores = ignores.size();
+    // 
+    // arma::uvec path;
+    // pathInd = 0
+    // for (unsigned int i = 0; i < actions.size(); i++) {
+    //   if(actions(i) > 0){
+    //     path(pathInd) = (unsigned int) actions(i);
+    //     
+    //     pathInd = pathInd + 1;
+    //   } else if (actions(i) == 0) {
+    //     if (arma::find(ignores == 0).size() == 0) {
+    //       path(pathInd) = 0;
+    //       pathInd = pathInd + 1;
+    //     } 
+    //   } 
+    // }
+   
+   // unscale with the weights, bmat already has been rescaled
+   beta = beta.each_row() / weights.t();
+   
+    // converg path to 1-based indexing:
+    path = path + 1;
+    
+      return(Rcpp::List::create( Rcpp::Named("beta") = beta,
+                                 Rcpp::Named("biasMat") = bmat,
+                                 Rcpp::Named("ordering") = path,
+                                 Rcpp::Named("RSS") = RSS));
+      
+    // return(Rcpp::List::create( Rcpp::Named("actions") = actions,
+    //                            Rcpp::Named("biasMat") = biasMat,
+    //                            Rcpp::Named("ignores") = ignores,
+    //                            Rcpp::Named("biasMat") = biasMat,
+    //                            Rcpp::Named("nbactions") = nbactions));
+  } catch( std::exception& __ex__ )
+  {
+    forward_exception_to_r( __ex__ );
+  } catch(...)
+  {
+    ::Rf_error( "c++ exception " "(unknown reason)" );
+  }
+  
+  return Rcpp::wrap(NA_REAL);
+}

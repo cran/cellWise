@@ -10,7 +10,7 @@ Box-Cox or Yeo-Johnson transformation to each variable in a dataset.
 Note that this function first calls \code{\link{checkDataSet}} to ensure that the variables to be transformed are not too discrete.
 }
 \usage{
-transfo(X, type = "bestObj", robust = TRUE, lambdarange = NULL,
+transfo(X, type = "YJ", robust = TRUE, lambdarange = NULL,
         prestandardize = TRUE, prescaleBC = F, scalefac = 1,
         quant = 0.99, nbsteps = 2, checkPars = list())
 }

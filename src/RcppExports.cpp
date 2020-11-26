@@ -77,12 +77,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// findCellPath_cpp
+Rcpp::List findCellPath_cpp(arma::mat& predictors, arma::vec& response, arma::vec& weights, arma::mat& Sigmai, const arma::uvec& naMask);
+RcppExport SEXP _cellWise_findCellPath_cpp(SEXP predictorsSEXP, SEXP responseSEXP, SEXP weightsSEXP, SEXP SigmaiSEXP, SEXP naMaskSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat& >::type predictors(predictorsSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type Sigmai(SigmaiSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type naMask(naMaskSEXP);
+    rcpp_result_gen = Rcpp::wrap(findCellPath_cpp(predictors, response, weights, Sigmai, naMask));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_cellWise_DDC_cpp", (DL_FUNC) &_cellWise_DDC_cpp, 19},
     {"_cellWise_Wrap_cpp", (DL_FUNC) &_cellWise_Wrap_cpp, 4},
     {"_cellWise_estLocScale_cpp", (DL_FUNC) &_cellWise_estLocScale_cpp, 6},
     {"_cellWise_unimcd_cpp", (DL_FUNC) &_cellWise_unimcd_cpp, 2},
+    {"_cellWise_findCellPath_cpp", (DL_FUNC) &_cellWise_findCellPath_cpp, 5},
     {NULL, NULL, 0}
 };
 

@@ -1,5 +1,5 @@
 
-transfo <- function(X, type = "bestObj", robust = TRUE, lambdarange = NULL,
+transfo <- function(X, type = "YJ", robust = TRUE, lambdarange = NULL,
                     prestandardize = TRUE, prescaleBC = F, scalefac = 1,
                     quant = 0.99, nbsteps = 2, checkPars = list()) {
   #
