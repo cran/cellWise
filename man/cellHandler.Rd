@@ -69,5 +69,6 @@ Xres <- X - out$Ximp # unstandardized residual
 mean(abs(as.vector(Xres - out$Zres*out$Zres_denom))) # 0
 W <- matrix(rep(0,n*d),nrow=n) # weight matrix 
 W[out$Zres != 0] <- 1 # 1 indicates cells that were flagged
-
+# For more examples, we refer to the vignette:
+vignette("DI_examples")
 }

@@ -855,13 +855,13 @@ plot(ggpMacroPCApredict) # is very similar to that based on all the data!
 
 <p>The glass data consists of spectra with 750 wavelengths of 180 archaeological glass samples.</p>
 
-<pre><code class="r">data(glass)
+<pre><code class="r">data(data_glass)
 </code></pre>
 
 <pre><code class="r">library(rrcov) # for robust PCA:
 </code></pre>
 
-<pre><code class="r">dim(glass) 
+<pre><code class="r">dim(data_glass) 
 </code></pre>
 
 <pre><code>## [1] 180 750
@@ -871,7 +871,7 @@ plot(ggpMacroPCApredict) # is very similar to that based on all the data!
 MacroPCApars$scale = FALSE
 
 # Check data
-checkData = checkDataSet(glass, silent=TRUE) 
+checkData = checkDataSet(data_glass, silent=TRUE) 
 </code></pre>
 
 <pre><code>##  
@@ -1028,7 +1028,7 @@ grid.arrange(ggpMacroPCA,ggpROBPCA,nrow=2)
 <pre><code class="r">fastDDCpars = list(fastDDC=TRUE, silent=TRUE)
 fastMacroPCApars = list(DDCpars=fastDDCpars, scale=FALSE, silent=TRUE)
 
-fastMacroPCAglass = MacroPCA(glass,k=4,MacroPCApars=fastMacroPCApars) # 2 seconds
+fastMacroPCAglass = MacroPCA(data_glass,k=4,MacroPCApars=fastMacroPCApars) # 2 seconds
 </code></pre>
 
 <pre><code>##  
@@ -1069,10 +1069,10 @@ grid.arrange(ggpMacroPCA,ggpfastMacroPCA,nrow=2) # The results are similar:
 <p>Finally we analyze the DPOSS data. This is a random subset of 20&#39;000 stars from 
 the Digitized Palomar Sky Survey described by Odewahn et al (1998).</p>
 
-<pre><code class="r">data(dposs)
+<pre><code class="r">data(data_dposs)
 </code></pre>
 
-<pre><code class="r">colnames(dposs); dim(dposs) 
+<pre><code class="r">colnames(data_dposs); dim(data_dposs) 
 </code></pre>
 
 <pre><code>##  [1] &quot;MAperF&quot; &quot;MTotF&quot;  &quot;MCoreF&quot; &quot;AreaF&quot;  &quot;IR2F&quot;   &quot;csfF&quot;   &quot;EllipF&quot; &quot;MAperJ&quot;
@@ -1083,14 +1083,14 @@ the Digitized Palomar Sky Survey described by Odewahn et al (1998).</p>
 <pre><code>## [1] 20000    21
 </code></pre>
 
-<pre><code class="r">n = nrow(dposs); n
+<pre><code class="r">n = nrow(data_dposs); n
 </code></pre>
 
 <pre><code>## [1] 20000
 </code></pre>
 
 <pre><code class="r"># Count missing cells
-missmat = is.na(dposs)
+missmat = is.na(data_dposs)
 sizemat = nrow(missmat)*ncol(missmat); sizemat 
 </code></pre>
 
@@ -1113,7 +1113,7 @@ missrow = length(which(rowSums(missmat) &gt; 0))
 
 <pre><code class="r"># PERFORM ICPCA AND MACROPCA
 
-ICPCAdposs = ICPCA(dposs,k=4,scale=TRUE)
+ICPCAdposs = ICPCA(data_dposs,k=4,scale=TRUE)
 names(ICPCAdposs)
 </code></pre>
 
@@ -1126,7 +1126,7 @@ names(ICPCAdposs)
 <pre><code class="r"># MacroPCA options with fracNA allowing for many NA&#39;s:
 DDCPars = list(fastDDC=F,fracNA=1.0)
 MacroPCAPars = list(DDCpars=DDCPars,scale=TRUE,silent=T)
-MacroPCAdposs = MacroPCA(dposs,k=4,MacroPCApars=MacroPCAPars) # takes 6 seconds
+MacroPCAdposs = MacroPCA(data_dposs,k=4,MacroPCApars=MacroPCAPars) # takes 6 seconds
 
 ## SCREE PLOTS
 

@@ -622,7 +622,7 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
         // Rcpp::Rcout << "ignores: " << ignores << std::endl;
         // Rcpp::Rcout << "action: " << action << std::endl;
         // Rcpp::Rcout << "action nrows: " << action.n_rows << std::endl;
-        if (rankR == active.size()) { // an ignore variable has entered
+        if ((unsigned)rankR == active.size()) { // an ignore variable has entered
           dimR = dimR - 1;
           ignores.insert_rows(ignores.n_rows, newVars.row(i));
           // Rcpp::Rcout << "ignores: " << ignores << std::endl;

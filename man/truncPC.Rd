@@ -5,7 +5,7 @@
 Classical Principal Components by truncated SVD.
 }
 \description{
- Similar usage to \code{\link[robustbase]{classPC}} of robustbase except for the new argument \code{ncomb} which is the desired number of components. Only this many PC's are computed in order to save computation time. Makes use of \code{propack.svd} of package \pkg{svd}.
+ Similar usage to robustbase::classPC except for the new argument \code{ncomb} which is the desired number of components. Only this many PC's are computed in order to save computation time. Makes use of \code{propack.svd} of package \pkg{svd}.
 }
 \usage{
 truncPC(X, ncomp = NULL, scale = FALSE, center = TRUE, 

@@ -1,5 +1,5 @@
-\name{glass}
-\alias{glass}
+\name{data_glass}
+\alias{data_glass}
 \docType{data}
 \title{
 The glass dataset
@@ -8,7 +8,7 @@ The glass dataset
 A dataset containing spectra with \eqn{d = 750} wavelengths collected on
 \eqn{n = 180} archeological glass samples.
 }
-\usage{data("glass")}
+\usage{data("data_glass")}
 \format{
   A data frame with 180 observations of 750 wavelengths.
 
@@ -22,5 +22,5 @@ PLS regression of EPXMA and \eqn{\mu}-XRF data. \emph{Journal of Chemometrics}, 
 }
 
 \examples{
-data(glass)
+data("data_glass")
 }

@@ -336,11 +336,11 @@ plot(ggpnew) # Looks quite similar to the result using the entire dataset:
 # dev.off()
 
 ## -----------------------------------------------------------------------------
-data(philips)
-dim(philips) 
-colnames(philips) = c("X1","X2","X3","X4","X5","X6","X7","X8","X9")
+data(data_philips)
+dim(data_philips) 
+colnames(data_philips) = c("X1","X2","X3","X4","X5","X6","X7","X8","X9")
 
-DDCphilips = DDC(philips,DDCpars)
+DDCphilips = DDC(data_philips,DDCpars)
 
 qqnorm(as.vector(DDCphilips$Z)) # rather gaussian, here we only see 2 outliers:
 
@@ -355,11 +355,11 @@ DDCphilips$indrows # flagged rows:
 library(robustbase) # for covMcd
 
 ## ----fig.height=4,fig.width=8-------------------------------------------------
-MCDphilips = robustbase::covMcd(philips)
-indrowsMCD = which(mahalanobis(philips,MCDphilips$center,
+MCDphilips = robustbase::covMcd(data_philips)
+indrowsMCD = which(mahalanobis(data_philips,MCDphilips$center,
                                MCDphilips$cov) > qchisq(0.975,df=d))
 
-plot(sqrt(mahalanobis(philips,MCDphilips$center,MCDphilips$cov)),
+plot(sqrt(mahalanobis(data_philips,MCDphilips$center,MCDphilips$cov)),
      main="Philips data",ylab="Robust distances",xlab="",pch=20)
 abline(h=sqrt(qchisq(0.975,df=9))) # this horizontal line is the cutoff.
 # dev.copy(pdf,"Figure_philips_left.pdf",width=10,height=4)
@@ -368,15 +368,15 @@ abline(h=sqrt(qchisq(0.975,df=9))) # this horizontal line is the cutoff.
 ## ----fig.height=10,fig.width=8------------------------------------------------
 # cellMaps with rectangular blocks:
 
-n = nrow(philips)
+n = nrow(data_philips)
 nrowsinblock = 15
 rowlabels = 1:n
 
-d = ncol(philips)
+d = ncol(data_philips)
 ncolumnsinblock = 1
-columnlabels = colnames(philips)
+columnlabels = colnames(data_philips)
 
-ggpMCDphilips = cellMap(D=philips,
+ggpMCDphilips = cellMap(D=data_philips,
                         R=matrix(0,n,d),
                         indcells=integer(0),
                         indrows=indrowsMCD,
@@ -388,7 +388,7 @@ ggpMCDphilips = cellMap(D=philips,
                         autolabel=T)
 plot(ggpMCDphilips)
 
-ggpDDCphilips = cellMap(D=philips, 
+ggpDDCphilips = cellMap(D=data_philips, 
                         R=DDCphilips$stdResid,
                         indcells=DDCphilips$indcells,
                         indrows=DDCphilips$indrows,
@@ -404,13 +404,13 @@ plot(ggpDDCphilips)
 # dev.off()
 
 ## -----------------------------------------------------------------------------
-data(mortality)
-dim(mortality)
+data(data_mortality)
+dim(data_mortality)
 # 198  91
-rownames(mortality)[1:5] 
-colnames(mortality)[1:5] 
+rownames(data_mortality)[1:5] 
+colnames(data_mortality)[1:5] 
 
-DDCmortality = DDC(mortality,DDCpars) # 1 second
+DDCmortality = DDC(data_mortality,DDCpars) # 1 second
 
 remX = DDCmortality$remX
 dim(remX)
@@ -419,7 +419,7 @@ dim(remX)
 library(rrcov) # contains ROBPCA
 
 ## ----fig.height=10,fig.width=8------------------------------------------------
-PCAmortality = rrcov::PcaHubert(mortality,alpha=0.75,scale=FALSE)
+PCAmortality = rrcov::PcaHubert(data_mortality,alpha=0.75,scale=FALSE)
 
 n = nrow(remX)
 nrowsinblock = 5
@@ -463,8 +463,8 @@ plot(ggpDDC) # Leads to a detailed interpretation:
 # dev.off()
 
 ## -----------------------------------------------------------------------------
-data(glass)
-DDCglass = DDC(glass,DDCpars) # takes 8 seconds
+data(data_glass)
+DDCglass = DDC(data_glass,DDCpars) # takes 8 seconds
 remX = DDCglass$remX
 # With DDCpars$silent = FALSE we obtain more information:
 #
@@ -501,7 +501,7 @@ dim(remX)
 ## -----------------------------------------------------------------------------
 
 fastDDCpars = list(fastDDC = TRUE, silent = TRUE)
-fastDDCglass = DDC(glass, fastDDCpars) # takes 2 seconds
+fastDDCglass = DDC(data_glass, fastDDCpars) # takes 2 seconds
 remXfast = fastDDCglass$remX
 all.equal(remX,remXfast) # The remaining data is the same:
 

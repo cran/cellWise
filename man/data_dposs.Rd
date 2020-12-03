@@ -1,5 +1,5 @@
-\name{dposs}
-\alias{dposs}
+\name{data_dposs}
+\alias{data_dposs}
 \docType{data}
 \title{
 DPOSS dataset
@@ -9,7 +9,7 @@ This is a random subset of 20'000 stars from the Digitized
 Palomar Sky Survey (DPOSS) described by Odewahn et al. (1998).
 }
 
-\usage{data("dposs")}
+\usage{data("data_dposs")}
 
 \format{
   A matrix of dimensions \eqn{20000 \times 21}.
@@ -19,7 +19,7 @@ Palomar Sky Survey (DPOSS) described by Odewahn et al. (1998).
 Odewahn, S., S. Djorgovski, R. Brunner, and R. Gal (1998). Data From the Digitized Palomar Sky Survey. Technical report, California Institute of Technology.
 }
 \examples{
-data(dposs)
+data("data_dposs")
 # For more examples, we refer to the vignette:
 vignette("MacroPCA_examples")
 }

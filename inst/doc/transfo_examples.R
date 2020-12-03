@@ -122,10 +122,10 @@ abline(0, 1)
 
 
 ## -----------------------------------------------------------------------------
-data("glass")
+data("data_glass")
 
 ## -----------------------------------------------------------------------------
-X <- as.matrix(glass[, -c(1:13)])
+X <- as.matrix(data_glass[, -c(1:13)])
 X <- X[, 1:500]
 Z <- scale(X, center=FALSE, robustbase::colMedians(X))
 dim(Z)
@@ -186,12 +186,12 @@ plot(CM_rob)
 # dev.off()
 
 ## -----------------------------------------------------------------------------
-data("dposs") # in package cellWise
-n = nrow(dposs); n 
-ncol(dposs) 
+data("data_dposs") # in package cellWise
+n = nrow(data_dposs); n 
+ncol(data_dposs) 
 
 ## -----------------------------------------------------------------------------
-missmat = is.na(dposs)
+missmat = is.na(data_dposs)
 sizemat = nrow(missmat)*ncol(missmat); sizemat 
 100*sum(as.vector(missmat))/sizemat 
 
@@ -216,7 +216,7 @@ missrow = length(which(rowSums(missmat) > 0))
 # We focus on the J band which has the most available rows.
 
 indx = which(rowSums(missmat[,8:14]) ==0)
-dpossJ = dposs[indx,8:14]
+dpossJ = data_dposs[indx,8:14]
 dim(dpossJ) 
 
 ## -----------------------------------------------------------------------------

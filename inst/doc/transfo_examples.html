@@ -676,12 +676,12 @@ skewness in the center of the data.</p>
 
 <p>In this example we study the glass data. It consists of spectra with 750 wavelengths of 180 archaeological glass samples.</p>
 
-<pre><code class="r">data(&quot;glass&quot;)
+<pre><code class="r">data(&quot;data_glass&quot;)
 </code></pre>
 
 <p>First, we do some preprocessing to avoid variables with very small scales (in fact, the first 13 variables have mad equal to zero). Afterwards, we focus on the first 500 wavelengths since this is where most of the activity occurs.</p>
 
-<pre><code class="r">X &lt;- as.matrix(glass[, -c(1:13)])
+<pre><code class="r">X &lt;- as.matrix(data_glass[, -c(1:13)])
 X &lt;- X[, 1:500]
 Z &lt;- scale(X, center=FALSE, robustbase::colMedians(X))
 dim(Z)
@@ -778,14 +778,14 @@ plot(CM_rob)
 
 <p>As a last example, we analyze the DPOSS data. This is a random subset of 20&#39;000 stars from the Digitized Palomar Sky Survey described by Odewahn et al (1998).</p>
 
-<pre><code class="r">data(&quot;dposs&quot;) # in package cellWise
-n = nrow(dposs); n 
+<pre><code class="r">data(&quot;data_dposs&quot;) # in package cellWise
+n = nrow(data_dposs); n 
 </code></pre>
 
 <pre><code>## [1] 20000
 </code></pre>
 
-<pre><code class="r">ncol(dposs) 
+<pre><code class="r">ncol(data_dposs) 
 </code></pre>
 
 <pre><code>## [1] 21
@@ -795,7 +795,7 @@ n = nrow(dposs); n
 some preprocessing to select the band of wavelengths which contain the 
 fewest missing values.</p>
 
-<pre><code class="r">missmat = is.na(dposs)
+<pre><code class="r">missmat = is.na(data_dposs)
 sizemat = nrow(missmat)*ncol(missmat); sizemat 
 </code></pre>
 
@@ -860,7 +860,7 @@ sizemat = nrow(missmat)*ncol(missmat); sizemat
 # We focus on the J band which has the most available rows.
 
 indx = which(rowSums(missmat[,8:14]) ==0)
-dpossJ = dposs[indx,8:14]
+dpossJ = data_dposs[indx,8:14]
 dim(dpossJ) 
 </code></pre>
 

@@ -97,7 +97,11 @@ cellHandler <- function(X, mu, Sigma, quant = 0.99) {
       }
     }
   }
-  indcells <- which(W == 1)
+  
+  indcells <- which(abs(Zres) > sqrt(qchisq(quant, 1)))
+  # W[badinds] <- 1
+  # 
+  # indcells <- which(W == 1)
   indNAs   <- which(naMask == 1)
   indcells <- setdiff(indcells, indNAs) # take NA inds out of indcells
   
@@ -538,7 +542,7 @@ DI = function(X,
   
   return(list(center = center_out,
               cov = cov_out,
-              nbits = nbits,
+              nits = nbits,
               Ximp = CH.out$Ximp,
               indcells = CH.out$indcells,
               indNAs = CH.out$indNAs,

@@ -145,9 +145,9 @@ pairs(X, panel = function(x, y) {
       })
 
 ## -----------------------------------------------------------------------------
-data(dog_walker)
+data(data_dogWalker)
 # keep a copy of the data for later:
-X <- dog_walker
+X <- data_dogWalker
 
 # Combine all pixels of an image in a row:
 dims <- dim(X); dims # 54 144 180   3
@@ -209,7 +209,7 @@ for (i in 1:4) {
   res2 <- restemp[, 1]^2 + restemp[, 2]^2 + restemp[, 3]^2
   mask <- rep(0, prod(dims[2:3])); mask[res2 > cutoff] <- 1
   mask <- cbind(mask,mask,mask);   dim(mask) <- dims[2:4]
-  realim <- dog_walker[index, , , ]; 
+  realim <- data_dogWalker[index, , , ]; 
   realim <- pmax(0, pmin(realim, 1)); dim(realim) <- dims[2:4]
   masked <- realim * mask; dim(masked)
   masked <- pmax(0, pmin(masked, 1)); dim(masked) <- dims[2:4]

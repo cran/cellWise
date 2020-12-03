@@ -15,7 +15,7 @@ maxCol = 0.25, checkPars = list())
 \arguments{
   \item{X}{\code{X} is the input data, and must be an \eqn{n} by \eqn{d} matrix or a data frame.
   }
-  \item{initEst}{An initial estimator for the center and covariance matrix. Should be one of \code{"DDCWcov"} or \code{"TSGS"}, where the latter refers to the function \code{\link[GSE]{TSGS}}. The default option \code{"DDCWcov"} uses the proposal of Raymaekers and Rousseeuw (2020)  which is much faster for increasing dimension. 
+  \item{initEst}{An initial estimator for the center and covariance matrix. Should be one of \code{"DDCWcov"} or \code{"TSGS"}, where the latter refers to the function GSE::TSGS. The default option \code{"DDCWcov"} uses the proposal of Raymaekers and Rousseeuw (2020)  which is much faster for increasing dimension. 
   }
   \item{crit}{The algorithm converges when the subsequent estimates of the center and covariance matrix do not differ more than \code{crit} in squared Euclidean norm.
 }
@@ -45,7 +45,7 @@ maxCol = 0.25, checkPars = list())
   Defaults to \eqn{1e-12}.
 }
  \item{\code{silent}\cr
-  Whether or not the function progress messages should be printed.
+  Whether or not the function progress messages should be suppressed.
   Defaults to \code{FALSE}.
 }
       }
@@ -61,7 +61,7 @@ maxCol = 0.25, checkPars = list())
      \item{\code{cov} \cr
     The final estimate of the covariance matrix.
     }
-    \item{\code{nbits} \cr
+    \item{\code{nits} \cr
     Number of DI-iterations executed to reach convergence.
     }
     \item{\code{Ximp} \cr
@@ -106,4 +106,6 @@ Sigma <- diag(3) * 0.1 + 0.9
 X <- MASS::mvrnorm(100, mu, Sigma)
 DI.out <- DI(X)
 DI.out$cov
+# For more examples, we refer to the vignette:
+vignette("DI_examples")
 }

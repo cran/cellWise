@@ -332,19 +332,19 @@ plot(ggpMacroPCApredict) # is very similar to that based on all the data!
 # dev.off()
 
 ## -----------------------------------------------------------------------------
-data(glass)
+data(data_glass)
 
 ## ----results='hide',message=FALSE,warning=FALSE-------------------------------
 library(rrcov) # for robust PCA:
 
 ## ----fig.height=6,fig.width=7-------------------------------------------------
-dim(glass) 
+dim(data_glass) 
 
 # Do not scale the spectra in the glass data:
 MacroPCApars$scale = FALSE
 
 # Check data
-checkData = checkDataSet(glass, silent=TRUE) 
+checkData = checkDataSet(data_glass, silent=TRUE) 
 # With checkData = checkDataSet(glass, silent=FALSE) we obtain more information:
 #
 #  The input data has 180 rows and 750 columns.
@@ -477,7 +477,7 @@ grid.arrange(ggpMacroPCA,ggpROBPCA,nrow=2)
 fastDDCpars = list(fastDDC=TRUE, silent=TRUE)
 fastMacroPCApars = list(DDCpars=fastDDCpars, scale=FALSE, silent=TRUE)
 
-fastMacroPCAglass = MacroPCA(glass,k=4,MacroPCApars=fastMacroPCApars) # 2 seconds
+fastMacroPCAglass = MacroPCA(data_glass,k=4,MacroPCApars=fastMacroPCApars) # 2 seconds
 
 ggpfastMacroPCA <- cellMap(D=remglass,
                            R=fastMacroPCAglass$stdResid,
@@ -501,15 +501,15 @@ grid.arrange(ggpMacroPCA,ggpfastMacroPCA,nrow=2) # The results are similar:
 # dev.off()
 
 ## -----------------------------------------------------------------------------
-data(dposs)
+data(data_dposs)
 
 ## ----fig.height=3,fig.width=7-------------------------------------------------
 
-colnames(dposs); dim(dposs) 
-n = nrow(dposs); n
+colnames(data_dposs); dim(data_dposs) 
+n = nrow(data_dposs); n
 
 # Count missing cells
-missmat = is.na(dposs)
+missmat = is.na(data_dposs)
 sizemat = nrow(missmat)*ncol(missmat); sizemat 
 100*sum(as.vector(missmat))/sizemat # 50.2% of the values are missing:
 
@@ -519,13 +519,13 @@ missrow = length(which(rowSums(missmat) > 0))
 
 # PERFORM ICPCA AND MACROPCA
 
-ICPCAdposs = ICPCA(dposs,k=4,scale=TRUE)
+ICPCAdposs = ICPCA(data_dposs,k=4,scale=TRUE)
 names(ICPCAdposs)
  
 # MacroPCA options with fracNA allowing for many NA's:
 DDCPars = list(fastDDC=F,fracNA=1.0)
 MacroPCAPars = list(DDCpars=DDCPars,scale=TRUE,silent=T)
-MacroPCAdposs = MacroPCA(dposs,k=4,MacroPCApars=MacroPCAPars) # takes 6 seconds
+MacroPCAdposs = MacroPCA(data_dposs,k=4,MacroPCApars=MacroPCAPars) # takes 6 seconds
 
 ## SCREE PLOTS
 

@@ -419,9 +419,9 @@ pairs(X, panel = function(x, y) {
 
 <h1>Dog walker video example</h1>
 
-<pre><code class="r">data(dog_walker)
+<pre><code class="r">data(data_dogWalker)
 # keep a copy of the data for later:
-X &lt;- dog_walker
+X &lt;- data_dogWalker
 
 # Combine all pixels of an image in a row:
 dims &lt;- dim(X); dims # 54 144 180   3
@@ -509,7 +509,7 @@ for (i in 1:4) {
   res2 &lt;- restemp[, 1]^2 + restemp[, 2]^2 + restemp[, 3]^2
   mask &lt;- rep(0, prod(dims[2:3])); mask[res2 &gt; cutoff] &lt;- 1
   mask &lt;- cbind(mask,mask,mask);   dim(mask) &lt;- dims[2:4]
-  realim &lt;- dog_walker[index, , , ]; 
+  realim &lt;- data_dogWalker[index, , , ]; 
   realim &lt;- pmax(0, pmin(realim, 1)); dim(realim) &lt;- dims[2:4]
   masked &lt;- realim * mask; dim(masked)
   masked &lt;- pmax(0, pmin(masked, 1)); dim(masked) &lt;- dims[2:4]

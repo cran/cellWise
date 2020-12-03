@@ -16,7 +16,7 @@ xlim = NULL, ylim = NULL, cex = 1, cex.main=1.2, cex.lab=NULL, cex.axis=NULL)
 \arguments{
   \item{res}{
 A list containing the orthogonal distances (\code{OD}), the score distances (\code{SD}) and their respective cut-offs (\code{cutoffOD} and \code{cutoffSD}). Can be the output of \code{\link{MacroPCA}},
-\code{\link[rospca]{robpca}}, \code{\link[rospca]{rospca}}.
+rospca::robpca, rospca::rospca.
 }
   \item{title}{
   Title of the plot, default is "Robust PCA".
