@@ -97,7 +97,7 @@ checkDataSet <- function(X, fracNA = 0.5, numDiscrete = 3, precScale = 1e-12,
   
   # 2. Deselect column(s) containing only the case number
   #
-  caseNumber <- (1:nrow(remX))
+  caseNumber <- (seq_len(nrow(remX)))
   distFromCaseNumber <- function(colj, caseNumber) {
     # assumes colj is a vector
     mean(abs(colj - caseNumber), na.rm = FALSE) # can be NA

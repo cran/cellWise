@@ -79,7 +79,7 @@ ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
     r <- misrc[, 1]
     c <- misrc[, 2]
     meanc <- colMeans(XO, na.rm = TRUE) # Mean vector
-    for (i in 1:length(r)) {
+    for (i in seq_len(length(r))) {
       Xnai[r[i], c[i]] <- meanc[c[i]];  
       # Impute missing data with mean values 
     }
@@ -90,11 +90,11 @@ ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
       Xnaic <- sweep(Xnai,2,mXnai)  # centered Xnai
       if (n < p) {
         XnaicSVD <- svd(t(Xnaic))
-        Pr <- as.matrix(XnaicSVD$u[, 1:k]) 
+        Pr <- as.matrix(XnaicSVD$u[, seq_len(k)]) 
         # reduced loadings matrix
       } else {
         XnaicSVD <- svd(Xnaic)
-        Pr <- as.matrix(XnaicSVD$v[, 1:k])
+        Pr <- as.matrix(XnaicSVD$v[, seq_len(k)])
         # reduced loadings matrix
       }
       Tr <- Xnaic %*% Pr          # reduced scores matrix     
@@ -110,11 +110,11 @@ ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
     Xnaic <- sweep(Xnai, 2, mXnai) # centered Xnai
     if (n < p) {
       XnaicSVD <- svd(t(Xnaic))
-      Pr <- as.matrix(XnaicSVD$u[, 1:k]) 
+      Pr <- as.matrix(XnaicSVD$u[, seq_len(k)]) 
       # reduced loadings matrix
     } else {
       XnaicSVD <- svd(Xnaic)
-      Pr <- as.matrix(XnaicSVD$v[, 1:k]) 
+      Pr <- as.matrix(XnaicSVD$v[, seq_len(k)]) 
       # reduced loadings matrix
     }
     Tr <- Xnaic %*% Pr        # reduced scores matrix     
@@ -143,7 +143,7 @@ ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
   return(list(scaleX = scaleX,
               k = k,
               loadings = Pr,
-              eigenvalues = res$eigenvalues[1:k],
+              eigenvalues = res$eigenvalues[seq_len(k)],
               center = center,
               covmatrix = S,
               It = It,
@@ -172,8 +172,8 @@ pca.distances.classic <- function(obj, data, r, crit = 0.99) {
                            obj$eigenvalues[q], 
                            " so the diagonal matrix of the eigenvalues",
                            "cannot be inverted!", sep = ""))  
-  mySd <- sqrt(mahalanobis(as.matrix(obj$scores[, 1:nk]),
-                           rep(0, nk), diag(obj$eigenvalues[1:nk], ncol = nk)))
+  mySd <- sqrt(mahalanobis(as.matrix(obj$scores[, seq_len(nk)]),
+                           rep(0, nk), diag(obj$eigenvalues[seq_len(nk)], ncol = nk)))
   cutoffSD <- sqrt(qchisq(crit, obj$k))
   out <- list(SD = mySd, cutoffSD = cutoffSD)
   out$OD <- apply(data - matrix(rep(obj$center, times = n), nrow = n, 

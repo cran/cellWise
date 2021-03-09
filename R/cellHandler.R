@@ -1,8 +1,3 @@
-# code for revision
-# library("SASxport")
-# library("matrixcalc")
-# library("GSE")
-
 
 ## The cellHandler method
 #########################
@@ -42,7 +37,7 @@ cellHandler <- function(X, mu, Sigma, quant = 0.99) {
   Zres <- matrix(0, n, d)
   cellPaths <- Zres_num <- Zres_denom <- matrix(0, n, d)
   #
-  for (i in 1:n) {
+  for (i in seq_len(n)) {
     x        <- X[i, ] 
     indNA    <- which(naMask[i, ] == 1)
     x[indNA] <- mu[indNA]
@@ -61,7 +56,7 @@ cellHandler <- function(X, mu, Sigma, quant = 0.99) {
     }
     #
     if (length(badCells) > 0) {
-      badinds  <- larOut$ordering[1:max(badCells)] # maxDelta rule
+      badinds  <- larOut$ordering[seq_len(max(badCells))] # maxDelta rule
       # now calculate residuals:
       if (length(badinds) == d) {
         stdresid <- (x - mu) / sqrt(diag(Sigma))
@@ -184,11 +179,11 @@ DDCWcov <- function(X, maxCol = 0.25) {
     Wna <- matrix(0, n, d); Wna[DDCout$indcells] <- 1
     overflag <- which(colSums(Wna) > maxCol * n)
     if (length(overflag) > 0) {
-      for (i in 1:length(overflag)) {
+      for (i in seq_len(length(overflag))) {
         ind <- overflag[i]
         replacement <- rep(0, n)
         replacement[order(abs(DDCout$stdResid[, ind]),
-                          decreasing = TRUE)[1:(floor(maxCol*n))]] <- 1
+                          decreasing = TRUE)[seq_len(floor(maxCol*n))]] <- 1
         Wna[, ind] <- replacement
       }
       DDCout$indcells <- which(Wna == 1)
@@ -428,7 +423,7 @@ DI = function(X,
     orderings  <- matrix(0, n, d)
     distances  <- matrix(0, n, d + 1)
     deltas     <- matrix(0, n, d)
-    for (i in 1:n) {
+    for (i in seq_len(n)) {
       z        <- Z[i, ] 
       indNA    <- which(naMask[i, ] == 1)
       z[indNA] <- mu[indNA]
@@ -455,7 +450,7 @@ DI = function(X,
     # to determine the actual flagged cells
     # Goal of this stage is to take maxCol into account
     
-    tiebraker    <- t(apply(orderings, 1, function(y) order(y))) + 1:n * d
+    tiebraker    <- t(apply(orderings, 1, function(y) order(y))) + seq_len(n) * d
     deltas_order <- order(deltas, tiebraker, # order of deltas in decreasin order
                           decreasing = TRUE) # second argument of order() solves ties
     
@@ -466,7 +461,7 @@ DI = function(X,
     cutpoints    <- rep(1, n) # where to stop the paths (1 = no imputes)
     droppedPaths <- rep(0, n) # which paths are dropped (="locked")
     W            <- matrix(0, n , d)
-    for (i in 1:length(deltas_order)) {
+    for (i in seq_len(length(deltas_order))) {
       idx   <- deltas_order[i]
       delta <- deltas[idx]
       rownb <- (idx - 1) %% n + 1
@@ -492,7 +487,7 @@ DI = function(X,
     finalDistances <- rep(0, n)
     finalNbimps    <- cutpoints - 1
     finalW         <- matrix(0, n, d)
-    for (i in 1:n) {
+    for (i in seq_len(n)) {
       finalBetas[i, ]   <- betamat[i, cutpoints[i], ]
       finalBias         <- finalBias + Bmat[i, cutpoints[i], , ]
       finalDistances[i] <- distances[i, cutpoints[i]]
@@ -520,7 +515,7 @@ DI = function(X,
   } # end of Step2: iteration
   
   # unstandardize and clean:
-  Sigmas <- Sigmas[1:(nbits + 1), , ]
+  Sigmas <- Sigmas[seq_len(nbits + 1), , ]
   
   Ximp   <- scale(Zimp, FALSE, 1 / locScale_init$scale)
   Ximp   <- scale(Ximp, -locScale_init$loc, FALSE)

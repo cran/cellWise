@@ -224,7 +224,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   MacroPCApars$DDCpars <- DDCpars
   Ti <- resultDDC$Ti
   indrows1 <- which(abs(Ti) > sqrt(qchisq(0.99, 1)))
-  indrows2 <- intersect(order(abs(Ti),decreasing = T)[1:(n - h)],
+  indrows2 <- intersect(order(abs(Ti),decreasing = T)[seq_len(n - h)],
                         indrows1)
   indcells <- resultDDC$indcells    
   
@@ -292,11 +292,11 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   rowcellind   <- tabulate(((indcells - 1) %% n) + 1, n)
   rowcellind[indrows2] <- d # pretends all cells flagged, so
   # the rows flagged as outlying by DDC will not be imputed.
-  hrowsLowcell <- order(rowcellind)[1:h]
+  hrowsLowcell <- order(rowcellind)[seq_len(h)]
   indComb <- unique(hrowsLowcell,
                     which(rowcellind == rowcellind[hrowsLowcell[h]]))
   # these rows have the fewest cellwise outliers (includes ties)
-  indComb <- setdiff(1:n, indComb) # take complement
+  indComb <- setdiff(seq_len(n), indComb) # take complement
   
   # Use unimputed rowwise outliers for least outlying points 
   # (original NA values are imputed)
@@ -325,20 +325,19 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
                        type = "mcd", alpha = alpha, silent = TRUE)
   zeroscales <- which(umcds$scale < 1e-12)
   
-  if (length(zeroscales) > 0) {
-    for (i in 1:length(zeroscales)) {
-      umcdweights <- unimcd(Y[, zeroscales[i]], alpha = alpha)$weights
-      if (robustbase::rankMM(Xci[umcdweights == 1, ]) == 1) {
-        stop("At least ", sum(umcdweights),
-             " observations are identical.")
-      }
+  for (i in seq_len(length(zeroscales))) {
+    umcdweights <- unimcd(Y[, zeroscales[i]], alpha = alpha)$weights
+    if (robustbase::rankMM(Xci[umcdweights == 1, ]) == 1) {
+      stop("At least ", sum(umcdweights),
+           " observations are identical.")
     }
   }
+  
   Z <- abs(scale(Y, umcds$loc, umcds$scale))
   
   H0 <- order(apply(Z, 1, max))
   H0 <- setdiff(H0,indrows2)
-  H0 <- H0[1:h]
+  H0 <- H0[seq_len(h)]
   
   
   ############################
@@ -365,15 +364,15 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
     k <- if (length(test) != 0) 
       min(min(Xcih.SVD$rank, test[1]), kmax)
     else min(Xcih.SVD$rank, kmax)
-    cumulative <- cumsum(Xcih.SVD$eigenvalues[1:k]) /
+    cumulative <- cumsum(Xcih.SVD$eigenvalues[seq_len(k)]) /
       sum(Xcih.SVD$eigenvalues)
     # We used _all_ eigenvalues in the denominator.
-    barplot(Xcih.SVD$eigenvalues[1:k], main = "scree plot",
-            ylab = "eigenvalues", names.arg = 1:k)
+    barplot(Xcih.SVD$eigenvalues[seq_len(k)], main = "scree plot",
+            ylab = "eigenvalues", names.arg = seq_len(k))
     
     cat(paste(c("\nThe cumulative percentage of explained variability",
                 "by the first", k, "components is:\n", 
-                paste(" PC", 1:length(cumulative),sep = ""),
+                paste(" PC", seq_len(length(cumulative)),sep = ""),
                 "\n", format(round(100 * cumulative, 1), nsmall = 1),
                 "\n", sep = "")))
     
@@ -390,7 +389,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
     cat(paste("\nPlease use this information and the scree plot",
               " to select a value of k",
               "\nand rerun MacroPCA with it.\n\n", sep = "")) 
-    return(list(eigenvalues = Xcih.SVD$eigenvalues[1:k],
+    return(list(eigenvalues = Xcih.SVD$eigenvalues[seq_len(k)],
                 cumulativeVar = cumulative))
   }
   
@@ -406,7 +405,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   It <- 0 # this is the iteration index s
   diff <- 0
   k <- min(k, Xcih.SVD$rank)
-  Pr <- Xcih.SVD$loadings[, 1:k]
+  Pr <- Xcih.SVD$loadings[, seq_len(k)]
   PrPrev <- Pr
   mXci <- Xcih.SVD$center # center
   if (any(Xind) & maxiter > 0) { 
@@ -424,7 +423,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
       Xcih <- Xci[H0, ]
       Xcih.SVD <- truncPC(Xcih, ncomp = k)
       k <- min(k, Xcih.SVD$rank)
-      Pr <- Xcih.SVD$loadings[, 1:k]  # loadings matrix
+      Pr <- Xcih.SVD$loadings[, seq_len(k)]  # loadings matrix
       mXci <- Xcih.SVD$center        # mean vector
       
       diff <- maxAngle(Pr, PrPrev)
@@ -441,7 +440,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   
   Xnai[indNA] <- Xci[indNA] 
   # update imputations of missings in Xnai
-  indrows3 <- setdiff((1:n), H0) 
+  indrows3 <- setdiff((seq_len(n)), H0) 
   # indrows3 means: all except H0
   
   # initialize Xfi, the fully imputed X
@@ -500,20 +499,20 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   h1     <- h.alpha.n(alpha, n1, k)
   Xci1   <- (Xci[Hstar, ] - matrix(rep(Xcih.SVD$center, times = n1), 
                                    nrow = n1, byrow = TRUE)) %*% Xcih.SVD$loadings
-  Xci1   <- as.matrix(Xci1[, 1:k])
-  rot    <- as.matrix(rot[, 1:k]) # new loading matrix
+  Xci1   <- as.matrix(Xci1[, seq_len(k)])
+  rot    <- as.matrix(rot[, seq_len(k)]) # new loading matrix
   mah    <- mahalanobis(Xci1, center = rep(0, ncol(Xci1)), 
-                        cov = diag(Xcih.SVD$eigenvalues[1:k], nrow = k))
+                        cov = diag(Xcih.SVD$eigenvalues[seq_len(k)], nrow = k))
   
   
   ###############
   # Step6: DetMCD
   ###############
   
-  oldobj <- prod(Xcih.SVD$eigenvalues[1:k])
+  oldobj <- prod(Xcih.SVD$eigenvalues[seq_len(k)])
   niter <- 100
-  for (j in 1:niter) { # This part is from ROBPCA
-    Xcih <- as.matrix(Xci1[order(mah)[1:h1], ], ncol = k)
+  for (j in seq_len(niter)) { # This part is from ROBPCA
+    Xcih <- as.matrix(Xci1[order(mah)[seq_len(h1)], ], ncol = k)
     Xcih.SVD <- truncPC(Xcih, ncomp = k)
     obj <- prod(Xcih.SVD$eigenvalues)
     Xci1 <- (Xci1 - matrix(rep(Xcih.SVD$center, times = n1), 
@@ -718,8 +717,8 @@ genImpTable <- function(indimp, n, d){
   # based on the bivariate positions in indimp
   arrayimp <- arrayInd(indimp, c(n, d))
   imptab   <- vector("list", n)
-  improws  <- 1:n
-  impcols  <- 1:d
+  improws  <- seq_len(n)
+  impcols  <- seq_len(d)
   for (i in improws) {   
     I  <- matrix(arrayimp[arrayimp[, 1] == i, ],ncol = 2)[, 2] 
     # Imputed variables
@@ -742,8 +741,8 @@ pca.distancesNew <- function(obj, data,myscores, r, crit = 0.99,
                             obj$eigenvalues[q], 
                             " so the diagonal matrix of the eigenvalues",
                             " cannot be inverted!", sep = ""))
-  SD <- sqrt(mahalanobis(as.matrix(myscores[, 1:nk]), 
-                         rep(0, nk), diag(obj$eigenvalues[1:nk],
+  SD <- sqrt(mahalanobis(as.matrix(myscores[, seq_len(nk)]), 
+                         rep(0, nk), diag(obj$eigenvalues[seq_len(nk)],
                                           ncol = nk)))
   cutoffSD <- sqrt(qchisq(crit, obj$k))
   OD <- apply(data - matrix(rep(obj$center, times = n), nrow = n, 
@@ -799,7 +798,7 @@ makeDirections <- function(data, ndirect, all = TRUE)
   
   randomset <- function(n, k, seed) {
     ranset <- vector(mode = "numeric", length = k)
-    for (j in 1:k) {
+    for (j in seq_len(k)) {
       r <- uniran(seed)
       seed <- r$seed
       num <- floor(r$random * n) + 1
@@ -893,10 +892,10 @@ truncPC <- function(X, ncomp = NULL, scale = FALSE, center = TRUE,
   rank <- sum(eigvals > 1e-10)
   if (rank == 0) 
     stop(" The data has rank zero")
-  eigvals <- (eigvals[1:rank])^2 / (n - 1)
+  eigvals <- (eigvals[seq_len(rank)])^2 / (n - 1)
   loadings <- SvdY$v
   dim(loadings)
-  loadings <- loadings[, 1:rank, drop = FALSE]
+  loadings <- loadings[, seq_len(rank), drop = FALSE]
   if (signflip) {
     flipcolumn <- function(x) {
       if (x[which.max(abs(x))] < 0) {

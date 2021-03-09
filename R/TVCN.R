@@ -60,6 +60,11 @@ transfo <- function(X, type = "YJ", robust = TRUE, lambdarange = NULL,
   #   weights     : the final weights from the reweighting.
   #   ttypes      : the type of transform used in each column.
   
+  # parameter checks
+  
+  if (nbsteps < 1) {
+    stop("nbsteps should be at least 1.")
+  }
   
   if (is.vector(X)) {X <- matrix(X, ncol = 1)}
   X <- as.matrix(X)
@@ -79,6 +84,7 @@ transfo <- function(X, type = "YJ", robust = TRUE, lambdarange = NULL,
   }
   
   # Start with checkDataSet to avoid transforming too discrete variables
+  out <- NULL
   if (!checkPars$coreOnly) {
     # Check the data set and set aside columns and rows that do
     # not satisfy the conditions:
@@ -104,7 +110,7 @@ transfo <- function(X, type = "YJ", robust = TRUE, lambdarange = NULL,
   muhat      <- rep(0, d)
   sigmahat   <- rep(1, d)
   if (is.null(lambdarange)) { lambdarange <- c(-4, 6) }
-  for (j in 1:d) { # loop over the columns of X
+  for (j in seq_len(d)) { # loop over the columns of X
     x         <- X[, j]
     goodInds  <- which(!is.na(x))
     x         <- x[goodInds]
@@ -444,7 +450,7 @@ reweightYJr <- function(x,
   x.rew   <- x[rewinds]
   x.all   <- x
   # YJ transform with weighted ML:
-  for (k in 1:nbsteps) {
+  for (k in seq_len(nbsteps)) {
     lambdahat.rew <- estML(x = x.rew, lambdarange = lambdarange, 
                            type = "YJ", prestandardize = F)$lambda
     YJ.out.rew    <- YJ(x.all, lambdahat.rew)
@@ -526,7 +532,7 @@ reweightBCr <- function(x, zt.raw, lambdahat.raw, lambdarange, quant = 0.99,
   # 
   # BC transform with weighted ML
   #
-  for (k in 1:nbsteps) {
+  for (k in seq_len(nbsteps)) {
     lambdahat.rew <- estML(x = x.rew, lambdarange = lambdarange, 
                            type = "BC", prestandardize = F)$lambda
     BC.out.rew <- BC(x.all, lambdahat.rew)
@@ -738,13 +744,13 @@ estMTL <- function(x, alpha = 0.95,
   }
   x_order <- order(x) # ranks of the data
   if (type == "YJ") { # Yeo-Johnson
-    for (i in 1:length(lambdagrid)) { # loop over lambdagrid
+    for (i in seq_len(length(lambdagrid))) { # loop over lambdagrid
       lambda <- lambdagrid[i]
       xyj <- YJ(x, lambda)$yt
       nbSubsets <- n - h + 1
       sds   <- rep(1, nbSubsets)
       means <- rep(0, nbSubsets)
-      for (j in 1:nbSubsets) { # loop over subsets
+      for (j in seq_len(nbSubsets)) { # loop over subsets
         datatemp <- xyj[x_order[j:(j + h - 1)]]
         # subset of ordered xyj
         means[j] <- mean(datatemp)
@@ -764,13 +770,13 @@ estMTL <- function(x, alpha = 0.95,
     xt <- YJ(x, lambda = lambdagrid[which.max(result)])$yt
     zt <- (xt - median(xt)) / mad(xt)
   } else { # Box-Cox
-    for (i in 1:length(lambdagrid)) {
+    for (i in seq_len(length(lambdagrid))) {
       lambda  <- lambdagrid[i]
       xyj     <- BC(x, lambda)$yt
       nbSubsets <- n - h + 1
       sds   <- rep(1, nbSubsets)
       means <- rep(0, nbSubsets)
-      for (j in 1:nbSubsets) { # loop over subsets
+      for (j in seq_len(nbSubsets)) { # loop over subsets
         datatemp <- xyj[x_order[j:(j + h - 1)]]
         # subset of ordered xyj
         means[j] <- mean(datatemp)
@@ -980,7 +986,7 @@ robnormality <- function(y, b = 0.5) {
                                     type = "hubhub")
   sy       <- (sy - locScale$loc) / locScale$scale
   # Theoretical quantiles and differences:
-  hprobs     <- ((1:n) - 1/3)/(n + 1/3)
+  hprobs     <- ((seq_len(n)) - 1/3)/(n + 1/3)
   theoQs     <- qnorm(hprobs)
   diffs      <- sy - theoQs
   # apply Biweight rho

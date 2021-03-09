@@ -29,8 +29,8 @@ generateCorMat <- function(d, corrType = "ALYZ", CN = 100, seed = NULL) {
     }
     R_0 <- cov2cor(Sig_temp) #the correlation matrix
   } else if (corrType == "A09") { 
-    columns <- matrix(data = (1:d), nrow = d, ncol = d, byrow = TRUE)
-    rows    <- matrix(data = (1:d), nrow = d, ncol = d, byrow = FALSE)
+    columns <- matrix(data = (seq_len(d)), nrow = d, ncol = d, byrow = TRUE)
+    rows    <- matrix(data = (seq_len(d)), nrow = d, ncol = d, byrow = FALSE)
     R_0     <- matrix(-0.9, nrow = d, ncol = d)
     R_0     <- R_0^(abs(columns - rows)) # A09 correlation matrix
   } 
@@ -71,19 +71,19 @@ generateData = function(n, d,
       replacement <- eigen(Sigma)$vectors[, d] /
         sqrt(mahalanobis(eigen(Sigma)$vectors[, d], mu, Sigma))
       replacement <- gamma * replacement * sqrt(d) * d
-      ind         <- 1:(floor(perout * n)) 
+      ind         <- seq_len(floor(perout * n)) 
       X[ind, ]    <- matrix(replacement, nrow = length(ind), ncol = d, byrow = TRUE)
       indrows <- ind 
     } else if (outlierType == "cellwisePlain") {
-      ind <- replicate(d, sample(1:n, perout * n, replace = FALSE))
+      ind <- replicate(d, sample(seq_len(n), perout * n, replace = FALSE))
       ind <- as.vector(t(t(ind) + n * (0:(d - 1))))
       X[ind] <- gamma
       indcells <- ind
     } else if (outlierType == "cellwiseStructured") {
-      ind <- replicate(d, sample(1:n, perout * n, replace = FALSE))
+      ind <- replicate(d, sample(seq_len(n), perout * n, replace = FALSE))
       ind <- as.vector(t(t(ind) + n * (0:(d - 1))))
       W   <- array(0, dim(X)); W[ind] <- 1
-      for (i in 1:n) {
+      for (i in seq_len(n)) {
         continds <- which(W[i, ] == 1)
         if (length(continds) > 0) {
           eigen_out <- eigen(Sigma[continds, continds])$vectors
@@ -97,7 +97,7 @@ generateData = function(n, d,
       replacement <- eigen(Sigma)$vectors[, d] /
         sqrt(mahalanobis(eigen(Sigma)$vectors[, d], mu, Sigma))
       replacement <- gamma * replacement * d * sqrt(d)
-      ind         <- 1:(floor(perout / 2 * n))
+      ind         <- seq_len(floor(perout / 2 * n))
       X[ind, ]    <- matrix(replacement, nrow = length(ind), ncol = d, byrow = TRUE)
       indrows <- ind
       

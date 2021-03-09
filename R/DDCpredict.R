@@ -195,14 +195,14 @@ DDCpredict = function(Xnew,InitialDDC,DDCpars=NULL){
   
   if(!includeSelf) colStandalone = which(rowSums(corrweight)==0)
   if(includeSelf) colStandalone = which(rowSums(corrweight[,-1])==0)
-  colConnected  = which(!((1:d) %in% colStandalone))
+  colConnected  = which(!((seq_len(d)) %in% colStandalone))
   
   indexStandalone = col2cell(colStandalone,n=n)
   indexStandalone = indexStandalone[indexStandalone %in% UniIndex]
   # = list of flagged cells in standalone variables.
   
   numiter = 1 # increase this if you want to iterate
-  for (iter in 1:numiter){
+  for (iter in seq_len(numiter)){
     
     ####################################
     ##    STEP 4 : ESTIMATE CELLS     ##
@@ -211,7 +211,7 @@ DDCpredict = function(Xnew,InitialDDC,DDCpars=NULL){
     Zest = U # These values will remain for standalone columns.  
     
     # Estimation for connected variables:
-    U = rbind(1:d,U)
+    U = rbind(seq_len(d),U)
     Zest[,colConnected] = apply(U[,colConnected],2,predictCol2,U=U,
                                 ngbrs=ngbrs,corrweight=corrweight,
                                 robslopes=robslopes,

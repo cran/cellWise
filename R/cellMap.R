@@ -41,8 +41,8 @@ cellMap = function(D, R, indcells = NULL, indrows = NULL,
     # function to combine cells into blocks
     Xblock = matrix(0,nrow=n,ncol=d)
     Xblockgrad = matrix(0,nrow=n,ncol=d)
-    for (i in 1:n) {
-      for (j in 1:d) {
+    for (i in seq_len(n)) {
+      for (j in seq_len(d)) {
         Xsel = Xin[(1+((i-1)*nrowsinblock)):(i*nrowsinblock),
                    (1+((j-1)*ncolumnsinblock)):(j*ncolumnsinblock)]
         seltable = tabulate(Xsel,nbins=4) #changed
@@ -102,10 +102,10 @@ cellMap = function(D, R, indcells = NULL, indrows = NULL,
   
   if(!(is.null(showcolumns) & is.null(showrows))){
     # here we extract the rows and columns that will be shown.
-    if(is.null(showcolumns)) { showcolumns = 1:d } else {
-      if(!(all(showcolumns %in% 1:d))) stop(" showcolumns goes out of bounds")}
-    if(is.null(showrows)) { showrows = 1:n } else {
-      if(!(all(showrows %in% 1:n))) stop(" showrows goes out of bounds")}
+    if(is.null(showcolumns)) { showcolumns = seq_len(d) } else {
+      if(!(all(showcolumns %in% seq_len(d)))) stop(" showcolumns goes out of bounds")}
+    if(is.null(showrows)) { showrows = seq_len(n) } else {
+      if(!(all(showrows %in% seq_len(n)))) stop(" showrows goes out of bounds")}
     
     tempMat = matrix(0,n,d)
     tempMat[indcells] = 1
@@ -166,7 +166,7 @@ cellMap = function(D, R, indcells = NULL, indrows = NULL,
       if (ncolumnsinblock>1 & length(columnlabels)>0) {
         labx = columnlabels
         columnlabels = rep(0,d)
-        for(ind in 1:d) {
+        for(ind in seq_len(d)) {
           columnlabels[ind] = paste(labx[(1+((ind-1)*ncolumnsinblock))],"-",
                                labx[(ind*ncolumnsinblock)],sep="")
         }
@@ -175,7 +175,7 @@ cellMap = function(D, R, indcells = NULL, indrows = NULL,
       if (nrowsinblock>1 & length(rowlabels)>0) {
         laby = rowlabels
         rowlabels = rep(0,n)
-        for(ind in 1:n) {
+        for(ind in seq_len(n)) {
           rowlabels[ind] = paste(laby[(1+((ind-1)*nrowsinblock))],"-",
                                laby[(ind*nrowsinblock) ])
         }
@@ -206,7 +206,7 @@ cellMap = function(D, R, indcells = NULL, indrows = NULL,
     mX$grad = mXgrad$grad
     mX$rescaleoffset = mXgrad$grad + 10*mX$CatNr
     
-    mXrow = data.frame(rownr=1:n,rescaleoffset=Xrowgrad+ 10*3)
+    mXrow = data.frame(rownr=seq_len(n),rescaleoffset=Xrowgrad+ 10*3)
     
     scalerange = c(0,1)
     gradientends = scalerange + rep(c(0,10,20,30,40), each=2)  #changed
@@ -286,7 +286,7 @@ cellMap = function(D, R, indcells = NULL, indrows = NULL,
     
     tempVec = rep(0,n)
     tempVec[indrows] = 1
-    mXrow = data.frame(rownr=1:n,rescaleoffset=40-(10*tempVec) )
+    mXrow = data.frame(rownr=seq_len(n),rescaleoffset=40-(10*tempVec) )
     rm(tempVec)
     if (is.null(standOD)) {
       mXrow$rescaleoffset[indrows] = mXrow$rescaleoffset[indrows] + 1
@@ -317,8 +317,8 @@ cellMap = function(D, R, indcells = NULL, indrows = NULL,
     npoints = 100
     circlePoints = mapply(circleFun, centerx, centery, radius,
                           npoints)
-    positions = data.frame(rownr = rep(1:n, each = npoints),
-                           x = c(circlePoints[1:npoints, ]), 
+    positions = data.frame(rownr = rep(seq_len(n), each = npoints),
+                           x = c(circlePoints[seq_len(npoints), ]), 
                            y = c(circlePoints[(npoints +1):(2*npoints), ]))
     datapoly = merge(mXrow, positions, by = c("rownr"))
   }

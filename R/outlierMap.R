@@ -37,7 +37,7 @@ outlierMap <- function(res, title = "Robust PCA", col = "black",
   mycex.axis = 1
   if(!is.null(cex.axis)) { mycex.axis = cex.axis }
   if (is.list(col)) {
-    for (i in 1:length(col)) {
+    for (i in seq_len(length(col))) {
       if (i == 1) {
         plot(SD[col[[i]]$index], OD[col[[i]]$index], 
              xlab = "", ylab = "", main = "", pch = pch, 

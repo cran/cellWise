@@ -167,7 +167,7 @@ DDC <- function(X, DDCpars = list()){
                 " columns in remX have over 50% of NAs. These columns will be considered standAlone variables."))
     }
   } else {
-    goodCols <- (1:dim(checkedData)[2]) - 1
+    goodCols <- (seq_len(dim(checkedData)[2])) - 1
   }
   
   # Check nCorr  params
