@@ -382,7 +382,10 @@ Rcpp::List Wrap_cpp(arma::mat & X, arma::vec & loc, arma::vec & scale, double pr
       u = u / scale(i);
       arma::vec ufin = u(finiteinds);
       LocScaleEstimators::psiTanh(ufin);
-      u(finiteinds) = ufin * scale(i) + loc(i) ;
+      double newloc = arma::mean(ufin);
+      double newsca = arma::stddev(ufin);
+      u(finiteinds) = ufin * (scale(i) / newsca) + (loc(i) - newloc * (scale(i) / newsca) ) ;
+      
       if (finiteinds.size() < X.n_rows) {
         arma::uvec infiniteinds = DDC::vdiff(arma::regspace<arma::uvec>(0,(X.n_rows - 1)), finiteinds);
         u(infiniteinds).fill(loc(i));

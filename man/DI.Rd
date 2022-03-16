@@ -107,5 +107,7 @@ X <- MASS::mvrnorm(100, mu, Sigma)
 DI.out <- DI(X)
 DI.out$cov
 # For more examples, we refer to the vignette:
+\dontrun{
 vignette("DI_examples")
+}
 }

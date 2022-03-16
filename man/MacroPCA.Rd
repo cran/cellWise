@@ -123,5 +123,7 @@ MacroPCA.out <- MacroPCA(x, 2)
 cellMap(MacroPCA.out$remX, MacroPCA.out$stdResid,
 columnlabels = 1:d, rowlabels = 1:n)
 # For more examples, we refer to the vignette:
+\dontrun{
 vignette("MacroPCA_examples")
+}
 }

@@ -21,5 +21,7 @@
 \examples{
 data("data_dogWalker")
 # For more examples, we refer to the vignette:
+\dontrun{
 vignette("Wrap_examples")
+}
 }

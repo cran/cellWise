@@ -4,7 +4,7 @@
 Wrap the data.
 }
 \description{
-Transforms multivariate data \code{X} using the wrapping function with \code{b = 1.5} and \code{c = 4}. By default, it starts by calling \code{\link{checkDataSet}} to clean the data and \code{\link{estLocScale}} to estimate the location and scale of the variables in the cleaned data. Alternatively, it works with user-provided vectors of location and scale given by \code{locX} and \code{scaleX}. 
+Transforms multivariate data \code{X} using the wrapping function with \code{b = 1.5} and \code{c = 4}. By default, it starts by calling \code{\link{checkDataSet}} to clean the data and \code{\link{estLocScale}} to estimate the location and scale of the variables in the cleaned data, yielding the vectors \eqn{latex}{(\hat{\mu}_1,\ldots,\hat{\mu}_d)} and \eqn{latex}{(\hat{\sigma}_1,\ldots,\hat{\sigma}_d)} where \eqn{d} is the number of variables. Alternatively, the user can specify such vectors in the arguments \code{locX} and \code{scaleX}. In either case, the data cell \eqn{x_{ij}} containing variable \eqn{j} of case \eqn{i} is transformed to \deqn{y_{ij} = muhat_j - b_j + sigmahat_j*psi((x_{ij} - muhat_j)/sigmahat_j)/a_j} in which \eqn{a_j} and \eqn{b_j} are such that for any fixed \eqn{j} the average of \eqn{y_{ij}} equals \eqn{\hat{\mu}_j} and the standard deviation of \eqn{y_{ij}} equals \eqn{\hat{\sigma}_j}.  
 }
 \usage{
 wrap(X, locX = NULL, scaleX = NULL, precScale = 1e-12,
@@ -80,5 +80,7 @@ X <- mvrnorm(n, rep(0, 10), diag(10))
 locScale <- estLocScale(X)
 Xw <- wrap(X, locScale$loc, locScale$scale)$Xw
 # For more examples, we refer to the vignette:
+\dontrun{
 vignette("wrap_examples")
+}
 }

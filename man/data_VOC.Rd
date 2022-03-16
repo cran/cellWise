@@ -58,5 +58,7 @@ regression and robust covariance. \emph{Arxiv: 1912.12446}. \href{https://arxiv.
 \examples{
 data("data_VOC")
 # For an analysis of this data, we refer to the vignette:
+\dontrun{
 vignette("DI_examples")
+}
 }

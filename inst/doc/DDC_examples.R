@@ -101,7 +101,7 @@ round(DDCx$robcors[1:3,],2)
 round(DDCx$robslopes[1:3,],2)
 # For each column, the slope of each neighbor predicting it.
 # For instance, X1 is predicted by its first neighbor with 
-# slope 0.91 and by its second neighbor with slope 1.02 .
+# slope 0.97 and by its second neighbor with slope 0.81 .
 
 round(DDCx$deshrinkage,2)
 # For each column, the factor by which its prediction is multiplied.
@@ -118,7 +118,7 @@ qqnorm(as.vector(DDCx$stdResid)) # Note the far outliers on both sides:
 as.vector(DDCx$indcells) # indices of the cells that were flagged by DDC:
 
 plot(DDCx$Ti) # the Ti values of the rows. None are high.
-qqnorm(DDCx$Ti) # no outliers
+qqnorm(DDCx$Ti) 
 DDCx$medTi # median of the raw Ti (used to standardize Ti):
 DDCx$madTi # median absolute deviation of the raw Ti (used to standardize Ti):
 

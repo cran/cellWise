@@ -29,11 +29,11 @@ tic = Sys.time()
 DI.out = DI(X)
 toc = Sys.time(); toc - tic 
 DI.out$nits 
-# the algorithm converges in 4 iterations and takes under 1 second
+# the algorithm converges in 5 iterations and takes under 1 second
 
 flaggedCells <- DI.out$indcells # indices of the flagged Cells
 length(intersect(data$indcells, flaggedCells))
-# 159 of the 200 cells are flagged
+# 155 of the 200 cells are flagged
 
 # We can now compare this with the marginal flagging of outliers.
 locScale.out <- estLocScale(X) # robust location and scale of X
@@ -113,7 +113,7 @@ W[indcells] <- 1
 # Variable 8 has a substantial number of red cells.
 # Its total number of outlying cells:
 sum(W[,8])/nrow(X)
-# Variable 8 has 12% of outlying cells.
+# Variable 8 has 11% of outlying cells.
 
 # Since quant = 0.99 these are the cells with absolute
 # residual above sqrt(qchisq(p=0.99,df=1)) = 2.575829 .
@@ -133,13 +133,14 @@ Z = scale(X,center=meds,scale=mads)
 cutoff = sqrt(qchisq(p=0.99,df=1)); cutoff 
 
 cellInd = which(abs(Zres[,8]) > cutoff)
-length(cellInd)/nrow(X) # almost 12%
+length(cellInd)/nrow(X) # almost 11%
 marginalInd = which(abs(Z[,8]) > cutoff)
 length(marginalInd)/nrow(X) # under 2%
 # Even for perfectly gaussian data this would already be 1%.
 
 # pdf("ZresVersusZ.pdf",width=5.4,height=5.4) # sizes in inches
-plot(Z[,8], Zres[,8], xlab = "",ylab = "",main = "",pch = 16, 
+plot(Z[,8], Zres[,8], xlab = "",
+     ylab = "",main = "",pch = 16, 
      col = "black", xlim=c(-3,5))
 title(main="log(URXCYM) in children aged 10 or younger",
       line=1) # , cex.lab=1.2, family="Calibri Light")
@@ -181,7 +182,7 @@ length(which(Zres[twoInHome,8] > 0))/length(twoInHome)
 
 # So 36% of the children living in a house with one smoker 
 # have suspiciously high levels for this biomarker.
-# 73% of the children living in a house with two smokers
+# 63% of the children living in a house with two smokers
 # have suspiciously high levels for this biomarker.
 
 cellMap(X, Zres, 
@@ -244,7 +245,7 @@ plotdata = matrix(c(length(which(Zres[nonsmokers,8] > 0))/length(nonsmokers),
 # pdf("cellwise_marginal.pdf",width=5.4,height=5.4)
 matplot(1:4, t(plotdata), type = "b", pch = 16, lwd = 3,
         cex = 2, xlab = "", xaxt = "n", ylab = "", yaxt = "n", 
-        ylim = c(0, 0.8), col = c("blue", "red"), lty = 1)
+        ylim = c(0, 0.7), col = c("blue", "red"), lty = 1)
 axis(side = 1, labels = c("none", "0 in home", "1 in home", "2 in home"),
      at = 1:4, cex.axis = 1.3)
 axis(side = 2, labels = seq(0, 100, by = 20),

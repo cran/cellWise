@@ -1,7 +1,7 @@
 Package: cellWise
 Type: Package
-Version: 2.2.5
-Date: 2021-03-09
+Version: 2.2.6
+Date: 2022-03-07
 Title: Analyzing Data with Cellwise Outliers
 Authors@R: c(
             person(given="Jakob",family="Raymaekers", role = c("aut","cre"),
@@ -10,7 +10,7 @@ Authors@R: c(
             person(given="Wannes",family="Van den Bossche", role = c("ctb")),
             person(given="Mia",family="Hubert", role = c("ctb")) 
              )
-Depends: R (>= 3.5.0)
+Depends: R (>= 4.0.0)
 Suggests: knitr, robustHD, MASS, ellipse, markdown, rospca, GSE
 Imports: reshape2, scales, ggplot2, matrixStats, gridExtra, robustbase,
         rrcov, svd, stats, Rcpp (>= 0.12.10.14)
@@ -34,6 +34,6 @@ Maintainer: Jakob Raymaekers <jakob.raymaekers@kuleuven.be>
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
 NeedsCompilation: yes
-Packaged: 2021-03-09 09:39:36 UTC; u0105404
+Packaged: 2022-03-16 13:41:04 UTC; u0105404
 Repository: CRAN
-Date/Publication: 2021-03-09 11:00:06 UTC
+Date/Publication: 2022-03-16 14:30:02 UTC

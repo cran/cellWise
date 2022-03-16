@@ -98,5 +98,7 @@ x <- cbind(1:n, x)
 checkedx <- checkDataSet(x)
 
 # For more examples, we refer to the vignette:
+\dontrun{
 vignette("DDC_examples")
+}
 }

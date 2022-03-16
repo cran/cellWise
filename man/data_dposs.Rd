@@ -21,5 +21,7 @@ Odewahn, S., S. Djorgovski, R. Brunner, and R. Gal (1998). Data From the Digitiz
 \examples{
 data("data_dposs")
 # For more examples, we refer to the vignette:
+\dontrun{
 vignette("MacroPCA_examples")
+}
 }

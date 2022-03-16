@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // DDC_cpp
 Rcpp::List DDC_cpp(arma::mat& X, const double& tolProbCell, const double& tolProbRow, const double& tolProbReg, const double& tolProbCorr, const double& corrlim, const int& combinRule, const int& includeSelf, const int& fastDDC, const int& qdim, const int& transFun, unsigned int& k, const unsigned int& numiter, const double& precScale, const int& standType, const int& corrType, const unsigned int& nCorr, const unsigned int& nLocScale, arma::uvec& goodCols);
 RcppExport SEXP _cellWise_DDC_cpp(SEXP XSEXP, SEXP tolProbCellSEXP, SEXP tolProbRowSEXP, SEXP tolProbRegSEXP, SEXP tolProbCorrSEXP, SEXP corrlimSEXP, SEXP combinRuleSEXP, SEXP includeSelfSEXP, SEXP fastDDCSEXP, SEXP qdimSEXP, SEXP transFunSEXP, SEXP kSEXP, SEXP numiterSEXP, SEXP precScaleSEXP, SEXP standTypeSEXP, SEXP corrTypeSEXP, SEXP nCorrSEXP, SEXP nLocScaleSEXP, SEXP goodColsSEXP) {

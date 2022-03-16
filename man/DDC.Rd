@@ -193,5 +193,7 @@ cellMap(DDCx$remX, DDCx$stdResid,
 columnlabels = 1:d, rowlabels = 1:n)
 
 # For more examples, we refer to the vignette:
+\dontrun{
 vignette("DDC_examples")
+}
 }

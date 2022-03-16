@@ -80,5 +80,7 @@ n = 100; d = 10
 X = mvrnorm(n, rep(0, 10), diag(10))
 locScale = estLocScale(X)
 # For more examples, we refer to the vignette:
+\dontrun{
 vignette("wrap_examples")
+}
 }

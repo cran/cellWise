@@ -876,7 +876,7 @@ truncPC <- function(X, ncomp = NULL, scale = FALSE, center = TRUE,
     center <- attr(Y, "scaled:center")
   if (is.null(ncomp)) {
     SvdY <- try(svd::propack.svd(Y, neig = min(n, d)), silent = TRUE)
-    if (class(SvdY) == "try-error") {
+    if (inherits(SvdY, "try-error")) {
       SvdY <- svd(Y, nu = min(n, d), nv = min(n, d))
     }
   } else {
@@ -884,7 +884,7 @@ truncPC <- function(X, ncomp = NULL, scale = FALSE, center = TRUE,
       stop(" ncomp must be at least 1")
     ncomp <- min(ncomp, n, d)
     SvdY <- try(svd::propack.svd(Y, neig = ncomp), silent = TRUE)
-    if (class(SvdY) == "try-error") {
+    if (inherits(SvdY, "try-error")) {
       SvdY <- svd(Y, nu = ncomp, nv = ncomp)
     }
   }

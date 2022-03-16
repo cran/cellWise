@@ -84,5 +84,7 @@ cellMap(xnew, predict.out$stdResid,
 columnlabels = 1:d, rowlabels = 1:50)
 
 # For more examples, we refer to the vignette:
+\dontrun{
 vignette("DDC_examples")
+}
 }

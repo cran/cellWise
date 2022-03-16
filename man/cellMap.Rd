@@ -116,6 +116,7 @@ Rousseeuw, P.J., Van den Bossche W. (2018). Detecting Deviating Data Cells. \emp
 
 \examples{
 # For examples of the cellmap, we refer to the vignette:
+\dontrun{
 vignette("DDC_examples")
 }
-
+}
