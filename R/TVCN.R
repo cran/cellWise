@@ -60,14 +60,45 @@ transfo <- function(X, type = "YJ", robust = TRUE, lambdarange = NULL,
   #   weights     : the final weights from the reweighting.
   #   ttypes      : the type of transform used in each column.
   
+  # check for too many outliers. Gives warning in this case
+  
+  if (is.vector(X)) {
+    X <- matrix(X, ncol = 1)
+  }
+  X      <- as.matrix(X)
+  locsca <- cellWise::estLocScale(X)
+  Xs     <- scale(X, center = locsca$loc, scale = locsca$scale)
+  cutf   <- sqrt(qchisq(0.99, df = 1))
+  fract  <- colMeans(abs(Xs) > cutf)
+  outl   <- which(fract >= 0.25)
+  if (length(outl) == 1) {
+    if (ncol(X) == 1) {
+      warning(paste0("The data has ",round(100 * fract[outl], 2),
+                     "% of outliers, but\n", "this function ",
+                     "was designed for less than 25% of outliers."))
+    } else {
+      message("The following variable has 25% or more outliers:")
+      print(round(100 * fract[outl], 2))
+      warning(paste0("It is recommended not to transform the\n",
+                     "variable ", colnames(X)[outl], 
+                     " or to do so manually."))
+    }
+  }
+  if (length(outl) > 1) {
+    message(paste0("Several variables have 25% or more outliers.",
+                   "\nThe percentages per variable are:"))
+    print(round(100 * fract[outl],2))
+    message("It is recommended not to transform the variables")
+    print(colnames(X)[outl])
+    message("or to do so manually.")
+    warning("There are variables with 25% or more outliers.")
+  }
+  
   # parameter checks
   
   if (nbsteps < 1) {
     stop("nbsteps should be at least 1.")
   }
-  
-  if (is.vector(X)) {X <- matrix(X, ncol = 1)}
-  X <- as.matrix(X)
   
   # parameters for checkDataSet
   if (!"coreOnly" %in% names(checkPars)) {

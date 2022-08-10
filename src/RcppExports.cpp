@@ -97,6 +97,52 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// allpreds_cpp
+Rcpp::List allpreds_cpp(arma::mat& X, arma::mat& S, arma::vec& mu, arma::umat& W);
+RcppExport SEXP _cellWise_allpreds_cpp(SEXP XSEXP, SEXP SSEXP, SEXP muSEXP, SEXP WSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type S(SSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< arma::umat& >::type W(WSEXP);
+    rcpp_result_gen = Rcpp::wrap(allpreds_cpp(X, S, mu, W));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Objective_cpp
+double Objective_cpp(arma::mat& X, arma::umat& W, arma::vec& mu, arma::mat& Sigma, arma::mat& Sigmai);
+RcppExport SEXP _cellWise_Objective_cpp(SEXP XSEXP, SEXP WSEXP, SEXP muSEXP, SEXP SigmaSEXP, SEXP SigmaiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::umat& >::type W(WSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type Sigmai(SigmaiSEXP);
+    rcpp_result_gen = Rcpp::wrap(Objective_cpp(X, W, mu, Sigma, Sigmai));
+    return rcpp_result_gen;
+END_RCPP
+}
+// updateW_cpp
+arma::umat updateW_cpp(const arma::mat& X, arma::umat W, const arma::vec& mu, const arma::mat& Sigma, const arma::mat& Sigmai, const arma::vec& lambda, const arma::uword& h);
+RcppExport SEXP _cellWise_updateW_cpp(SEXP XSEXP, SEXP WSEXP, SEXP muSEXP, SEXP SigmaSEXP, SEXP SigmaiSEXP, SEXP lambdaSEXP, SEXP hSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type W(WSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Sigmai(SigmaiSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< const arma::uword& >::type h(hSEXP);
+    rcpp_result_gen = Rcpp::wrap(updateW_cpp(X, W, mu, Sigma, Sigmai, lambda, h));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_cellWise_DDC_cpp", (DL_FUNC) &_cellWise_DDC_cpp, 19},
@@ -104,6 +150,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cellWise_estLocScale_cpp", (DL_FUNC) &_cellWise_estLocScale_cpp, 6},
     {"_cellWise_unimcd_cpp", (DL_FUNC) &_cellWise_unimcd_cpp, 2},
     {"_cellWise_findCellPath_cpp", (DL_FUNC) &_cellWise_findCellPath_cpp, 5},
+    {"_cellWise_allpreds_cpp", (DL_FUNC) &_cellWise_allpreds_cpp, 4},
+    {"_cellWise_Objective_cpp", (DL_FUNC) &_cellWise_Objective_cpp, 5},
+    {"_cellWise_updateW_cpp", (DL_FUNC) &_cellWise_updateW_cpp, 7},
     {NULL, NULL, 0}
 };
 

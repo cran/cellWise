@@ -21,3 +21,15 @@ findCellPath_cpp <- function(predictors, response, weights, Sigmai, naMask) {
     .Call(`_cellWise_findCellPath_cpp`, predictors, response, weights, Sigmai, naMask)
 }
 
+allpreds_cpp <- function(X, S, mu, W) {
+    .Call(`_cellWise_allpreds_cpp`, X, S, mu, W)
+}
+
+Objective_cpp <- function(X, W, mu, Sigma, Sigmai) {
+    .Call(`_cellWise_Objective_cpp`, X, W, mu, Sigma, Sigmai)
+}
+
+updateW_cpp <- function(X, W, mu, Sigma, Sigmai, lambda, h) {
+    .Call(`_cellWise_updateW_cpp`, X, W, mu, Sigma, Sigmai, lambda, h)
+}
+

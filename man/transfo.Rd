@@ -118,8 +118,7 @@ A list with components: \cr
     }
 }
 \references{
-J. Raymaekers and P.J. Rousseeuw (2020). Transforming variables to 
-central normality. \emph{Arxiv: 2005.07946}. \href{https://arxiv.org/abs/2005.07946}{(link to open access pdf)}
+J. Raymaekers and P.J. Rousseeuw (2021). Transforming variables to central normality. \emph{Machine Learning}. \doi{10.1007/s10994-021-05960-5}{(link to open access pdf)}
 }
 \author{
 J. Raymaekers and P.J. Rousseeuw

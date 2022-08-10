@@ -1,7 +1,7 @@
 Package: cellWise
 Type: Package
-Version: 2.2.6
-Date: 2022-03-07
+Version: 2.4.0
+Date: 2022-08-10
 Title: Analyzing Data with Cellwise Outliers
 Authors@R: c(
             person(given="Jakob",family="Raymaekers", role = c("aut","cre"),
@@ -20,10 +20,10 @@ Description: Tools for detecting cellwise outliers and robust methods to analyze
     Rousseeuw and Van den Bossche (2018) <doi:10.1080/00401706.2017.1340909> (open access)
     Hubert et al. (2019) <doi:10.1080/00401706.2018.1562989> (open access),
     Raymaekers and Rousseeuw (2019) <doi:10.1080/00401706.2019.1677270> (open access),
-    Raymaekers and Rousseeuw (2020) <arXiv:2005.07946> (open access),
-    Raymaekers and Rousseeuw (2020) <arXiv:1912.12446> (open access).
+    Raymaekers and Rousseeuw (2020) <doi:10.1007/s10994-021-05960-5> (open access),
+    Raymaekers and Rousseeuw (2020) <doi:10.52933/jdssv.v1i3.18> (open access).
     Examples can be found in the vignettes:
-    "DDC_examples", "MacroPCA_examples", "wrap_examples", "transfo_examples" and "DI_examples".
+    "DDC_examples", "MacroPCA_examples", "wrap_examples", "transfo_examples", "DI_examples" and "cellMCD_examples".
 License: GPL (>= 2)
 LazyData: No
 Author: Jakob Raymaekers [aut, cre],
@@ -34,6 +34,6 @@ Maintainer: Jakob Raymaekers <jakob.raymaekers@kuleuven.be>
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
 NeedsCompilation: yes
-Packaged: 2022-03-16 13:41:04 UTC; u0105404
+Packaged: 2022-08-10 09:01:51 UTC; u0105404
 Repository: CRAN
-Date/Publication: 2022-03-16 14:30:02 UTC
+Date/Publication: 2022-08-10 15:30:16 UTC

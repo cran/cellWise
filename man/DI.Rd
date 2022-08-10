@@ -88,8 +88,7 @@ maxCol = 0.25, checkPars = list())
     }
 }
 \references{
-J. Raymaekers and P.J. Rousseeuw (2020). Handling cellwise outliers by sparse
-regression and robust covariance. \emph{Arxiv: 1912.12446}. \href{https://arxiv.org/abs/1912.12446}{(link to open access pdf)}
+J. Raymaekers and P.J. Rousseeuw (2020). Handling cellwise outliers by sparse regression and robust covariance. \emph{Journal of Data Science, Statistics, and Visualisation}. \doi{10.52933/jdssv.v1i3.18}{(link to open access pdf)}
 }
 \author{
 J. Raymaekers and P.J. Rousseeuw

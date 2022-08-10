@@ -63,7 +63,7 @@ of the corresponding variable. Defaults to \code{TRUE}.
 }
 }
 \references{
-Raymaekers, J., Rousseeuw P.J. (2019). Fast robust correlation for high dimensional data. \emph{Technometrics}, published online. \href{https://www.tandfonline.com/doi/full/10.1080/00401706.2019.1677270}{(link to open access pdf)}
+Raymaekers, J., Rousseeuw P.J. (2019). Fast robust correlation for high dimensional data. \emph{Technometrics}, \bold{63}(2), 184-198. \href{https://www.tandfonline.com/doi/full/10.1080/00401706.2019.1677270}{(link to open access pdf)}
 }
 \author{
  Raymaekers, J. and Rousseeuw P.J.

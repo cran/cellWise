@@ -1,6 +1,6 @@
 ---
 title: "DI examples"
-author: "Raymaekers, J."
+author: "Raymaekers, J. and Rousseeuw, P.J."
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >

@@ -697,11 +697,67 @@ This only takes a few seconds for the 500 variables.</p>
 <pre><code class="r">ML.out    &lt;- transfo(Z, type = &quot;YJ&quot;, robust=F)
 </code></pre>
 
+<pre><code>## Several variables have 25% or more outliers.
+## The percentages per variable are:
+</code></pre>
+
+<pre><code>##   V14   V18  V111  V112  V113  V126  V127  V128  V129  V130  V131  V132  V133 
+## 39.44 36.67 25.00 26.67 25.00 26.11 27.78 27.22 27.22 29.44 26.67 28.89 29.44 
+##  V134  V135  V136  V137  V138  V139  V140  V141  V142  V143  V144  V145  V146 
+## 28.33 30.56 30.56 31.67 33.33 33.33 32.22 32.78 32.78 33.33 32.78 32.78 32.22 
+##  V147  V148  V149  V150  V151  V183  V184 
+## 31.67 32.22 29.44 27.22 26.67 25.56 26.67
+</code></pre>
+
+<pre><code>## It is recommended not to transform the variables
+</code></pre>
+
+<pre><code>##  [1] &quot;V14&quot;  &quot;V18&quot;  &quot;V111&quot; &quot;V112&quot; &quot;V113&quot; &quot;V126&quot; &quot;V127&quot; &quot;V128&quot; &quot;V129&quot; &quot;V130&quot;
+## [11] &quot;V131&quot; &quot;V132&quot; &quot;V133&quot; &quot;V134&quot; &quot;V135&quot; &quot;V136&quot; &quot;V137&quot; &quot;V138&quot; &quot;V139&quot; &quot;V140&quot;
+## [21] &quot;V141&quot; &quot;V142&quot; &quot;V143&quot; &quot;V144&quot; &quot;V145&quot; &quot;V146&quot; &quot;V147&quot; &quot;V148&quot; &quot;V149&quot; &quot;V150&quot;
+## [31] &quot;V151&quot; &quot;V183&quot; &quot;V184&quot;
+</code></pre>
+
+<pre><code>## or to do so manually.
+</code></pre>
+
+<pre><code>## Warning in transfo(Z, type = &quot;YJ&quot;, robust = F): There are variables with 25% or
+## more outliers.
+</code></pre>
+
 <pre><code>##  
 ##  The input data has 180 rows and 500 columns.
 </code></pre>
 
 <pre><code class="r">RewML.out &lt;- transfo(Z, type = &quot;YJ&quot;, robust=T)
+</code></pre>
+
+<pre><code>## Several variables have 25% or more outliers.
+## The percentages per variable are:
+</code></pre>
+
+<pre><code>##   V14   V18  V111  V112  V113  V126  V127  V128  V129  V130  V131  V132  V133 
+## 39.44 36.67 25.00 26.67 25.00 26.11 27.78 27.22 27.22 29.44 26.67 28.89 29.44 
+##  V134  V135  V136  V137  V138  V139  V140  V141  V142  V143  V144  V145  V146 
+## 28.33 30.56 30.56 31.67 33.33 33.33 32.22 32.78 32.78 33.33 32.78 32.78 32.22 
+##  V147  V148  V149  V150  V151  V183  V184 
+## 31.67 32.22 29.44 27.22 26.67 25.56 26.67
+</code></pre>
+
+<pre><code>## It is recommended not to transform the variables
+</code></pre>
+
+<pre><code>##  [1] &quot;V14&quot;  &quot;V18&quot;  &quot;V111&quot; &quot;V112&quot; &quot;V113&quot; &quot;V126&quot; &quot;V127&quot; &quot;V128&quot; &quot;V129&quot; &quot;V130&quot;
+## [11] &quot;V131&quot; &quot;V132&quot; &quot;V133&quot; &quot;V134&quot; &quot;V135&quot; &quot;V136&quot; &quot;V137&quot; &quot;V138&quot; &quot;V139&quot; &quot;V140&quot;
+## [21] &quot;V141&quot; &quot;V142&quot; &quot;V143&quot; &quot;V144&quot; &quot;V145&quot; &quot;V146&quot; &quot;V147&quot; &quot;V148&quot; &quot;V149&quot; &quot;V150&quot;
+## [31] &quot;V151&quot; &quot;V183&quot; &quot;V184&quot;
+</code></pre>
+
+<pre><code>## or to do so manually.
+</code></pre>
+
+<pre><code>## Warning in transfo(Z, type = &quot;YJ&quot;, robust = T): There are variables with 25% or
+## more outliers.
 </code></pre>
 
 <pre><code>##  
@@ -882,6 +938,17 @@ lambdas larger than 1 and smaller than 1, corresponding with the skewness in
 both directions.</p>
 
 <pre><code class="r">transfoJ_YJ &lt;- transfo(dpossJ, type = &quot;YJ&quot;, robust = T)
+</code></pre>
+
+<pre><code>## The following variable has 25% or more outliers:
+</code></pre>
+
+<pre><code>##  csfJ 
+## 39.67
+</code></pre>
+
+<pre><code>## Warning in transfo(dpossJ, type = &quot;YJ&quot;, robust = T): It is recommended not to transform the
+## variable csfJ or to do so manually.
 </code></pre>
 
 <pre><code>##  

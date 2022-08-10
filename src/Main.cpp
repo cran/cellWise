@@ -1,6 +1,7 @@
 
 
 #include "DDC.h"
+#include "cellMCD.h"
 
 /*************************************/
 /*       Main DDCcore function       */
@@ -468,9 +469,6 @@ Rcpp::List unimcd_cpp(arma::vec & y, const double alpha) {
   return Rcpp::wrap(NA_REAL);
 }
 
-/******************************************/
-/*       Development Hidden export        */
-/******************************************/
 
 // [[Rcpp::export]]
 Rcpp::List findCellPath_cpp(arma::mat & predictors,
@@ -481,17 +479,15 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
   
   try
   {
-   
-// prepare input to lar ols by scaling the predictors/response
-// with the weights in w
+    
+    // prepare input to lar ols by scaling the predictors/response
+    // with the weights in w
     arma::mat x = predictors;
     x = x.each_row() / weights.t();
     arma::vec y = response;
     arma::mat Gram = Sigmai;
     Gram = Gram.each_row() / weights.t();
     Gram = Gram.each_col() / weights;
-    
-    // Rcpp::Rcout << "gram" << Gram << std::endl;
     
     //// start of lar_ols
     
@@ -502,8 +498,6 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
     arma::vec Cvec = (y.t() * x).t();
     arma::vec residuals = y;
     const int maxSteps = std::min(x.n_rows, x.n_cols);
-    
-    // arma::mat beta = arma::mat(maxSteps + 1, x.n_cols);
     
     // containers for used output
     arma::mat beta = arma::mat(maxSteps + 1, x.n_cols, arma::fill::zeros);
@@ -531,8 +525,6 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
     double normXnew;
     arma::uvec newVars;
     arma::uvec oldVars;
-   // arma::cube biasMat  = arma::cube(maxSteps + 1, x.n_cols, x.n_cols, arma::fill::zeros);
-    // Rcpp::Rcout << "check1" << std::endl;
     
     
     while ((k < maxSteps) && (active.size() < x.n_cols - ignores.size())) {
@@ -547,7 +539,6 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
         break; 
       }
       
-      // Rcpp::Rcout << "check2" << std::endl;
       // select variables going active and staying inactive
       if ((k == 0) && (arma::sum(naMask)) > 0) { 
         newVars = arma::find(naMask == 1);
@@ -558,25 +549,14 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
       oldVars = DDC::vdiff(arma::regspace<arma::uvec>(0, C.size() - 1), newVars);
       
       
-      // Rcpp::Rcout << "C" << C << std::endl;
-      // Rcpp::Rcout << "newVars" << newVars << std::endl;
-      // Rcpp::Rcout << "oldVars" << oldVars << std::endl;
       C = C(oldVars);
-      // Rcpp::Rcout << "C" << C << std::endl;
-      // Rcpp::Rcout << "inactive" << inactive << std::endl;
-      // Rcpp::Rcout << "active" << active.t() << std::endl;
-      
       newVars = inactive(newVars);
-      // Rcpp::Rcout << "newVars: " << newVars << std::endl;
       
       for(unsigned int i = 0; i < newVars.size(); i++) {
         // update R, the Cholesky decomposition of Sigmai[active, active]
-
+        
         double xtx = Gram(newVars(i), newVars(i));
         normXnew = std::sqrt(xtx);
-        // Rcpp::Rcout << "normXnew: " << normXnew << std::endl;
-        // Rcpp::Rcout << "xtx: " << xtx << std::endl;
-        // Rcpp::Rcout << "check3" << std::endl;
         if (dimR == 0) {
           R(0,0) = normXnew;
           rankR = 1;
@@ -584,19 +564,12 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
         } else {
           arma::vec Xtx = Gram.row(newVars(i)).t();
           Xtx = Xtx.elem(active);
-          // Rcpp::Rcout << "Xtx: " << Xtx << std::endl;
-          // Rcpp::Rcout << "dimR: " << dimR << std::endl;
-          // Rcpp::Rcout << "Rsubmat: " << R.submat(0, 0,dimR - 1, dimR - 1) << std::endl;
           arma::mat r = arma::solve(arma::trimatl((R.submat(0, 0,dimR - 1,
-                                                           dimR - 1)).t()), Xtx);
+                                                            dimR - 1)).t()), Xtx);
           
-          // Rcpp::Rcout << "check3a" << std::endl;
-          // Rcpp::Rcout << "r: " << r << std::endl;
-          // Rcpp::Rcout << "normXnew: " << normXnew << std::endl;
           double rpp;
           rpp = std::pow(normXnew,2) - arma::as_scalar(arma::sum(arma::pow(r,2)));
           
-          // Rcpp::Rcout << "rpp" << rpp << std::endl;
           if (rpp <= precScale){
             rpp = precScale;
           } else {
@@ -604,99 +577,48 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
             rankR = rankR + 1;
           }
           dimR = dimR + 1;
-          // Rcpp::Rcout << "dimR: " << dimR << std::endl;
-          // Rcpp::Rcout << "R " << R << std::endl;
-          // Rcpp::Rcout << "check3b" << std::endl;
           arma::vec newcol(x.n_cols, arma::fill::zeros);
-          // Rcpp::Rcout << "dimR " << dimR << std::endl;
-          // Rcpp::Rcout << "r " << r << std::endl;
-          // Rcpp::Rcout << "rpp " << rpp << std::endl;
           newcol.head(dimR - 1) = r;
           newcol(dimR - 1) = rpp;
           R.col(dimR - 1) = newcol;
-          // Rcpp::Rcout << "R " << R << std::endl;
-         
+          
         }
-        // Rcpp::Rcout << "Rsubmat: " << R.submat(0, 0,dimR - 1, dimR - 1) << std::endl;
-        // 
-        
-        // Rcpp::Rcout << "check3c" << std::endl;
-        // Rcpp::Rcout << "newVars: " << newVars(i) << std::endl;
-        // Rcpp::Rcout << "ignores: " << ignores << std::endl;
-        // Rcpp::Rcout << "action: " << action << std::endl;
-        // Rcpp::Rcout << "action nrows: " << action.n_rows << std::endl;
         if ((unsigned)rankR == active.size()) { // an ignore variable has entered
           dimR = dimR - 1;
           ignores.insert_rows(ignores.n_rows, newVars.row(i));
-          // Rcpp::Rcout << "ignores: " << ignores << std::endl;
-          // Rcpp::Rcout << "newadd2 : " << newAdd2 << std::endl;
           action.insert_rows(action.n_rows, arma::conv_to<arma::ivec>::from(newVars.row(i) * (-1)));
-          // Rcpp::Rcout << "action: " << action << std::endl;
         } else {
           active.insert_rows(active.n_rows, newVars.row(i));
           Posaction.insert_rows(Posaction.n_rows, newVars.row(i));
           path.insert_rows(path.n_rows, newVars.row(i));
-          // Sign.insert_rows(Sign.n_rows, Cvec(newVars(i)));
           Sign.insert_rows(Sign.n_rows, arma::sign(Cvec.row(newVars(i))));
           action.insert_rows(action.n_rows, arma::conv_to<arma::ivec>::from(newVars.row(i)));
         }
       }
-      // Rcpp::Rcout << "active" << active <<std::endl;
-      // Rcpp::Rcout << "ignores" << ignores <<std::endl;
-      
-      
-      // Rcpp::Rcout << "check4" << std::endl;
-      // Rcpp::Rcout << "Rmat: " << R.submat(0, 0,dimR - 1, dimR - 1) <<std::endl;
-      // Rcpp::Rcout << "Sign: " << Sign <<std::endl;
-      // 
-      // Rcpp::Rcout << arma::solve(arma::trimatu(R.submat(0, 0,dimR - 1, dimR - 1)),
-      //             Sign) << std::endl;
-      
-      // Rcpp::Rcout << "check4a" << std::endl;
       
       arma::mat Gi1 = arma::solve(arma::trimatu(R.submat(0, 0,dimR - 1, dimR - 1)),
                                   (arma::solve(arma::trimatl((R.submat(0, 0,dimR - 1,
                                                                        dimR - 1)).t()),
-                                               Sign)));
-     
-      // Rcpp::Rcout << "check5" << std::endl;
-      // Rcpp::Rcout << "Gi1" << Gi1 << std::endl;
+                                                                       Sign)));
       
       double A = 1 / std::sqrt(arma::sum(Gi1 % Sign));
-      // Rcpp::Rcout << "A" << A << std::endl;
-      // Rcpp::Rcout << "gi1" << Gi1 << std::endl;
       arma::vec  w = A * Gi1; // need to cast matrix to vector
       double gamhat;
-
-      // construct the inactive set by taking out actives and ignores
-      // inactive = DDC::vdiff(arma::regspace<arma::uvec>(0, C.size() - 1), active);
-      // inactive = DDC::vdiff(arma::regspace<arma::uvec>(0, C.size() - 1), ignores);
       
-      // Rcpp::Rcout << "check5a" << std::endl;
+      // construct the inactive set by taking out actives and ignores
+      
       arma::uvec actAndIgn = active;
       actAndIgn.insert_rows(actAndIgn.n_rows, ignores);
-      // Rcpp::Rcout << "actAndIgn" << actAndIgn << std::endl;
       inactive = DDC::vdiff(arma::regspace<arma::uvec>(0, x.n_cols - 1),
                             arma::sort(actAndIgn));
       
-      // Rcpp::Rcout << "inactive" << inactive << std::endl;
       
       if ((active.size() >= x.n_cols - ignores.size())) {
         gamhat = Cmax / A;
       } else {
         arma::vec a;
-        // Rcpp::Rcout << "w " << w << std::endl;
-        // Rcpp::Rcout << "C " << C << std::endl;
-        // Rcpp::Rcout << "Gram(active,inactive) " << Gram(active,inactive) << std::endl;
         a = (w.t() * Gram(active,inactive)).t();
-        // Rcpp::Rcout << "a " << a << std::endl;
-        
-        // Rcpp::Rcout << "gam1 " << gam1 << std::endl;
-        // Rcpp::Rcout << "gam2 " << gam2 << std::endl;
-        // Rcpp::Rcout << "Cmax/A " << Cmax/A << std::endl;
         arma::vec gam(2* C.size());
-        // gam.head(C.size()) = gam1;
-        // gam.tail(C.size()) = gam2;
         
         gam.head(C.size()) = (Cmax - C) / (A - a);
         gam.tail(C.size()) = (Cmax + C) / (A + a);
@@ -709,29 +631,14 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
         }
       }
       
-      // Rcpp::Rcout << "check6" << std::endl;
-      // Rcpp::Rcout << "Cvec" << Cvec << std::endl;
-      // Rcpp::Rcout << "gamhat" << gamhat << std::endl;
-      // Rcpp::Rcout << "w" << w << std::endl;
-      // Rcpp::Rcout << "Gram.cols(active)" << Gram.cols(active) << std::endl;
       Cvec = Cvec - gamhat * Gram.cols(active) * w;
-      
-      // Rcpp::Rcout << "Cvec" << Cvec << std::endl;
-      // Rcpp::Rcout << "action" << action << std::endl;
-      
-      // Can we construct the needed output here?
-      
-      // Rcpp::Rcout << "check6" << std::endl;
-      
       
       betaOLS.zeros();
       betaOLS(active) =  (arma::solve(arma::trimatu(R.submat(0, 0,dimR - 1, dimR - 1)),
-              (arma::solve(arma::trimatl((R.submat(0, 0,dimR - 1,
-                                                   dimR - 1)).t()),
-                                                   (x.cols(active)).t()))) * y).t();
-      // Rcpp::Rcout << "check6a" << std::endl;
+                          (arma::solve(arma::trimatl((R.submat(0, 0,dimR - 1,
+                                                               dimR - 1)).t()),
+                                                               (x.cols(active)).t()))) * y).t();
       residuals = y -  (betaOLS.cols(active) *  (x.cols(active)).t()).t();
-      // Rcpp::Rcout << "check6b" << std::endl;
       
       arma::mat Ip(dimR, dimR);
       Ip.eye();
@@ -752,10 +659,6 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
       totactions = totactions + action.size();
       totPosactions = totPosactions + Posaction.size();
       
-      
-      
-      // Rcpp::Rcout << "check7" << std::endl;
-      
       // Now return the biasmat. 
       // we return the R of the cholesky decomposition instead
       // can be used to construct bias may through Rinverse * Rinverse.t();
@@ -767,9 +670,7 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
       
       // arma::mat bmat_replacement(x.n_cols, x.n_cols, arma::fill:: zeros);
       // bmat_replacement.submat(0, 0, dimR - 1, dimR - 1) = R.submat(0, 0, dimR - 1, dimR - 1);
-      // Rcpp::Rcout << "R" << R << std::endl;
-      // Rcpp::Rcout << "bmat_replacement" << bmat_replacement << std::endl;
-      // biasMat.row(k+1) = bmat_replacement; // the first one is a zero matrix
+       // biasMat.row(k+1) = bmat_replacement; // the first one is a zero matrix
       // biasMat.row(k + 1) = R; // the first one is a zero matrix
       k = k + 1;
       
@@ -780,19 +681,11 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
     arma::uvec missingInds;
     missingInds = DDC::vdiff(arma::regspace<arma::uvec>(0, x.n_cols - 1),
                              arma::sort(path));
-    // Rcpp::Rcout << "check: " <<  std::endl;
-    // Rcpp::Rcout << "path: " << path << std::endl;
-    // Rcpp::Rcout << "missingInds: " << missingInds << std::endl;
     if (missingInds.size() > 0) {
       path.insert_rows(path.size(), missingInds);
       betaOLS.zeros();
-      // Rcpp::Rcout << "betaOLS: " << betaOLS << std::endl;
-      // Rcpp::Rcout << "x: " << x << std::endl;
-      // Rcpp::Rcout << "y: " << y << std::endl;
       betaOLS   = arma::solve(x, y, arma::solve_opts::likely_sympd).t();
-      // Rcpp::Rcout << "betaOLS: " << betaOLS << std::endl;
       residuals = y -  (betaOLS *  x.t()).t();
-      // Rcpp::Rcout << "check: " <<  std::endl;
       
       for (unsigned int i = 0; i < missingInds.size(); i++) {
         // bmat.row(bmat.n_rows - i - 1)  = solve(Sigmai); // maybe we don't need these?
@@ -800,7 +693,6 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
         RSS(RSS.size() - i - 1) = arma::conv_to<double>::from(arma::sum(arma::pow(residuals, 2)));
       }
     }
-    // Rcpp::Rcout << "check: " <<  std::endl;
     //// End of lar_ols
     // Now start constructing the output
     
@@ -826,23 +718,18 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
     //     } 
     //   } 
     // }
-   
-   // unscale with the weights, bmat already has been rescaled
-   beta = beta.each_row() / weights.t();
-   
+    
+    // unscale with the weights, bmat already has been rescaled
+    beta = beta.each_row() / weights.t();
+    
     // converg path to 1-based indexing:
     path = path + 1;
     
-      return(Rcpp::List::create( Rcpp::Named("beta") = beta,
-                                 Rcpp::Named("biasMat") = bmat,
-                                 Rcpp::Named("ordering") = path,
-                                 Rcpp::Named("RSS") = RSS));
-      
-    // return(Rcpp::List::create( Rcpp::Named("actions") = actions,
-    //                            Rcpp::Named("biasMat") = biasMat,
-    //                            Rcpp::Named("ignores") = ignores,
-    //                            Rcpp::Named("biasMat") = biasMat,
-    //                            Rcpp::Named("nbactions") = nbactions));
+    return(Rcpp::List::create( Rcpp::Named("beta") = beta,
+                               Rcpp::Named("biasMat") = bmat,
+                               Rcpp::Named("ordering") = path,
+                               Rcpp::Named("RSS") = RSS));
+    
   } catch( std::exception& __ex__ )
   {
     forward_exception_to_r( __ex__ );
@@ -852,4 +739,222 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
   }
   
   return Rcpp::wrap(NA_REAL);
+}
+
+
+// cellMCD //
+
+// [[Rcpp::export]]
+Rcpp::List allpreds_cpp(arma::mat& X,
+                        arma::mat& S,
+                        arma::vec& mu,
+                        arma::umat& W) {
+try
+{
+  
+  arma::uword n = W.n_rows;
+  arma::uword d = W.n_cols;
+  //arma::mat Sinv = arma::inv_sympd(arma::symmatu(S));
+  arma::mat Sinv = arma::inv(S);
+  arma::mat preds(n, d);
+  arma::mat cvars(n, d);
+  
+  
+  std::unordered_map<std::string, arma::uvec> Wmap;
+  uniqueRows(W, Wmap);
+  
+  
+  for (std::pair<std::string, arma::uvec> s : Wmap) {
+    
+    
+    arma::uvec myrows = s.second; // all indices with rowpattern(string) s
+    arma::urowvec w = W.row(myrows(0)); // the actual rowpattern
+    
+    arma::uvec obs = arma::find(w);
+    arma::uvec mis = arma::find(1 - w);
+    
+    if (mis.n_elem < d) {
+      if (mis.n_elem > 0) {
+        
+        arma::mat Sjinv = subinverse_cpp(S, Sinv, obs);
+        
+        arma::vec cvar = arma::diagvec(S(mis, mis) -
+          S(mis, obs) * Sjinv * S(obs, mis));
+        for (arma::uword i = 0; i < myrows.n_elem; i++) {
+          arma::uvec rowi(1);
+          rowi(0) = myrows(i);
+          cvars(rowi, mis) = cvar.t();
+          preds(rowi, mis) = mu(mis).t() + (X(rowi, obs) - mu(obs).t()) * Sjinv * S(obs, mis);
+        }
+        
+        // now compute preds and cvars for all available entries
+        //
+        
+        if (obs.n_elem == 1) {
+          for (arma::uword i = 0; i < myrows.n_elem; i++) {
+            arma::uvec rowi(1);
+            rowi(0) = myrows(i);
+            preds(rowi, obs) = mu(obs);
+            cvars(rowi, obs) = S(obs, obs);
+          }
+        } else {
+          for (arma::uword j = 0; j < obs.n_elem; j++) {
+            arma::uvec obsj(1);
+            obsj(0) = obs(j);
+            arma::uvec helps = obs(arma::find(obs != obs(j)));
+            arma::mat M2inv = subinverse_cpp(S, Sinv, helps);
+            
+            arma::mat cvar = S(obsj, obsj) - S(obsj, helps) *
+              M2inv * S(helps, obsj);
+            
+            for (arma::uword i = 0; i < myrows.n_elem; i++) {
+              arma::uvec rowi(1);
+              rowi(0) = myrows(i);
+              cvars(rowi, obsj) = cvar;
+              preds(rowi, obsj) = mu(obsj).t() +
+                (X(rowi, helps) - mu(helps).t()) * M2inv * S(helps, obsj);
+            }
+          }
+        }
+        
+      } else { //no missings in this pattern
+        
+        arma:: vec cvar = (1 / arma::diagvec(Sinv));
+        
+        for (arma::uword i = 0; i < myrows.n_elem; i++) {
+          cvars.row(myrows(i)) =  cvar.t();
+        }
+        
+        for (arma::uword j = 0; j < d; j++) {
+          arma::uvec jvec(1);
+          jvec(0) = j;
+          arma::uvec j_neg = arma::regspace<arma::uvec>(0, d - 1);
+          j_neg.shed_rows(jvec);
+          
+          arma::mat Sjinv = subinverse_cpp(S, Sinv, j_neg);
+          arma::mat Xtemp = X(myrows, j_neg);
+          Xtemp.each_row() -= mu(j_neg).t();
+          
+          preds(myrows, jvec) = (arma::as_scalar(mu(j)) +
+            Xtemp * Sjinv * S(j_neg, jvec));
+        }
+      }
+    } else { // all elements of this pattern are missing
+      for (arma::uword i = 0; i < myrows.n_elem; i++) {
+        preds.row(myrows(i)) = mu.t();
+        cvars.row(myrows(i)) =  arma::diagvec(Sinv).t();
+      }
+    }
+    
+  }
+  
+  
+  return Rcpp::List::create(Rcpp::Named("preds") = preds,
+                            Rcpp::Named("cvars") = cvars);
+} catch( std::exception& __ex__ )
+{
+  forward_exception_to_r( __ex__ );
+} catch(...)
+{
+  ::Rf_error( "c++ exception " "(unknown reason)" );
+}
+
+return Rcpp::wrap(NA_REAL);
+}
+
+
+
+// [[Rcpp::export]]
+double Objective_cpp(arma::mat &X,
+                     arma::umat &W,
+                     arma::vec &mu,
+                     arma::mat &Sigma,
+                     arma::mat &Sigmai) {
+  try
+  {
+    
+    double objective = 0;
+    double objective_add = 0;
+    
+    
+    std::unordered_map<std::string, arma::uvec> Wmap;
+    uniqueRows(W, Wmap);
+    
+    
+    for (std::pair<std::string, arma::uvec> s : Wmap) {
+      
+      arma::uvec myrows = s.second; // all indices with rowpattern(string) s
+      arma::urowvec w = W.row(myrows(0)); // the actual rowpattern
+      
+      arma::uvec obs = arma::find(w);
+      arma::uvec mis = arma::find(1 - w);
+      
+      arma::vec subMu = mu(obs);
+      arma::mat subSigma = Sigma(obs, obs);
+      arma::mat invsubSigma = subinverse_cpp(Sigma, Sigmai, obs);
+      
+      
+      arma::mat Xtemp = X(myrows, obs);
+      Xtemp.each_row() -= subMu.t();
+      arma::mat MD = arma::sum((Xtemp * invsubSigma) % Xtemp, 1);
+      objective_add = arma::as_scalar(arma::sum(MD + 
+        arma::log_det_sympd(arma::symmatu(subSigma)) + 
+        std::log(2 * arma::datum::pi) * (obs.n_elem)));
+      objective    = objective + objective_add;
+    } 
+    
+    return(objective);
+  } catch( std::exception& __ex__ )
+  {
+    forward_exception_to_r( __ex__ );
+  } catch(...)
+  {
+    ::Rf_error( "c++ exception " "(unknown reason)" );
+  }
+  
+  return NA_REAL;
+}
+
+
+// [[Rcpp::export]]
+arma::umat updateW_cpp(const arma::mat &X,
+                       arma::umat W,
+                       const arma::vec &mu,
+                       const arma::mat &Sigma,
+                       const arma::mat &Sigmai,
+                       const arma::vec &lambda,
+                       const arma::uword &h) {
+  try
+  {
+    
+    arma::uword n = W.n_rows;
+    arma::uword d = W.n_cols;
+    arma::uvec ord = arma::stable_sort_index(arma::sum(W, 0));
+    arma::vec Delta(n);
+    arma::uvec goodCells;
+    arma::uvec wnew(n);
+    arma::uvec Delta_rank(n);
+    for (arma::uword j = 0; j < d; j++) {
+      arma::uword jtemp = ord(j);
+      Delta = Deltacalc_cpp(X, W, Sigma, Sigmai, mu, jtemp + 1);
+      goodCells = arma::find(Delta <= lambda(jtemp));
+      if (goodCells.n_elem < h) {
+        Delta_rank = arma::stable_sort_index(Delta - lambda(jtemp));
+        goodCells = Delta_rank.head(h);
+      }
+      wnew.zeros();
+      wnew(goodCells).fill(1);
+      W.col(jtemp) = wnew;
+    }
+    return(W);
+  } catch( std::exception& __ex__ )
+  {
+    forward_exception_to_r( __ex__ );
+  } catch(...)
+  {
+    ::Rf_error( "c++ exception " "(unknown reason)" );
+  }
+  arma::umat error_out(1,1);
+  error_out.fill(arma::datum::nan);
+  return error_out;
 }
