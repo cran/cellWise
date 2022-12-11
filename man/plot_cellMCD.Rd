@@ -66,7 +66,8 @@ plot_cellMCD(cellout, type = "Zres/X", whichvar = NULL,
     }
 }
 \references{
-J. Raymaekers and P.J. Rousseeuw (2022). The cellwise MCD estimator. 
+J. Raymaekers and P.J. Rousseeuw (2022). The cellwise MCD estimator, ArXiv:2207.13493.
+\href{https://arxiv.org/abs/2207.13493}{(link to open access pdf)} 
 }
 \author{
 J. Raymaekers and P.J. Rousseeuw

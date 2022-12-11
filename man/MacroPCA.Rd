@@ -58,6 +58,8 @@ MacroPCA(X, k = 0, MacroPCApars = NULL)
       \item{\code{maxiter} \cr Maximum number of iterations. Default is 20.}
       
       \item{\code{tol} \cr Tolerance for iterations. Default is 0.005.}
+      \item{\code{center}\cr
+      if \code{NULL}, MacroPCA will compute the center. If a vector with \eqn{d} components, this center will be used.}
       \item{\code{bigOutput} \cr whether to compute and return NAimp, Cellimp and Fullimp. Defaults to \code{TRUE}.}
     }
   }
@@ -69,11 +71,11 @@ MacroPCA(X, k = 0, MacroPCApars = NULL)
   \item{remX}{Cleaned data after \code{checkDataSet}.}
   \item{DDC}{results of the first step of MacroPCA. These are needed to run
   MacroPCApredict on new data.}
-  \item{scaleX}{the scales of the columns of \code{X}.}
+  \item{scaleX}{the scales of the columns of \code{X}. When \code{scale = FALSE} these are all \eqn{1}.}
   \item{k}{the number of principal components.}
   \item{loadings}{the columns are the \code{k} loading vectors.}
   \item{eigenvalues}{the \code{k} eigenvalues.}
-  \item{center}{vector with the fitted center.}
+  \item{center}{vector with the center.}
   \item{alpha}{\code{alpha} from the input.}
   \item{h}{\code{h} (computed from \code{alpha}).}
   \item{It}{number of iteration steps.}
@@ -120,7 +122,7 @@ x[sample(1:(n * d), 50, FALSE)] <- NA
 x[sample(1:(n * d), 50, FALSE)] <- 10
 x <- cbind(1:n, x)
 MacroPCA.out <- MacroPCA(x, 2)
-cellMap(MacroPCA.out$remX, MacroPCA.out$stdResid,
+cellMap(D = MacroPCA.out$remX, R = MacroPCA.out$stdResid,
 columnlabels = 1:d, rowlabels = 1:n)
 # For more examples, we refer to the vignette:
 \dontrun{

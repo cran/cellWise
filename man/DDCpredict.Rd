@@ -15,8 +15,7 @@ DDCpredict(Xnew, InitialDDC, DDCpars = NULL)
 
 \arguments{
 
-\item{Xnew}{The new data (test data), which must be a matrix or a data frame.
-It must always be provided.}
+\item{Xnew}{The new data (test data), which must be a matrix or a data frame. It must always be provided. Its columns (variables) should correspond to those of \code{InitialDDC$remX}.}
 
 \item{InitialDDC}{The output of the \code{\link{DDC}} function on the initial (training)
 dataset. Must be provided.}
@@ -80,7 +79,7 @@ DDCx <- DDC(x)
 xnew <- mvrnorm(50, rep(0,d), A)
 xnew[sample(1:(50 * d), 50, FALSE)] <- 10
 predict.out <- DDCpredict(xnew, DDCx)
-cellMap(xnew, predict.out$stdResid,
+cellMap(D = xnew, R = predict.out$stdResid,
 columnlabels = 1:d, rowlabels = 1:50)
 
 # For more examples, we refer to the vignette:

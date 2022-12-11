@@ -43,7 +43,7 @@ length(intersect(data$indcells, flaggedCells_marginal))
 # only 61 of the 200 cells are flagged
 
 
-cellMap(X, DI.out$Zres, indcells = flaggedCells, 
+cellMap(D = X, R = DI.out$Zres, indcells = flaggedCells, 
                   columnlabels = 1:10,
                   rowlabels = 1:100,
                   mTitle = "cellHandler",
@@ -52,7 +52,7 @@ cellMap(X, DI.out$Zres, indcells = flaggedCells,
                   sizetitles = 2,
                   drawCircles = F)
 
-cellMap(X, Z, indcells = flaggedCells_marginal, 
+cellMap(D = X, R = Z, indcells = flaggedCells_marginal, 
                   columnlabels = 1:10,
                   rowlabels = 1:100,
                   mTitle = "marginal analysis",
@@ -93,7 +93,7 @@ indcells <- DI.out$indcells
 # Draw cellmap:
 # pdf("VOCs_20_cellmap.pdf", height = 6)
 rowsToShow = 1:20
-cellMap(X, Zres, 
+cellMap(D = X, R = Zres, 
                   indcells = indcells, 
                   columnlabels = colnames(X),
                   showrows = rowsToShow,
@@ -185,7 +185,7 @@ length(which(Zres[twoInHome,8] > 0))/length(twoInHome)
 # 63% of the children living in a house with two smokers
 # have suspiciously high levels for this biomarker.
 
-cellMap(X, Zres, 
+cellMap(D = X, R = Zres, 
                   indcells = which(W == 1), 
                   columnlabels = colnames(X),
                   showrows = oneInHome,
@@ -196,7 +196,7 @@ cellMap(X, Zres,
                   sizetitles = 2,
                   drawCircles = F)
 
-cellMap(X, Zres, 
+cellMap(D = X, R = Zres, 
                   indcells = which(W == 1), 
                   columnlabels = colnames(X),
                   showrows = twoInHome,
@@ -210,7 +210,7 @@ cellMap(X, Zres,
 # For one or more smokers in the house:
 smokeInHome = c(oneInHome,twoInHome)
 length(smokeInHome) 
-cellMap(X, Zres, 
+cellMap(D = X, R = Zres, 
                   indcells = which(W == 1), 
                   columnlabels = colnames(X),
                   showrows = smokeInHome,

@@ -11,53 +11,58 @@ and possibly combining cells into blocks. A cellmap shows which cells are missin
 }
 
 \usage{
-cellMap(D, R, indcells = NULL, indrows = NULL,
-                   standOD=NULL,showVals=NULL,rowlabels="",
-                   columnlabels="",mTitle="", rowtitle="",
-                   columntitle="",showrows=NULL, showcolumns=NULL,
-                   nrowsinblock=1, ncolumnsinblock=1,autolabel=TRUE,
-                   columnangle=90,sizetitles=1.1,adjustrowlabels=1,
-                   adjustcolumnlabels=1, colContrast=1,outlyingGrad=TRUE,
-                   darkestColor = sqrt(qchisq(0.999,1)),
-                   drawCircles = TRUE)
+cellMap(R, indcells = NULL, indrows = NULL, standOD = NULL, 
+          showVals = NULL, D=NULL, rowlabels = NULL,
+          columnlabels = NULL, mTitle = "cell map",
+          rowtitle = "cases", columntitle = "variables", 
+          showrows = NULL, showcolumns = NULL,
+          nrowsinblock = 1, ncolumnsinblock = 1, 
+          autolabel = TRUE, columnangle = 90, sizemain = 2,
+          sizetitles = 1.1, adjustrowlabels = 1, 
+          adjustcolumnlabels = 1, colContrast = 1, outlyingGrad = TRUE, 
+          darkestColor = sqrt(qchisq(0.999, 1)), drawCircles = TRUE) 
 }
 
 \arguments{
-  \item{D}{
-  The data matrix (required input argument).
-  }
   \item{R}{
-  Matrix of standardized residuals of the cells (required input argument)
+  Matrix of standardized residuals of the cells (required input argument). After running \code{\link{DDC}}, \code{\link{DDCpredict}},  \code{\link{MacroPCA}} or \code{\link{MacroPCApredict}} this is typically their value \code{$stdResid}.
   }
   \item{indcells}{
   Indices of outlying cells. Defaults to \code{NULL}, which indicates the cells for which
 \eqn{|\code{R}| > \sqrt(qchisq(0.99,1))}.
   }
   \item{indrows}{
-  Indices of outlying rows. By default no rows are indicated.
+  Indices of outlying rows. If not \code{NULL}, the small circle to the right of the row is filled black if the row is in this list, and white otherwise. This gets overruled if \code{standOD} is not \code{NULL}.
   }
   \item{standOD}{
-  Standardized Orthogonal Distance of each row. Defaults to \code{NULL}, then no rows
-  are indicated.
+  Standardized Orthogonal Distance of each row. If not \code{NULL}, represents the outlyingness of each row by a shade of gray in the small circle to the right of the row. This color is white for \code{standOD} below \eqn{1}, and becomes fully black for \code{standOD} over \eqn{3}.
   }
   \item{showVals}{
-  Takes the values \code{"D"}, \code{"R"} or \code{NULL} and determines whether or not to show the entries of the data matrix (D) or the residuals (R) in the cellmap. Defaults to \code{NULL}, then no values are shown.
+  Takes the values \code{"D"}, \code{"R"} or \code{NULL} (the default). If \code{"R"} the numerical values of the residuals in \code{R} are shown in the cellmap. If \code{"D"}, the entries of the data matrix \code{D} are shown, provided the matrix \code{D} is being specified. If \code{NULL}, no entries are shown.
+  }
+  \item{D}{
+  A matrix of data values, of the same dimensions as \code{R}. Default is \code{NULL}. \code{D} is only required when the data values are to be shown in the cellmap, by the option \code{showVals = "D"}. After running \code{\link{DDC}} or \code{\link{MacroPCA}}, \code{D} is typically their value \code{$remX}. After running \code{\link{DDCpredict}} or \code{\link{MacroPCApredict}} it is their argument \code{$newX}.
   }
   \item{rowlabels}{
-  Labels of the rows.
+  Labels of the rows. If \code{NULL}, row labels are taken from the argument \code{R}.
   }
   \item{columnlabels}{
-  Labels of the columns.
+  Labels of the columns. If \code{NULL}, column labels are taken from the argument \code{R}.
   }
   \item{mTitle}{
-  Main title of the cellMap. 
+  Main title of the cellMap. Defaults to "cell map".
+  }
+  \item{sizemain}{
+  Size of main title. Defaults to \eqn{2}.
   }
   \item{rowtitle}{
-  Title for the rows.
+  Title for the rows. Defaults to "cases".
   }
   \item{columntitle}{
-  Title for the columns.
+  Title for the columns. Defaults to "variables".
   }
+  \item{sizetitles}{
+  Size of row title and column title. Defaults to \eqn{1.1}.}
   \item{showrows}{
   Indices of the rows to be shown. Defaults to \code{NULL} which means all rows are shown.
   }
@@ -76,10 +81,7 @@ cellMap(D, R, indcells = NULL, indrows = NULL,
   Defaults to \code{TRUE}.
   }
   \item{columnangle}{
-  Angle of the column labels. Defaults to \eqn{90}.
-  }
-  \item{sizetitles}{
-  Size of row title and column title. Defaults to \eqn{1.1}.
+  Angle of the column labels. Defaults to \eqn{90} so the column labels are vertical.
   }
   \item{adjustrowlabels}{
   Adjust row labels: 0=left, 0.5=centered, 1=right. Defaults to \eqn{1}.

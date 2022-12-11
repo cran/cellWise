@@ -1,7 +1,7 @@
 Package: cellWise
 Type: Package
-Version: 2.4.0
-Date: 2022-08-10
+Version: 2.5.0
+Date: 2022-12-10
 Title: Analyzing Data with Cellwise Outliers
 Authors@R: c(
             person(given="Jakob",family="Raymaekers", role = c("aut","cre"),
@@ -13,17 +13,21 @@ Authors@R: c(
 Depends: R (>= 4.0.0)
 Suggests: knitr, robustHD, MASS, ellipse, markdown, rospca, GSE
 Imports: reshape2, scales, ggplot2, matrixStats, gridExtra, robustbase,
-        rrcov, svd, stats, Rcpp (>= 0.12.10.14)
+        rrcov, svd, stats, utils, shape, Rcpp (>= 0.12.10.14)
 LinkingTo: Rcpp, RcppArmadillo (>= 0.7.600.1.0)
 Description: Tools for detecting cellwise outliers and robust methods to analyze
     data which may contain them. Contains the implementation of the algorithms described in
     Rousseeuw and Van den Bossche (2018) <doi:10.1080/00401706.2017.1340909> (open access)
     Hubert et al. (2019) <doi:10.1080/00401706.2018.1562989> (open access),
-    Raymaekers and Rousseeuw (2019) <doi:10.1080/00401706.2019.1677270> (open access),
-    Raymaekers and Rousseeuw (2020) <doi:10.1007/s10994-021-05960-5> (open access),
-    Raymaekers and Rousseeuw (2020) <doi:10.52933/jdssv.v1i3.18> (open access).
+    Raymaekers and Rousseeuw (2021) <doi:10.1080/00401706.2019.1677270> (open access),
+    Raymaekers and Rousseeuw (2021) <doi:10.1007/s10994-021-05960-5> (open access),
+    Raymaekers and Rousseeuw (2021) <doi:10.52933/jdssv.v1i3.18> (open access),
+    Raymaekers and Rousseeuw (2022) <arXiv:2207.13493> (open access)
+    Rousseeuw (2022) <arXiv:2209.12697> (open access).
     Examples can be found in the vignettes:
-    "DDC_examples", "MacroPCA_examples", "wrap_examples", "transfo_examples", "DI_examples" and "cellMCD_examples".
+    "DDC_examples", "MacroPCA_examples", "wrap_examples", "transfo_examples",
+    "DI_examples", "cellMCD_examples" , "Correspondence_analysis_examples",
+    and "cellwise_weights_examples".
 License: GPL (>= 2)
 LazyData: No
 Author: Jakob Raymaekers [aut, cre],
@@ -34,6 +38,6 @@ Maintainer: Jakob Raymaekers <jakob.raymaekers@kuleuven.be>
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
 NeedsCompilation: yes
-Packaged: 2022-08-10 09:01:51 UTC; u0105404
+Packaged: 2022-12-10 16:19:25 UTC; u0105404
 Repository: CRAN
-Date/Publication: 2022-08-10 15:30:16 UTC
+Date/Publication: 2022-12-11 07:50:05 UTC

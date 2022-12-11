@@ -144,7 +144,7 @@ pairs(X, panel = function(x, y) {
         i <<- i + 1
       })
 
-## -----------------------------------------------------------------------------
+## ----fig.height=4,fig.width=3-------------------------------------------------
 data(data_dogWalker)
 # keep a copy of the data for later:
 X <- data_dogWalker

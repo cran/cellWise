@@ -4,8 +4,8 @@
 
 
 arma::uvec LocScaleEstimators::sample(const arma::uvec & sampleFrom,
-                       const unsigned int nbSamples,
-                       const bool replace) {
+                                      const unsigned int nbSamples,
+                                      const bool replace) {
   //acess function for RcppArmadillo::sample
   arma::uvec output = Rcpp::RcppArmadillo::sample(sampleFrom, nbSamples, replace);
   return(output);
@@ -78,7 +78,7 @@ void LocScaleEstimators::locWeightTanh154(arma::vec &x) {
 }
 
 double LocScaleEstimators::loc1StepM(const arma::vec &x, std::function<void (arma::vec&)> weightFunction, 
-                 double initLoc, double initScale, double precScale) {
+                                     double initLoc, double initScale, double precScale) {
   // Computes the first step of an algorithm for
   //   a location M-estimator using a weight function.
   // The weights are computed on (med,mad)-standardized data.
@@ -123,7 +123,7 @@ double LocScaleEstimators::loc1StepM(const arma::vec &x, std::function<void (arm
 
 
 void LocScaleEstimators::psiTanh(arma::vec &x, double b, double c, double k, double A,
-                   double B) {
+                                 double B) {
   // Psi function of the hyperbolic tangent estimator. The input values
   // have 2 degrees of freedom, be carefull in changing them!
   //   
@@ -196,7 +196,7 @@ void LocScaleEstimators::rhoHuber15(arma::vec &x) {
 
 double LocScaleEstimators::scale1StepM(const arma::vec &x,
                                        std::function<void (arma::vec&)> rhoFunction,
-                   double initScale, double precScale) {
+                                       double initScale, double precScale) {
   // Computes the first step of an algorithm for
   //   a scale M-estimator using the given rho function.
   // The scatter is computed relative to zero.
@@ -235,11 +235,14 @@ double LocScaleEstimators::scale1StepM(const arma::vec &x,
 // LOCSCALE //
 //////////////
 
-LocScaleEstimators::locscale LocScaleEstimators::uniMcd(arma::vec y, double alpha) {
+LocScaleEstimators::locscale LocScaleEstimators::uniMcd(arma::vec y,
+                                                        double alpha,
+                                                        const int center) {
   // Computes reweighted univariate MCD estimator
+  // first step uses mcd location, but MAD scale.
   // Still needs to be finetuned: check for finite values, return 0 instead of NA
   // assumes alpha is based on y.size(), i.e. before checking for non finite values
-  
+  // if center is 0, the scale is computed around a fixed center of 0
   
   locscale out ={0, 1, 0, 1, 1, 1, arma::zeros<arma::uvec>(y.size())}; //output vector
   
@@ -253,75 +256,101 @@ LocScaleEstimators::locscale LocScaleEstimators::uniMcd(arma::vec y, double alph
   
   int len = y.size() - quan + 1;
   
-  if (len == 1) {
-    out.loc = arma::mean(y);
-    out.scale = sqrt(arma::var(y));
-    out.rawloc = out.loc;
-    out.rawscale = out.scale;
-  } else {
-    arma::vec sh(len, arma::fill::zeros);
-    arma::vec sh2(len, arma::fill::zeros);
-    arma::vec sq(len, arma::fill::zeros);
+  if (center == 0) {
     
+    out.rawloc = 0;
+    out.loc = 0;
+    arma::vec y2 = arma::pow(y, 2);
     
-    arma::uvec I = arma::sort_index(y);
-    y = y(I);
-    sh(0) = arma::sum(y.head(quan));
-    sh2(0) = std::pow(sh(0), 2) / quan;
-    sq(0) = arma::conv_to<double>::from(arma::sum(arma::pow(y.head(quan), 2)) - sh2(0));
+    arma::uvec I = arma::sort_index(y2);
+    y2 = y2(I);
     
-    for (int i = 1; i < len ; i++) {
-      sh(i) = sh(i - 1) - y(i - 1) + y(i + quan - 1);
-      sh2(i) = std::pow(sh(i), 2) / quan;
-      sq(i) = sq(i - 1) - std::pow(y(i - 1), 2) + std::pow(y(i + quan - 1), 2) - sh2(i) + sh2(i - 1);
-    }
+    double rawsqscale = y2(quan) / R::qchisq(((double) quan) / ((double) y2.size()), 1, true, false);
     
-    double sqmin = sq.min();
-    arma::uvec Isq = arma::sort_index(sq);
-    unsigned int ntied =  std::count(sq.begin(), sq.end(), sqmin);
-    // number of duplicates
-    
-    arma::uvec idtied = Isq.head(ntied);
-    double initmean = arma::mean(sh(idtied))/quan;
-    arma::vec sqres = arma::pow((y - initmean), 2);
-    arma::vec sortsqres = arma::sort(sqres); // could be replaced by std::partial_sort
-    
-    if(y.size() < 10){
-      arma::vec allc = {4.252,1.970,2.217,1.648,1.767,1.482,1.555};
-      out.cfac1 = allc(y.size()-3);
-    } else {
-      if(y.size() % 2 == 0) {
-        out.cfac1 = (double) y.size() / ( (double) y.size() - 3.0);
-      } else {
-        out.cfac1 = (double) y.size() /( (double) y.size() - 3.4);
-      }    
-    }
-    
-    double rawsqscale = std::pow(out.cfac1, 2) * sortsqres(quan - 1) / R::qchisq(((double) quan) / ((double) y.size()), 1, true, false);
     double cutoff = rawsqscale *  R::qchisq(0.975, 1, true, false) ;
-    arma::uvec weights = arma::find(sqres <= cutoff);
-
-    
-    out.rawloc = initmean;
+    arma::uvec weights = arma::find(y2 <= cutoff);
     out.rawscale = std::sqrt(rawsqscale);
-    out.loc = arma::sum(y(weights)) / weights.size();
+    //out.loc = arma::sum(y(weights)) / weights.size();
     
     arma::uvec weightsOut = arma::zeros<arma::uvec>(y.size());
     weightsOut(weights).ones();
     weightsOut(I) = weightsOut; // I allows us to put the weights in the right order
     out.weights(indfin) = weightsOut; 
     
+    double sqscale = std::sqrt(std::max(0.0,
+                                        arma::sum(y2(weights))) / (weights.size() - 1));
+    out.scale = 1.0835 * sqrt(sqscale);
     
-    double tempscale = std::sqrt(std::max(0.0, arma::sum(arma::pow(y(weights) - out.loc, 2))) / (weights.size() - 1));
-    if(y.size() < 16){ 
-      arma::vec alld = {1.475,1.223,1.253,1.180,1.181,1.140, 1.143,1.105,1.114,1.098,1.103,1.094,1.093};
-      out.cfac2 = alld(y.size() - 3) ; 
+  } else {
+    if (len == 1) {
+      out.loc = arma::mean(y);
+      out.scale = sqrt(arma::var(y));
+      out.rawloc = out.loc;
+      out.rawscale = out.scale;
     } else {
-      out.cfac2 = y.size()/(y.size()-1.4);
-    }    
-    out.scale = out.cfac2 * 1.0835 * tempscale;
+      arma::vec sh(len, arma::fill::zeros);
+      arma::vec sh2(len, arma::fill::zeros);
+      arma::vec sq(len, arma::fill::zeros);
+      
+      
+      arma::uvec I = arma::sort_index(y);
+      y = y(I);
+      sh(0) = arma::sum(y.head(quan));
+      sh2(0) = std::pow(sh(0), 2) / quan;
+      sq(0) = arma::conv_to<double>::from(arma::sum(arma::pow(y.head(quan), 2)) - sh2(0));
+      
+      for (int i = 1; i < len ; i++) {
+        sh(i) = sh(i - 1) - y(i - 1) + y(i + quan - 1);
+        sh2(i) = std::pow(sh(i), 2) / quan;
+        sq(i) = sq(i - 1) - std::pow(y(i - 1), 2) + std::pow(y(i + quan - 1), 2) - sh2(i) + sh2(i - 1);
+      }
+      
+      double sqmin = sq.min();
+      arma::uvec Isq = arma::sort_index(sq);
+      unsigned int ntied =  std::count(sq.begin(), sq.end(), sqmin);
+      // number of duplicates
+      
+      arma::uvec idtied = Isq.head(ntied);
+      double initmean = arma::mean(sh(idtied))/quan;
+      arma::vec sqres = arma::pow((y - initmean), 2);
+      arma::vec sortsqres = arma::sort(sqres); // could be replaced by std::partial_sort
+      
+      if(y.size() < 10){
+        arma::vec allc = {4.252,1.970,2.217,1.648,1.767,1.482,1.555};
+        out.cfac1 = allc(y.size()-3);
+      } else {
+        if(y.size() % 2 == 0) {
+          out.cfac1 = (double) y.size() / ( (double) y.size() - 3.0);
+        } else {
+          out.cfac1 = (double) y.size() /( (double) y.size() - 3.4);
+        }    
+      }
+      
+      double rawsqscale = std::pow(out.cfac1, 2) * sortsqres(quan - 1) / R::qchisq(((double) quan) / ((double) y.size()), 1, true, false);
+      double cutoff = rawsqscale *  R::qchisq(0.975, 1, true, false) ;
+      arma::uvec weights = arma::find(sqres <= cutoff);
+      
+      
+      out.rawloc = initmean;
+      out.rawscale = std::sqrt(rawsqscale);
+      out.loc = arma::sum(y(weights)) / weights.size();
+      
+      arma::uvec weightsOut = arma::zeros<arma::uvec>(y.size());
+      weightsOut(weights).ones();
+      weightsOut(I) = weightsOut; // I allows us to put the weights in the right order
+      out.weights(indfin) = weightsOut; 
+      
+      
+      double tempscale = std::sqrt(std::max(0.0, arma::sum(arma::pow(y(weights) - out.loc, 2))) / (weights.size() - 1));
+      if(y.size() < 16){ 
+        arma::vec alld = {1.475,1.223,1.253,1.180,1.181,1.140, 1.143,1.105,1.114,1.098,1.103,1.094,1.093};
+        out.cfac2 = alld(y.size() - 3) ; 
+      } else {
+        out.cfac2 = y.size()/(y.size()-1.4);
+      }    
+      out.scale = out.cfac2 * 1.0835 * tempscale;
+    }
   }
-  
   return(out);
 }
 
@@ -343,11 +372,11 @@ LocScaleEstimators::Xlocscale LocScaleEstimators::estLocScale(const arma::mat &X
   // every col of X
   // quan is only used for mcd
   // center is boolean determining whether or not to center before calculating scale
-  //        it is not used for unimcd options
   // type 0 = biweight location + huber 2.5 scale
   // type 1 = huber location + huber scale
   // type 2 = unimcd + wrapping location/scale
   // type 3 = unimcd
+  // type 4 = raw unimcd
   
   LocScaleEstimators::Xlocscale out;
   out.loc = arma::zeros(X.n_cols);
@@ -365,14 +394,14 @@ LocScaleEstimators::Xlocscale LocScaleEstimators::estLocScale(const arma::mat &X
       if (nLocScaleFlag) {
         arma::uvec sampleFrom = arma::find_finite(tempCol);
         if (sampleFrom.size() > nLocScale){
-        tempCol = tempCol(LocScaleEstimators::sample(sampleFrom, nLocScale, false));
+          tempCol = tempCol(LocScaleEstimators::sample(sampleFrom, nLocScale, false));
         }
       }
       if (center) {
-      out.loc(i) = LocScaleEstimators::loc1StepM(tempCol, 
-              LocScaleEstimators::locWeightBiweight,
-              arma::datum::nan,
-              arma::datum::nan, precScale);
+        out.loc(i) = LocScaleEstimators::loc1StepM(tempCol, 
+                LocScaleEstimators::locWeightBiweight,
+                arma::datum::nan,
+                arma::datum::nan, precScale);
       } else {
         out.loc(i) = 0;
       }
@@ -392,10 +421,10 @@ LocScaleEstimators::Xlocscale LocScaleEstimators::estLocScale(const arma::mat &X
         }
       }
       if (center) {
-      out.loc(i) = LocScaleEstimators::loc1StepM(tempCol, 
-              LocScaleEstimators::locWeightHuber15,
-              arma::datum::nan,
-              arma::datum::nan, precScale);
+        out.loc(i) = LocScaleEstimators::loc1StepM(tempCol, 
+                LocScaleEstimators::locWeightHuber15,
+                arma::datum::nan,
+                arma::datum::nan, precScale);
       } else {
         out.loc(i) = 0;
       }
@@ -416,7 +445,7 @@ LocScaleEstimators::Xlocscale LocScaleEstimators::estLocScale(const arma::mat &X
       }
       
       // initial estimate
-      LocScaleEstimators::locscale uni = LocScaleEstimators::uniMcd(tempCol, alpha);
+      LocScaleEstimators::locscale uni = LocScaleEstimators::uniMcd(tempCol, alpha, center);
       double m0 = uni.loc;
       double s0 = uni.scale;
       
@@ -437,7 +466,7 @@ LocScaleEstimators::Xlocscale LocScaleEstimators::estLocScale(const arma::mat &X
           tempCol = tempCol(LocScaleEstimators::sample(sampleFrom, nLocScale, false));
         }
       }
-      LocScaleEstimators::locscale uni = LocScaleEstimators::uniMcd(tempCol, alpha);
+      LocScaleEstimators::locscale uni = LocScaleEstimators::uniMcd(tempCol, alpha, center);
       out.loc(i) = uni.loc;
       out.scale(i)  = uni.scale;
     }
@@ -451,7 +480,7 @@ LocScaleEstimators::Xlocscale LocScaleEstimators::estLocScale(const arma::mat &X
           tempCol = tempCol(LocScaleEstimators::sample(sampleFrom, nLocScale, false));
         }
       }
-      LocScaleEstimators::locscale uni = LocScaleEstimators::uniMcd(tempCol, alpha);
+      LocScaleEstimators::locscale uni = LocScaleEstimators::uniMcd(tempCol, alpha, center);
       out.loc(i) = uni.rawloc;
       out.scale(i)  = uni.rawscale;
     }
@@ -468,9 +497,9 @@ LocScaleEstimators::Xlocscale LocScaleEstimators::estLocScale(const arma::mat &X
       // 1 step M estimate, starting from median & mad
       double m1;
       if (center) {
-       m1  =  LocScaleEstimators::loc1StepM(tempCol, LocScaleEstimators::locWeightTanh154,
-                                                  arma::datum::nan,
-                                                  arma::datum::nan, precScale);
+        m1  =  LocScaleEstimators::loc1StepM(tempCol, LocScaleEstimators::locWeightTanh154,
+                                             arma::datum::nan,
+                                             arma::datum::nan, precScale);
       } else {
         m1 = 0;
       }

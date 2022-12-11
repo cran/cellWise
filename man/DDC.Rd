@@ -189,7 +189,7 @@ x[sample(1:(n * d), 50, FALSE)] <- 10
 x[sample(1:(n * d), 50, FALSE)] <- -10
 x <- cbind(1:n, x)
 DDCx <- DDC(x)
-cellMap(DDCx$remX, DDCx$stdResid,
+cellMap(D = DDCx$remX, R = DDCx$stdResid,
 columnlabels = 1:d, rowlabels = 1:n)
 
 # For more examples, we refer to the vignette:

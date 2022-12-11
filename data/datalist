@@ -1,6 +1,9 @@
 data_VOC
+data_brands
+data_clothes
 data_dogWalker
 data_dposs
 data_glass
 data_mortality
+data_personality_traits
 data_philips

@@ -39,12 +39,11 @@ datafr
 DDCdatafr = DDC(datafr,DDCpars)
 
 remX = DDCdatafr$remX; dim(remX)
-cellMap(D=remX, R=DDCdatafr$stdResid, rowlabels = 1:nrow(remX), 
-        columnlabels = colnames(remX))
+cellMap(DDCdatafr$stdResid)
 # Red cells have higher value than predicted, blue cells lower,
 # white cells are missing values, all other cells are yellow.
 
-## ----fig.height=10,fig.width=7------------------------------------------------
+## ----fig.height=6,fig.width=3-------------------------------------------------
 set.seed(12345) # for reproducibility
 n <- 50; d <- 20
 A <- matrix(0.9, d, d); diag(A) = 1
@@ -59,8 +58,7 @@ x[sample(1:(n * d), 50, FALSE)] <- -10
 # all defaults are used:
 DDCx <- DDC(x)
 
-cellMap(D=DDCx$remX, R=DDCx$stdResid, columnlabels = 1:d, 
-        rowlabels = 1:n)
+cellMap(DDCx$stdResid)
 # Red cells have higher value than predicted, blue cells lower,
 # white cells are missing values, all other cells are yellow.
 
@@ -205,7 +203,7 @@ DDCtransTG = DDC(transTG,DDCpars)
 
 
 
-## ----fig.height=10,fig.width=8------------------------------------------------
+## ----fig.height=8,fig.width=6-------------------------------------------------
 remX = DDCtransTG$remX # the remaining part of the dataset
 dim(remX)
 
@@ -225,34 +223,24 @@ tempX = myTopGear[DDCtransTG$rowInAnalysis,DDCtransTG$colInAnalysis]
 tempX$Price = tempX$Price/1000 # to avoid printing long numbers
 dim(tempX)
 
-columnlabels = colnames(tempX)
-rowlabels = rownames(tempX)
 # Show the following 17 cars in the cellmap:
 showrows = c(12,42,56,73,81,94,99,135,150,164,176,198,209,215,234,241,277)
 
 # Make two ggplot2 objects:
-ggpcol = cellMap(D=tempX,
-                 R=standX,
-                 indcells=which(is.na(transTGcol)),
-                 indrows=integer(0),
-                 columnlabels=columnlabels,
-                 rowlabels=rowlabels,
+ggpcol = cellMap(standX,
                  mTitle="By column",
                  showrows=showrows,
                  showVals="D",
-                 adjustrowlabels=0.5) 
+                 D=tempX,
+                 adjustrowlabels=0.5)  
 plot(ggpcol)
 
 ## ----fig.height=10,fig.width=8------------------------------------------------
-ggpDDC = cellMap(D=tempX,
-                 R=DDCtransTG$stdResid, 
-                 indcells=DDCtransTG$indcells,
-                 indrows=DDCtransTG$indrows,
-                 columnlabels=columnlabels,
-                 rowlabels=rowlabels,
+ggpDDC = cellMap(DDCtransTG$stdResid, 
                  mTitle="DetectDeviatingCells",
                  showrows=showrows,
                  showVals="D",
+                 D=tempX,
                  adjustrowlabels=0.5)
 plot(ggpDDC)
 
@@ -262,28 +250,19 @@ plot(ggpDDC)
 # dev.off()
 
 
-## ----fig.height=10,fig.width=8------------------------------------------------
+## ----fig.height=8,fig.width=6-------------------------------------------------
 # Top Gear dataset: prediction of "new" data
 ############################################
 # For comparison we first remake the cell map of the entire dataset, but now 
 # showing the values of the residuals instead of the data values:
 
 dim(remX) # 296 11
-rowlabels = rownames(remX)
-columnlabels = colnames(remX)
 
-ggpDDC = cellMap(D=remX,
-                 R=DDCtransTG$stdResid,
-                 indcells=DDCtransTG$indcells,
-                 indrows=DDCtransTG$indrows,
-                 standOD=NULL,
+ggpDDC = cellMap(DDCtransTG$stdResid, 
+                 mTitle="DetectDeviatingCells",
+                 showrows=showrows,
                  showVals="R",
-                 rowlabels=rowlabels,
-                 columnlabels=columnlabels,
-                 mTitle="DDC",
-                 showrows=showrows, 
-                 adjustrowlabels=0.5, 
-                 outlyingGrad = 1)
+                 adjustrowlabels=0.5)
 plot(ggpDDC)
 
 ## -----------------------------------------------------------------------------
@@ -317,17 +296,10 @@ all.equal(predictDDC,predictDDC2) # TRUE
 
 ## ----fig.height=10,fig.width=8------------------------------------------------
 
-ggpnew = cellMap(D=newX,
-                 R=predictDDC$stdResid,
-                 indcells=predictDDC$indcells,
-                 indrows=predictDDC$indrows,
-                 standOD=NULL,
+ggpnew = cellMap(predictDDC$stdResid,
                  showVals="R",
-                 rowlabels=rowlabels[showrows],
-                 columnlabels=columnlabels,
                  mTitle="DDCpredict",
-                 adjustrowlabels=0.5, 
-                 outlyingGrad = 1)
+                 adjustrowlabels=0.5) 
 plot(ggpnew) # Looks quite similar to the result using the entire dataset:
 
 # Creating the pdf:
@@ -340,7 +312,7 @@ data(data_philips)
 dim(data_philips) 
 colnames(data_philips) = c("X1","X2","X3","X4","X5","X6","X7","X8","X9")
 
-DDCphilips = DDC(data_philips,DDCpars)
+DDCphilips = DDC(data_philips)
 
 qqnorm(as.vector(DDCphilips$Z)) # rather gaussian, here we only see 2 outliers:
 
@@ -357,7 +329,7 @@ library(robustbase) # for covMcd
 ## ----fig.height=4,fig.width=8-------------------------------------------------
 MCDphilips = robustbase::covMcd(data_philips)
 indrowsMCD = which(mahalanobis(data_philips,MCDphilips$center,
-                               MCDphilips$cov) > qchisq(0.975,df=d))
+                               MCDphilips$cov) > qchisq(0.975,df=9))
 
 plot(sqrt(mahalanobis(data_philips,MCDphilips$center,MCDphilips$cov)),
      main="Philips data",ylab="Robust distances",xlab="",pch=20)
@@ -365,40 +337,21 @@ abline(h=sqrt(qchisq(0.975,df=9))) # this horizontal line is the cutoff.
 # dev.copy(pdf,"Figure_philips_left.pdf",width=10,height=4)
 # dev.off()
 
-## ----fig.height=10,fig.width=8------------------------------------------------
+## ----fig.height=8,fig.width=6-------------------------------------------------
 # cellMaps with rectangular blocks:
 
-n = nrow(data_philips)
-nrowsinblock = 15
-rowlabels = 1:n
-
-d = ncol(data_philips)
-ncolumnsinblock = 1
-columnlabels = colnames(data_philips)
-
-ggpMCDphilips = cellMap(D=data_philips,
-                        R=matrix(0,n,d),
-                        indcells=integer(0),
+ggpMCDphilips = cellMap(data_philips,
                         indrows=indrowsMCD,
-                        rowlabels=rowlabels,
-                        columnlabels=columnlabels,                        
                         mTitle="MCD",
-                        nrowsinblock=nrowsinblock,
-                        ncolumnsinblock=ncolumnsinblock,                        
-                        autolabel=T)
+                        nrowsinblock=15,
+                        ncolumnsinblock=1)
 plot(ggpMCDphilips)
 
-ggpDDCphilips = cellMap(D=data_philips, 
-                        R=DDCphilips$stdResid,
-                        indcells=DDCphilips$indcells,
+ggpDDCphilips = cellMap(DDCphilips$stdResid,
                         indrows=DDCphilips$indrows,
-                        rowlabels=rowlabels,
-                        columnlabels=columnlabels,                        
                         mTitle="DetectDeviatingCells",
-                        nrowsinblock=nrowsinblock,
-                        ncolumnsinblock=ncolumnsinblock,
-                        autolabel=T,
-                        adjustrowlabels=1)
+                        nrowsinblock=15,
+                        ncolumnsinblock=1)
 plot(ggpDDCphilips)
 # dev.copy(pdf,"Figure_philips_right.pdf",width=6,height=12)
 # dev.off()
@@ -418,44 +371,27 @@ dim(remX)
 ## ----results='hide',message=FALSE,warning=FALSE-------------------------------
 library(rrcov) # contains ROBPCA
 
-## ----fig.height=10,fig.width=8------------------------------------------------
+## ----fig.height=8,fig.width=6-------------------------------------------------
 PCAmortality = rrcov::PcaHubert(data_mortality,alpha=0.75,scale=FALSE)
 
-n = nrow(remX)
-nrowsinblock = 5
-rowlabels = rownames(remX)
-
-d = ncol(remX)
-ncolumnsinblock = 5
-columnlabels = colnames(remX)
-
-ggpROBPCA = cellMap(D=remX,
-                    R=matrix(0,n,d),
+ggpROBPCA = cellMap(remX,
                     indrows=which(PCAmortality@flag==FALSE),
-                    rowlabels=rowlabels,
-                    columnlabels=columnlabels,                    
                     mTitle="By row",
-                    nrowsinblock=nrowsinblock,
-                    ncolumnsinblock=ncolumnsinblock, 
+                    nrowsinblock=5,
+                    ncolumnsinblock=5, 
                     rowtitle = "Years",
                     columntitle = "Age",
-                    sizetitles = 2.0,
-                    autolabel=T)
+                    sizetitles = 2.0)
 plot(ggpROBPCA)
 
-ggpDDC = cellMap(D=remX, 
-                 R=DDCmortality$stdResid,
-                 indcells=DDCmortality$indcells,
+ggpDDC = cellMap(DDCmortality$stdResid,
                  indrows=DDCmortality$indrows,
-                 rowlabels=rowlabels,
-                 columnlabels=columnlabels,                 
                  mTitle="DetectDeviatingCells",
-                 nrowsinblock=nrowsinblock,
-                 ncolumnsinblock=ncolumnsinblock,
+                 nrowsinblock=5,
+                 ncolumnsinblock=5,
                  rowtitle = "Years",
                  columntitle = "Age",
-                 sizetitles = 2.0,
-                 autolabel=T)
+                 sizetitles = 2.0)
 plot(ggpDDC) # Leads to a detailed interpretation:
 
 # pdf("cellmap_mortality.pdf",width=14,height=12)
@@ -516,45 +452,39 @@ nrowsinblock = 5
 rowtitle = "glass samples"
 rowlabels = rep("",floor(n/nrowsinblock));
 rowlabels[1] = "1"
-rowlabels[floor(n/ncolumnsinblock)] = "n";
-# rowlabels
+rowlabels[floor(n/nrowsinblock)] = "n";
 
 d = ncol(remX)
 ncolumnsinblock = 5
 columntitle = "wavelengths"
 columnlabels = rep("",floor(d/ncolumnsinblock));
 columnlabels[1] = "1";
-columnlabels[floor(d/nrowsinblock)] = "d"
-# columnlabels
+columnlabels[floor(d/ncolumnsinblock)] = "d"
 
-ggpROBPCA = cellMap(D=remX, 
-                    R=matrix(0,n,d),
-                    indcells=integer(0),
+ggpROBPCA = cellMap(matrix(0,n,d),
                     indrows=which(PCAglass@flag==FALSE),
                     rowlabels=rowlabels,
                     columnlabels=columnlabels,
                     mTitle="By row",
-                    nrowsinblock=nrowsinblock,
-                    ncolumnsinblock=ncolumnsinblock,
+                    nrowsinblock=5,
+                    ncolumnsinblock=5,
                     columnangle=0,
-                    rowtitle=rowtitle,
-                    columntitle=columntitle,
+                    rowtitle="glass samples",
+                    columntitle="wavelengths",
                     sizetitles=1.5,
                     autolabel=F)
 plot(ggpROBPCA)
 
-ggpDDC = cellMap(D=remX, 
-                 R=DDCglass$stdResid,
-                 indcells=DDCglass$indcells,
+ggpDDC = cellMap(DDCglass$stdResid,
                  indrows=DDCglass$indrows,
                  rowlabels=rowlabels,
                  columnlabels=columnlabels,
                  mTitle="DDC",
-                 nrowsinblock=nrowsinblock,
-                 ncolumnsinblock=ncolumnsinblock,
+                 nrowsinblock=5,
+                 ncolumnsinblock=5,
                  columnangle=0,
-                 rowtitle=rowtitle,
-                 columntitle=columntitle,
+                 rowtitle="glass samples",
+                 columntitle="wavelengths",
                  sizetitles=1.5,
                  autolabel=F)
 plot(ggpDDC)
@@ -562,18 +492,16 @@ plot(ggpDDC)
 # gridExtra::grid.arrange(ggpROBPCA,ggpDDC,ncol=1)
 # dev.off()
 
-ggpfastDDC = cellMap(D=remXfast, 
-                     R=fastDDCglass$stdResid,
-                     indcells=fastDDCglass$indcells,
+ggpfastDDC = cellMap(fastDDCglass$stdResid,
                      indrows=fastDDCglass$indrows,
                      rowlabels=rowlabels,
                      columnlabels=columnlabels,
                      mTitle="fast DDC",
-                     nrowsinblock=nrowsinblock,
-                     ncolumnsinblock=ncolumnsinblock,
+                     nrowsinblock=5,
+                     ncolumnsinblock=5,
                      columnangle=0,
-                     rowtitle=rowtitle,
-                     columntitle=columntitle,    
+                     rowtitle="glass samples",
+                     columntitle="wavelengths",
                      sizetitles=1.5,
                      autolabel=F)
 plot(ggpfastDDC)

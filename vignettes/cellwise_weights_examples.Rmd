@@ -1,0 +1,222 @@
+---
+title: "cellwise weights examples"
+author: "Rousseeuw, P.J."
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{cellwise weights examples}
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+ fig.width = 8 ,
+ fig.height = 12,
+ fig.align ='center'
+)
+```
+
+
+# Introduction
+
+This file contains examples of the use of the weightedEM, unpack, and cwLocScat functions. It reproduces all the figures of the report "Analyzing cellwise weighted data" by P.J. Rousseeuw.
+
+
+```{r}
+library("cellWise")
+n = 10
+d = 3
+A = matrix(0.7, d, d); diag(A) = 1
+A
+set.seed(12345)
+library("MASS")
+X = mvrnorm(n, rep(0,d), A)
+colnames(X) = c("X1","X2","X3")
+X[1,3] = X[2,2] = X[3,1] = X[4,1] = X[6,2] = NA
+X # rows 1, 2, 3, 4, 6 have NAs
+w = c(1,2,1,1,2,2,1,1,1,1) # rowwise weights
+out = weightedEM(X,w,crit=1e-12,computeloglik=T)
+out$niter # number of iteration steps taken
+out$mu
+round(out$Sigma,6)
+plot(1:out$niter, out$loglikhd[1:out$niter], type='l',
+     lty=1, col=4, xlab='step', ylab='log(likelihood)',
+     main='log(likelihood) of weighted EM iterations')
+tail(out$loglikhd) # would have NAs for computeloglik=F
+out$impX # imputed data, has no NA's
+
+# The weights may be multiplied by a constant:
+#
+(w = c(1,2,1,1,2,2,1,1,1,1)/3) # divide weights by 3
+out = weightedEM(X,w,crit=1e-12,computeloglik=T)
+out$niter # OK, same results:
+out$mu # same
+round(out$Sigma,6) # same
+tail(out$loglikhd)
+# converges to -11.3573 = -34.07189 / 3
+
+
+# Create an equivalent matrix y without weights, by repeating
+# some rows according to their integer weights:
+#
+Y = X[c(1,2,2,3,4,5,5,6,6,7,8,9,10),]
+dim(Y)
+Y # This gives the same results:
+out = weightedEM(Y,crit=1e-12,computeloglik=T) # OK, same
+out$niter
+out$mu
+round(out$Sigma,6)
+tail(out$loglikhd)
+# converges to -34.07189 like before.
+```
+
+
+#  Unpack the toy example in section 2 of the paper
+
+```{r}
+X = matrix(c(2.8,5.3,4.9,7.4,
+             2.3,5.7,4.3,7.2,
+             2.5,5.1,4.4,7.6),nrow=3,byrow=T)
+W = matrix(c(0.8,1.0,0.3,0.4,
+             0.3,0.5,0.9,0.5,
+             1.0,0.6,0,0.7),nrow=3,byrow=T)
+rownames(X) = rownames(W) = c("A","B","C")
+colnames(X) = colnames(W) = c("V1","V2","V3","V4")
+n = nrow(X); d = ncol(X)
+X
+W
+out = unpack(X,W)
+cbind(out$U,out$v) # OK
+dim(out$U)
+```
+
+# Playing with the function cwLocScat
+
+```{r}
+set.seed(12345)
+n = 1000; d = 2
+A = matrix(0.7, d, d); diag(A) = 1
+A
+X = mvrnorm(n, rep(0,d), A)
+head(X)
+W = abs(mvrnorm(n, rep(0,d), diag(rep(1,2))))
+W = W/max(as.vector(W))
+W[2,1] = 0
+W[5,2] = 0
+head(W)
+
+fit = cwLocScat(X,W)
+fit$cwMLEiter # number of iteration steps
+
+fit$cwMLEmu
+
+fit$cwMean
+
+fit$cwMLEsigma
+
+fit$cwCov # similar to cwMLEsigma:
+
+fit$sqrtCov # same diagonal:
+
+```
+
+# Personality traits example from section 4
+
+```{r}
+data("data_personality_traits")
+X <- data_personality_traits$X
+W <- data_personality_traits$W
+cbind(X,W) # as in table in the paper
+
+out = unpack(X,W)
+cbind(out$U,out$v)
+fit = cwLocScat(X,W)
+fit$cwMLEiter
+
+round(fit$cwMLEmu,2)
+
+round(fit$cwMean,2)
+
+round(fit$cwMLEsigma, 2)
+
+round(eigen(fit$cwMLEsigma)$values, 2)
+
+round(fit$cwCov, 2)
+
+round(eigen(fit$cwCov)$values,5)
+
+round(cov(X), 2) # unweighted
+
+round(eigen(cov(X))$values, 2)
+```
+
+Now we reproduce the figure in the paper
+
+```{r}
+ellips = function(covmat, mu, quant=0.95, npoints = 120)
+{ # computes points of the ellipse t(X-mu)%*%covmat%*%(X-mu) = c
+  # with c = qchisq(quant,df=2)
+  if (!all(dim(covmat) == c(2, 2))) stop("covmat is not 2 by 2")
+  eig = eigen(covmat)
+  U = eig$vectors
+  R = U %*% diag(sqrt(eig$values)) %*% t(U) # square root of covmat
+  angles = seq(0, 2*pi, length = npoints+1)
+  xy = cbind(cos(angles),sin(angles)) # points on the unit circle
+  fac = sqrt(qchisq(quant, df=2))
+  scale(fac*xy%*%R, center = -mu, scale=FALSE)
+}  
+
+
+n = nrow(X)
+j = 3; k = 6 # to plot variables t3 and t6
+xy = X[,c(j,k)]
+cov2cor(cov(X)[c(j,k),c(j,k)]) # unweighted correlation is 0.10
+cov2cor(fit$cwMLEsigma[c(j,k),c(j,k)]) # now correlation is 0.31
+(wxy = W[,c(j,k)])
+duplicated(xy) # ties: row 4 equals row 3, and row 9 equals row 5
+wxy[3,] = wxy[3,] + wxy[4,] # add cell weights of rows 3 and 4
+wxy[5,] = wxy[5,] + wxy[9,] # add cell weights of rows 5 and 9
+(wxy = wxy[-c(4,9),]) # remove duplicate rows
+(xy = xy[-c(4,9),]) # remove duplicate rows
+
+# pdf("personality_cwMLE_cwCov.pdf",width=5.5,height=5.5)
+myxlim = c(2,14); myylim = c(1,13)
+plot(xy, pch=16, col="white", xlim=myxlim, ylim=myylim,
+     xlab="",ylab="")
+fac = 0.3 # for the size of the lines representing the cell weights
+for(i in seq_len(nrow(xy))){
+  WY = c(xy[i,1] - fac*wxy[i,1],xy[i,2]) # (WestX, Y) 
+  EY = c(xy[i,1] + fac*wxy[i,1],xy[i,2]) # (EastX, Y) 
+  XS = c(xy[i,1],xy[i,2] - fac*wxy[i,2]) # (X, SouthY)
+  XN = c(xy[i,1],xy[i,2] + fac*wxy[i,2]) # (X, NorthY)
+  lines(rbind(WY,EY),lwd=3)
+  lines(rbind(XS,XN),lwd=3)
+}
+title(main="tolerance ellipses with and without cell weights",
+      line=0.8,cex.main=1) # 1.2)
+title(xlab="trait 3",line=2.1,cex.lab=1.0)
+title(ylab="trait 6",line=2.1,cex.lab=1.0)
+center1 = colMeans(X[,c(j,k)])
+covmat1 = (n-1)*cov(X[,c(j,k)])/n                   
+ell1 = ellips(covmat1, center1)
+lines(ell1,lwd=1.5,col="red") # ellipse from unweighted covariance
+fit2 = cwLocScat(xy,wxy)
+center2 = fit2$cwMLEmu
+covmat2 = fit2$cwMLEsigma
+ell2 = ellips(covmat2, center2) # ellipse from cwMLE estimates
+lines(ell2,lwd=1.5,col="blue")
+center3 = fit2$cwMean
+covmat3 = fit2$cwCov
+ell3 = ellips(covmat3, center3) # ellipse from cwMean and cwCov
+lines(ell3,lwd=1.5,lty=2,col="blue")
+legend("topleft",c("cwMLE","cwCov","MLE"),
+       col=c("blue","blue","red"), lty=c(1,2,1), lwd=1.5, cex=1)
+# dev.off()
+
+# The blue ellipses, that use the cell weights, are a bit
+# higher and more slanted than the red ellipse that doesn't,
+# mainly due to the high cell weight of the y-coordinate of 
+# the point in the top right corner.
+```
+

@@ -5,13 +5,16 @@ import("ggplot2")
 importFrom("utils", "data")
 importFrom("stats", "mad", "median", "na.omit", "pchisq", "qchisq","weighted.mean", "cov", "mahalanobis", "qnorm", "sd", "cov.wt", "optimize", "cov2cor","rnorm", "runif")
 importFrom("matrixStats","weightedMedian")
+importFrom("shape","Arrows")
 importFrom("reshape2","melt")
 importFrom("gridExtra","grid.arrange")
 importFrom("scales","rescale")
 importFrom("rrcov","CovMcd")
-importFrom("robustbase","classPC", "rankMM", "covMcd")
+# import("robustbase")
+importFrom("robustbase","classPC", "rankMM", "covMcd", "Qn", "scaleTau2", "r6pack", "mahalanobisD")
 importFrom("svd","propack.svd")
-importFrom("graphics", "abline", "plot", "points", "barplot", "lines", "text", "title")
+importFrom("graphics", "abline", "plot",
+           "points", "barplot", "lines", "text", "title")
 importFrom("grDevices", "adjustcolor")
 
 export(checkDataSet)
@@ -38,3 +41,8 @@ export(generateCorMat)
 
 export(cellMCD)
 export(plot_cellMCD)
+
+export(weightedEM)
+export(unpack)
+export(cwLocScat)
+

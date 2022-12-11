@@ -17,7 +17,9 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProbCell,
                    const unsigned int & numiter, const double & precScale,
                    const int & standType, const int & corrType,
                    const unsigned int & nCorr, const unsigned int & nLocScale,
-                   arma::uvec & goodCols)
+                   arma::uvec & goodCols,
+                   const int & fixedCenter,
+                   const arma::vec & center)
 {
   
   try
@@ -48,14 +50,27 @@ Rcpp::List DDC_cpp(arma::mat & X, const double & tolProbCell,
     /////////////////////////////////////
     
     // Robust standardization
-    if (fastDDC == 0) {
-      locscaleX = LocScaleEstimators::estLocScale(X, nLocScale,
-                                                  standType, precScale, 1);
+    if (fixedCenter == 0) {
+      if (fastDDC == 0) {
+        locscaleX = LocScaleEstimators::estLocScale(X, nLocScale,
+                                                    standType, precScale, 1);
+      } else {
+        locscaleX = LocScaleEstimators::estLocScale(X, nLocScale,
+                                                    2, precScale, 1);
+      }
+      Z = X.each_row() - locscaleX.loc.t();
     } else {
-      locscaleX = LocScaleEstimators::estLocScale(X, nLocScale,
-                                                  2, precScale, 1);
+      Z = X.each_row() - center.t();
+      if (fastDDC == 0) {
+        locscaleX = LocScaleEstimators::estLocScale(Z, nLocScale,
+                                                    standType, precScale, 0);
+      } else {
+        locscaleX = LocScaleEstimators::estLocScale(Z, nLocScale,
+                                                    2, precScale, 0);
+      }
+      locscaleX.loc = center;
     }
-    Z = X.each_row() - locscaleX.loc.t();
+    
     Z = Z.each_row() / locscaleX.scale.t();
     
     
@@ -448,11 +463,12 @@ Rcpp::List estLocScale_cpp(arma::mat & X, unsigned int nLocScale,
 
 
 // [[Rcpp::export]]
-Rcpp::List unimcd_cpp(arma::vec & y, const double alpha) {
+Rcpp::List unimcd_cpp(arma::vec & y, const double alpha, 
+                      const int center) {
   try
   {
     LocScaleEstimators::locscale out;
-    out = LocScaleEstimators::uniMcd(y, alpha);
+    out = LocScaleEstimators::uniMcd(y, alpha, center);
     
     return(Rcpp::List::create( Rcpp::Named("loc") = out.loc,
                                Rcpp::Named("scale") = out.scale,
@@ -670,7 +686,7 @@ Rcpp::List findCellPath_cpp(arma::mat & predictors,
       
       // arma::mat bmat_replacement(x.n_cols, x.n_cols, arma::fill:: zeros);
       // bmat_replacement.submat(0, 0, dimR - 1, dimR - 1) = R.submat(0, 0, dimR - 1, dimR - 1);
-       // biasMat.row(k+1) = bmat_replacement; // the first one is a zero matrix
+      // biasMat.row(k+1) = bmat_replacement; // the first one is a zero matrix
       // biasMat.row(k + 1) = R; // the first one is a zero matrix
       k = k + 1;
       
@@ -749,117 +765,117 @@ Rcpp::List allpreds_cpp(arma::mat& X,
                         arma::mat& S,
                         arma::vec& mu,
                         arma::umat& W) {
-try
-{
-  
-  arma::uword n = W.n_rows;
-  arma::uword d = W.n_cols;
-  //arma::mat Sinv = arma::inv_sympd(arma::symmatu(S));
-  arma::mat Sinv = arma::inv(S);
-  arma::mat preds(n, d);
-  arma::mat cvars(n, d);
-  
-  
-  std::unordered_map<std::string, arma::uvec> Wmap;
-  uniqueRows(W, Wmap);
-  
-  
-  for (std::pair<std::string, arma::uvec> s : Wmap) {
+  try
+  {
+    
+    arma::uword n = W.n_rows;
+    arma::uword d = W.n_cols;
+    //arma::mat Sinv = arma::inv_sympd(arma::symmatu(S));
+    arma::mat Sinv = arma::inv(S);
+    arma::mat preds(n, d);
+    arma::mat cvars(n, d);
     
     
-    arma::uvec myrows = s.second; // all indices with rowpattern(string) s
-    arma::urowvec w = W.row(myrows(0)); // the actual rowpattern
+    std::unordered_map<std::string, arma::uvec> Wmap;
+    uniqueRows(W, Wmap);
     
-    arma::uvec obs = arma::find(w);
-    arma::uvec mis = arma::find(1 - w);
     
-    if (mis.n_elem < d) {
-      if (mis.n_elem > 0) {
-        
-        arma::mat Sjinv = subinverse_cpp(S, Sinv, obs);
-        
-        arma::vec cvar = arma::diagvec(S(mis, mis) -
-          S(mis, obs) * Sjinv * S(obs, mis));
-        for (arma::uword i = 0; i < myrows.n_elem; i++) {
-          arma::uvec rowi(1);
-          rowi(0) = myrows(i);
-          cvars(rowi, mis) = cvar.t();
-          preds(rowi, mis) = mu(mis).t() + (X(rowi, obs) - mu(obs).t()) * Sjinv * S(obs, mis);
-        }
-        
-        // now compute preds and cvars for all available entries
-        //
-        
-        if (obs.n_elem == 1) {
+    for (std::pair<std::string, arma::uvec> s : Wmap) {
+      
+      
+      arma::uvec myrows = s.second; // all indices with rowpattern(string) s
+      arma::urowvec w = W.row(myrows(0)); // the actual rowpattern
+      
+      arma::uvec obs = arma::find(w);
+      arma::uvec mis = arma::find(1 - w);
+      
+      if (mis.n_elem < d) {
+        if (mis.n_elem > 0) {
+          
+          arma::mat Sjinv = subinverse_cpp(S, Sinv, obs);
+          
+          arma::vec cvar = arma::diagvec(S(mis, mis) -
+            S(mis, obs) * Sjinv * S(obs, mis));
           for (arma::uword i = 0; i < myrows.n_elem; i++) {
             arma::uvec rowi(1);
             rowi(0) = myrows(i);
-            preds(rowi, obs) = mu(obs);
-            cvars(rowi, obs) = S(obs, obs);
+            cvars(rowi, mis) = cvar.t();
+            preds(rowi, mis) = mu(mis).t() + (X(rowi, obs) - mu(obs).t()) * Sjinv * S(obs, mis);
           }
-        } else {
-          for (arma::uword j = 0; j < obs.n_elem; j++) {
-            arma::uvec obsj(1);
-            obsj(0) = obs(j);
-            arma::uvec helps = obs(arma::find(obs != obs(j)));
-            arma::mat M2inv = subinverse_cpp(S, Sinv, helps);
-            
-            arma::mat cvar = S(obsj, obsj) - S(obsj, helps) *
-              M2inv * S(helps, obsj);
-            
+          
+          // now compute preds and cvars for all available entries
+          //
+          
+          if (obs.n_elem == 1) {
             for (arma::uword i = 0; i < myrows.n_elem; i++) {
               arma::uvec rowi(1);
               rowi(0) = myrows(i);
-              cvars(rowi, obsj) = cvar;
-              preds(rowi, obsj) = mu(obsj).t() +
-                (X(rowi, helps) - mu(helps).t()) * M2inv * S(helps, obsj);
+              preds(rowi, obs) = mu(obs);
+              cvars(rowi, obs) = S(obs, obs);
+            }
+          } else {
+            for (arma::uword j = 0; j < obs.n_elem; j++) {
+              arma::uvec obsj(1);
+              obsj(0) = obs(j);
+              arma::uvec helps = obs(arma::find(obs != obs(j)));
+              arma::mat M2inv = subinverse_cpp(S, Sinv, helps);
+              
+              arma::mat cvar = S(obsj, obsj) - S(obsj, helps) *
+                M2inv * S(helps, obsj);
+              
+              for (arma::uword i = 0; i < myrows.n_elem; i++) {
+                arma::uvec rowi(1);
+                rowi(0) = myrows(i);
+                cvars(rowi, obsj) = cvar;
+                preds(rowi, obsj) = mu(obsj).t() +
+                  (X(rowi, helps) - mu(helps).t()) * M2inv * S(helps, obsj);
+              }
             }
           }
+          
+        } else { //no missings in this pattern
+          
+          arma:: vec cvar = (1 / arma::diagvec(Sinv));
+          
+          for (arma::uword i = 0; i < myrows.n_elem; i++) {
+            cvars.row(myrows(i)) =  cvar.t();
+          }
+          
+          for (arma::uword j = 0; j < d; j++) {
+            arma::uvec jvec(1);
+            jvec(0) = j;
+            arma::uvec j_neg = arma::regspace<arma::uvec>(0, d - 1);
+            j_neg.shed_rows(jvec);
+            
+            arma::mat Sjinv = subinverse_cpp(S, Sinv, j_neg);
+            arma::mat Xtemp = X(myrows, j_neg);
+            Xtemp.each_row() -= mu(j_neg).t();
+            
+            preds(myrows, jvec) = (arma::as_scalar(mu(j)) +
+              Xtemp * Sjinv * S(j_neg, jvec));
+          }
         }
-        
-      } else { //no missings in this pattern
-        
-        arma:: vec cvar = (1 / arma::diagvec(Sinv));
-        
+      } else { // all elements of this pattern are missing
         for (arma::uword i = 0; i < myrows.n_elem; i++) {
-          cvars.row(myrows(i)) =  cvar.t();
-        }
-        
-        for (arma::uword j = 0; j < d; j++) {
-          arma::uvec jvec(1);
-          jvec(0) = j;
-          arma::uvec j_neg = arma::regspace<arma::uvec>(0, d - 1);
-          j_neg.shed_rows(jvec);
-          
-          arma::mat Sjinv = subinverse_cpp(S, Sinv, j_neg);
-          arma::mat Xtemp = X(myrows, j_neg);
-          Xtemp.each_row() -= mu(j_neg).t();
-          
-          preds(myrows, jvec) = (arma::as_scalar(mu(j)) +
-            Xtemp * Sjinv * S(j_neg, jvec));
+          preds.row(myrows(i)) = mu.t();
+          cvars.row(myrows(i)) =  arma::diagvec(Sinv).t();
         }
       }
-    } else { // all elements of this pattern are missing
-      for (arma::uword i = 0; i < myrows.n_elem; i++) {
-        preds.row(myrows(i)) = mu.t();
-        cvars.row(myrows(i)) =  arma::diagvec(Sinv).t();
-      }
+      
     }
     
+    
+    return Rcpp::List::create(Rcpp::Named("preds") = preds,
+                              Rcpp::Named("cvars") = cvars);
+  } catch( std::exception& __ex__ )
+  {
+    forward_exception_to_r( __ex__ );
+  } catch(...)
+  {
+    ::Rf_error( "c++ exception " "(unknown reason)" );
   }
   
-  
-  return Rcpp::List::create(Rcpp::Named("preds") = preds,
-                            Rcpp::Named("cvars") = cvars);
-} catch( std::exception& __ex__ )
-{
-  forward_exception_to_r( __ex__ );
-} catch(...)
-{
-  ::Rf_error( "c++ exception " "(unknown reason)" );
-}
-
-return Rcpp::wrap(NA_REAL);
+  return Rcpp::wrap(NA_REAL);
 }
 
 

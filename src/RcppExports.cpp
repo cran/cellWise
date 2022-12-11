@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // DDC_cpp
-Rcpp::List DDC_cpp(arma::mat& X, const double& tolProbCell, const double& tolProbRow, const double& tolProbReg, const double& tolProbCorr, const double& corrlim, const int& combinRule, const int& includeSelf, const int& fastDDC, const int& qdim, const int& transFun, unsigned int& k, const unsigned int& numiter, const double& precScale, const int& standType, const int& corrType, const unsigned int& nCorr, const unsigned int& nLocScale, arma::uvec& goodCols);
-RcppExport SEXP _cellWise_DDC_cpp(SEXP XSEXP, SEXP tolProbCellSEXP, SEXP tolProbRowSEXP, SEXP tolProbRegSEXP, SEXP tolProbCorrSEXP, SEXP corrlimSEXP, SEXP combinRuleSEXP, SEXP includeSelfSEXP, SEXP fastDDCSEXP, SEXP qdimSEXP, SEXP transFunSEXP, SEXP kSEXP, SEXP numiterSEXP, SEXP precScaleSEXP, SEXP standTypeSEXP, SEXP corrTypeSEXP, SEXP nCorrSEXP, SEXP nLocScaleSEXP, SEXP goodColsSEXP) {
+Rcpp::List DDC_cpp(arma::mat& X, const double& tolProbCell, const double& tolProbRow, const double& tolProbReg, const double& tolProbCorr, const double& corrlim, const int& combinRule, const int& includeSelf, const int& fastDDC, const int& qdim, const int& transFun, unsigned int& k, const unsigned int& numiter, const double& precScale, const int& standType, const int& corrType, const unsigned int& nCorr, const unsigned int& nLocScale, arma::uvec& goodCols, const int& fixedCenter, const arma::vec& center);
+RcppExport SEXP _cellWise_DDC_cpp(SEXP XSEXP, SEXP tolProbCellSEXP, SEXP tolProbRowSEXP, SEXP tolProbRegSEXP, SEXP tolProbCorrSEXP, SEXP corrlimSEXP, SEXP combinRuleSEXP, SEXP includeSelfSEXP, SEXP fastDDCSEXP, SEXP qdimSEXP, SEXP transFunSEXP, SEXP kSEXP, SEXP numiterSEXP, SEXP precScaleSEXP, SEXP standTypeSEXP, SEXP corrTypeSEXP, SEXP nCorrSEXP, SEXP nLocScaleSEXP, SEXP goodColsSEXP, SEXP fixedCenterSEXP, SEXP centerSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -36,7 +36,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const unsigned int& >::type nCorr(nCorrSEXP);
     Rcpp::traits::input_parameter< const unsigned int& >::type nLocScale(nLocScaleSEXP);
     Rcpp::traits::input_parameter< arma::uvec& >::type goodCols(goodColsSEXP);
-    rcpp_result_gen = Rcpp::wrap(DDC_cpp(X, tolProbCell, tolProbRow, tolProbReg, tolProbCorr, corrlim, combinRule, includeSelf, fastDDC, qdim, transFun, k, numiter, precScale, standType, corrType, nCorr, nLocScale, goodCols));
+    Rcpp::traits::input_parameter< const int& >::type fixedCenter(fixedCenterSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type center(centerSEXP);
+    rcpp_result_gen = Rcpp::wrap(DDC_cpp(X, tolProbCell, tolProbRow, tolProbReg, tolProbCorr, corrlim, combinRule, includeSelf, fastDDC, qdim, transFun, k, numiter, precScale, standType, corrType, nCorr, nLocScale, goodCols, fixedCenter, center));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -71,14 +73,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // unimcd_cpp
-Rcpp::List unimcd_cpp(arma::vec& y, const double alpha);
-RcppExport SEXP _cellWise_unimcd_cpp(SEXP ySEXP, SEXP alphaSEXP) {
+Rcpp::List unimcd_cpp(arma::vec& y, const double alpha, const int center);
+RcppExport SEXP _cellWise_unimcd_cpp(SEXP ySEXP, SEXP alphaSEXP, SEXP centerSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(unimcd_cpp(y, alpha));
+    Rcpp::traits::input_parameter< const int >::type center(centerSEXP);
+    rcpp_result_gen = Rcpp::wrap(unimcd_cpp(y, alpha, center));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -145,10 +148,10 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_cellWise_DDC_cpp", (DL_FUNC) &_cellWise_DDC_cpp, 19},
+    {"_cellWise_DDC_cpp", (DL_FUNC) &_cellWise_DDC_cpp, 21},
     {"_cellWise_Wrap_cpp", (DL_FUNC) &_cellWise_Wrap_cpp, 4},
     {"_cellWise_estLocScale_cpp", (DL_FUNC) &_cellWise_estLocScale_cpp, 6},
-    {"_cellWise_unimcd_cpp", (DL_FUNC) &_cellWise_unimcd_cpp, 2},
+    {"_cellWise_unimcd_cpp", (DL_FUNC) &_cellWise_unimcd_cpp, 3},
     {"_cellWise_findCellPath_cpp", (DL_FUNC) &_cellWise_findCellPath_cpp, 5},
     {"_cellWise_allpreds_cpp", (DL_FUNC) &_cellWise_allpreds_cpp, 4},
     {"_cellWise_Objective_cpp", (DL_FUNC) &_cellWise_Objective_cpp, 5},

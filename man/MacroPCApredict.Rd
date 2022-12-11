@@ -16,7 +16,7 @@ MacroPCApredict(Xnew, InitialMacroPCA, MacroPCApars = NULL)
 \arguments{
 
 \item{Xnew}{The new data (test data), which must be a matrix or a data frame.
-It must always be provided.}
+It must always be provided. Its columns (variables) should correspond to those of \code{InitialMacroPCA$remX}.}
 
 \item{InitialMacroPCA}{The output of the MacroPCA function on the initial
 (training) dataset. Must be provided.}
@@ -84,6 +84,6 @@ MacroPCA.out <- MacroPCA(x, 2)
 xnew <- mvrnorm(n, rep(0,d), A)
 xnew[sample(1:(n * d), 50, FALSE)] <- 10
 predict.out <- MacroPCApredict(xnew, MacroPCA.out)
-cellMap(xnew, predict.out$stdResid,
+cellMap(D = xnew, R = predict.out$stdResid,
 columnlabels = 1:d, rowlabels = 1:n)
 }

@@ -62,7 +62,7 @@ double scale1StepM(const arma::vec &x, std::function<void (arma::vec&)> rhoFunct
 // LOCSCALE //
 //////////////
 
-locscale uniMcd(arma::vec y, double alpha = 0.5);
+locscale uniMcd(arma::vec y, double alpha = 0.5, const int center = 1);
 
 /////////////////////////
 // Vectorized LOCSCALE //

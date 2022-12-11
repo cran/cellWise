@@ -7,7 +7,7 @@ cellWise minimum covariance determinant estimator
 \description{
 The cellwise minimum covariance determinant estimator
 computes cellwise robust estimates of the center and covariance matrix of a data set \code{X}. The algorithm guarantees a monotone decrease of an objective function, 
-which is based on partial Gaussian log-likelihood. By default, it starts by calling \code{\link{checkDataSet}} to clean the data.
+which is based on observed Gaussian log-likelihood. By default, it starts by calling \code{\link{checkDataSet}} to clean the data.
 }
 \usage{
 cellMCD(X, alpha = 0.75, quant = 0.99,
@@ -97,7 +97,7 @@ cellMCD(X, alpha = 0.75, quant = 0.99,
     }
 }
 \references{
-J. Raymaekers and P.J. Rousseeuw (2022). The cellwise MCD estimator.
+J. Raymaekers and P.J. Rousseeuw (2022). The cellwise MCD estimator, ArXiv:2207.13493.
 \href{https://arxiv.org/abs/2207.13493}{(link to open access pdf)}
 }
 \author{

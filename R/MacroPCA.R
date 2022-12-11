@@ -15,11 +15,10 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   #     variability is >= 80% .
   # MacroPCApars : a list with all the options chosen by the user.
   #     Its default is
-  #
   #     MacroPCApars <- list(DDCpars=NULL,kmax=10,alpha=0.50,
   #                          h=NULL,scale=TRUE,maxdir=250,
   #                          distprob=0.99,silent = TRUE, 
-  #                          maxiter=20, tol=0.005)
+  #                          maxiter=20, tol=0.005, center = NULL)
   #
   # Meaning of these options:
   # DDCpars   : list with parameters for the first step of the 
@@ -54,7 +53,9 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   #             Default is TRUE 
   # maxiter   : maximum number of iterations. Default is 20.
   # tol       : tolerance for iterations. Default is 0.005.
-  #bigOutput: whether to compute and return NAimp, Fullimp and Cellimp
+  # bigOutput : whether to compute and return NAimp, Fullimp and Cellimp
+  # center    : if NULL, MacroPCA will compute the center. If a vector 
+  #             with d components, this center will be used.
   #
   # The outputs are:
   #
@@ -84,7 +85,6 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   # Fullimp     : various result for the fully imputed data.
   # DDC         : results of the first step of MacroPCA. These are
   #               needed to run MacroPCApredict on new data.
-  # 
   
   # The random seed is retained when leaving the function
   if (exists(".Random.seed",envir = .GlobalEnv,inherits = FALSE)) {
@@ -97,8 +97,8 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   if (!is.data.frame(X) & !is.matrix(X)) {
     stop("The input data must be a matrix or a data frame.")
   }
-  if (ncol(X) < 2) stop("The input data must have at least 2 columns.")
-  
+  d <- ncol(X)
+  if (d < 2) stop("The input data must have at least 2 columns.")
   
   if (is.null(MacroPCApars)) {
     MacroPCApars <- list()
@@ -108,12 +108,11 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   }
   
   # Parameters for checkDataset
-  # the default DDC parameters are set in DDC.R
   if (!"DDCpars" %in% names(MacroPCApars)) {
     MacroPCApars$DDCpars <- list()
   }
   if (!"fracNA" %in% names(MacroPCApars$DDCpars)) {
-    MacroPCApars$DDCpars$fracNA <-  0.5
+    MacroPCApars$DDCpars$fracNA <- 0.5
   }
   if (!"numDiscrete" %in% names(MacroPCApars$DDCpars)) {
     MacroPCApars$DDCpars$numDiscrete <- 3
@@ -128,7 +127,29 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
       MacroPCApars$silent
     }
   }
-  
+  # We want the ability to set MacroPCApars$DDCpars$center
+  # separately from MacroPCApars$center :
+  if (!("center" %in% names(MacroPCApars$DDCpars))) {
+    DDCcenter <- NA
+  } else {
+    DDCcenter = MacroPCApars$DDCpars$center
+    if(is.na(DDCcenter[1])){
+      if (length(DDCcenter) > 1) {
+        stop(paste0("MacroPCApars$DDCpars$center should be NA,\n",
+                    "or a vector of length ncol(X) without NAs"))
+      }
+    } else {
+      DDCcenter <- as.vector(DDCcenter)
+      ddc = length(DDCcenter)
+      print(dim(X))
+      if(ddc != d) stop(paste0(
+        "length(MacroPCApars$DDCpars$center) = ",ddc,
+        " should equal ncol(X) = ",d))
+      if (any(is.na(DDCcenter))) stop(
+        "MacroPCApars$DDCpars$center should not contain NAs")
+    }
+  } 
+  MacroPCApars$DDCpars$center <- DDCcenter
   
   # parameters for MacroPCA
   if (!"kmax" %in% names(MacroPCApars)) {
@@ -158,13 +179,15 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   if (!"bigOutput" %in% names(MacroPCApars)) {
     MacroPCApars$bigOutput <- TRUE
   }
-  
+  if (!"center" %in% names(MacroPCApars)) {
+    MacroPCApars$center <- NA
+  }
   
   # Put options in convenient order
-  
-  MacroPCApars <- MacroPCApars[c("DDCpars", "kmax", "alpha", "scale", "maxdir",
-                                 "distprob", "silent", "maxiter", "tol", "bigOutput")]
-  
+  MacroPCApars <- MacroPCApars[c("DDCpars", "kmax", "alpha", 
+                                 "scale", "maxdir", "distprob",
+                                 "silent", "maxiter", "tol",
+                                 "bigOutput", "center")]
   
   # Input arguments
   DDCpars   <- MacroPCApars$DDCpars
@@ -177,71 +200,94 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   tol       <- MacroPCApars$tol
   scale     <- MacroPCApars$scale
   bigOutput <- MacroPCApars$bigOutput
+  center    <- MacroPCApars$center
   
-  # Check Dataset
-  # needs to be done first, as some rows/columns may leave the analysis.
+  # check fixedCenter
+  if(is.na(center[1])){
+    fixedCenter <- FALSE
+    if (length(center) > 1) {
+      stop("MacroPCApars$center should be a vector of length ncol(X) without NAs")
+    }
+  } else {
+    fixedCenter <- TRUE
+    givenCenter <- as.vector(center)
+    dc = length(givenCenter)
+    if(dc != d) stop(paste0(
+      "length(MacroPCApars$center) = ",dc," should equal ncol(X) = ",d))
+    if (any(is.na(center))) stop("MacroPCApars$center should not contain NAs")
+  }
   
-  checkOut <- checkDataSet(X, DDCpars$fracNA, DDCpars$numDiscrete,
-                           DDCpars$precScale, DDCpars$silent, DDCpars$cleanNAfirst)
-  X <- checkOut$remX
-  
-  X <- as.matrix(X)
+  # check dataset (some rows/columns may leave the analysis).
+  checkOut <- cellWise::checkDataSet(X, DDCpars$fracNA,
+                                     DDCpars$numDiscrete,
+                                     DDCpars$precScale, 
+                                     DDCpars$silent,
+                                     DDCpars$cleanNAfirst)
+  X <- as.matrix(checkOut$remX)
   n <- nrow(X)
   d <- ncol(X)
+  if(fixedCenter == TRUE){
+    givenCenter <- givenCenter[checkOut$colInAnalysis]
+    X <- scale(X, center = givenCenter, scale = FALSE)
+    # drop attribute center:
+    attr(X, "scaled:center") <- NULL
+  }
+  if(!is.na(DDCcenter[1])) DDCcenter <- DDCcenter[checkOut$colInAnalysis] 
   
   ## Verify inputs
   
   if (is.null(k)) { k <- 0 }
   
   # Check kmax, k, alpha, h
-  if (kmax < 1) stop("kmax should be at least 1.")  
-  if ((k <- floor(k)) < 0) {
+  if (kmax < 1) stop("kmax should be at least 1.")
+  kmax <- min(kmax, d) # PR
+  k <- floor(k)
+  if (k < 0) {
     k <- 0
   } else if (k > kmax) {
-    warning(paste("The number of principal components k = ", 
-                  k, " is larger than kmax = ", kmax,
-                  "; k is set to ", kmax, ".", sep = ""))
+    cat(paste("\nThe number of principal components k = ", 
+              k, " is larger than kmax = ", kmax,
+              "\n so k is set to ", kmax, ".\n", sep = ""))
     k <- kmax
   }
-  
-  
   
   if (alpha < 0.5 | alpha > 1) 
     stop("Alpha is out of range: should be between 1/2 and 1")
   if (k == 0) 
     h <- h.alpha.n(alpha, n, kmax)
   else h <- h.alpha.n(alpha, n, k)
-  
+  # cat(paste0("h = ",h,"\n"))
   
   
   ##########################
   ##  Detect deviating cells
   ##########################
   
-  DDCpars$coreOnly <- TRUE # now only execute DDCcore, CheckDataSet already done
-  resultDDC <- DDC(X, DDCpars)
-  DDCpars   <- resultDDC$DDCpars
+  DDCpars$coreOnly <- TRUE 
+  ## now only execute DDCcore, since CheckDataSet already done
+  if(!is.na(DDCcenter[1])) DDCpars$center <- DDCcenter
+  resultDDC <- cellWise::DDC(X, DDCpars)
+  DDCpars   <- resultDDC$DDCpars # does not contain the center
+  if(!is.na(DDCcenter[1])) DDCpars$center <- DDCcenter
   MacroPCApars$DDCpars <- DDCpars
+  
   Ti <- resultDDC$Ti
   indrows1 <- which(abs(Ti) > sqrt(qchisq(0.99, 1)))
   indrows2 <- intersect(order(abs(Ti),decreasing = T)[seq_len(n - h)],
                         indrows1)
   indcells <- resultDDC$indcells    
-  
-  
-  Xnai      <- X   # initialize NA-imputed data matrix
-  Xci       <- X   # initialize cell-imputed data matrix
-  XO        <- Xci # original matrix, with its NA's
-  indNA     <- which(is.na(Xci))            
+  XO       <- X   # original matrix, with its NA's
+  Xnai     <- X   # initialize NA-imputed data matrix
+  Xci      <- X   # initialize cell-imputed data matrix
+  indNA    <- which(is.na(X))            
   # positions of missing values
-  indimp    <- unique(c(indcells, indNA))
+  indimp   <- unique(c(indcells, indNA))
   # positions where values can be imputed
   Xci[indimp] <- resultDDC$Ximp[indimp] 
-  # imputes all missings and cellwise outliers
+  # Imputes all missings and cellwise outliers
   # This is not the same as resultDDC$Ximp, 
-  # which imputes indrows completely
+  # which imputes indrows completely.
   
-  # timestamp() # after DDC = first part of MacroPCA
   
   #########################
   # Step 1: Standardization
@@ -249,20 +295,22 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   
   # Compute scales of the variables if requested
   if (is.logical(scale)) {
-    if (!scale) scaleX <- vector("numeric", d) + 1
+    if (!scale) scaleX <- rep(1, d) # vector("numeric", d) + 1
     if (scale) {
-      locScale <- estLocScale(X, nLocScale = DDCpars$nLocScale, type = "1stepM")
+      locScale <- cellWise::estLocScale(X, nLocScale = DDCpars$nLocScale,
+                                        type = "1stepM", 
+                                        center = !fixedCenter)
       scaleX <- locScale$scale
     }
   } else if (is.function(scale)) {
     scaleX <- apply(X, 2, FUN = scale, na.rm = TRUE)
   } else if (is.vector(scale)) scaleX <- scale  
-  rm(X)            # to save space
+  rm(X) # to save space
   
-  # Standardize
-  Xci  <- sweep(Xci, 2, scaleX, "/")  
+  # Scale the variables
+  XO   <- sweep(XO, 2, scaleX, "/")
   Xnai <- sweep(Xnai, 2, scaleX, "/")  
-  XO   <- sweep(XO, 2, scaleX, "/")  
+  Xci  <- sweep(Xci, 2, scaleX, "/")  
   # Note that scaleX is 1 when scale=F
   
   ############################
@@ -270,20 +318,16 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   ############################
   
   # Compute initial cell-imputed matrix
-  
-  XOimp   <- Xci  # store imputed rowoutliers    
-  # Ximptab <- genImpTable(indimp,n,d) # positions where 
-  # values can be imputed, now listed per row
-  Xind    <- Xci; Xind[indimp] <- NA; Xind <- is.na(Xind)
-  # XOind   <- Xind
-  # rowInAnalysis <- 1:n
+  XOimp <- Xci  # store imputed rowoutliers    
+  Xind  <- Xci; Xind[indimp] <- NA; Xind <- is.na(Xind)
   
   # impute original NA values in unimputed rowoutliers
   Xnai[indNA] <- XOimp[indNA] 
   
   # classical PCA to determine the rank of the data matrix
   # (this step is the same as in ROBPCA)
-  XciSVD <- truncPC(Xci)
+  XciSVD <- truncPC(Xci, center = !fixedCenter)
+  
   if (XciSVD$rank == 0) stop("All data points collapse!")
   
   center <- rep(0, d)  
@@ -301,38 +345,52 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   # Use unimputed rowwise outliers for least outlying points 
   # (original NA values are imputed)
   
-  
   if (length(indComb) > 0) Xci[indComb, ] <- Xnai[indComb, ]
   
   # Find least outlying points by projections:
   
-  alldir <- choose(n, 2)
-  ndir   <- min(maxdir, alldir)
-  all    <- (ndir == alldir)
-  # calculate ndirect directions through two random data points
-  B <- makeDirections(Xci, ndir, all = all)
-  Bnorm <- vector(mode = "numeric", length = nrow(B))
+  if (!fixedCenter) {
+    alldir <- choose(n, 2)
+    ndir <- min(maxdir, alldir) # too low for fixedCenter
+    all  <- (ndir == alldir) # <==> (maxdir >= alldir)
+    B <- makeDirections(Xci, ndir, all = all,
+                         fixedCenter = FALSE)
+    # Calculates directions through two data points.
+  } else {
+    Xnorm <- apply(Xci, 1, vecnorm)
+    nzind  <- which(Xnorm > 1e-12) # to avoid dividing by zero
+    ndir <- maxdir # we will always use maxdir directions
+    B <- makeDirections(Xci[nzind, ], ndir, all = FALSE,
+                         fixedCenter = TRUE)
+    # Calculates ndir directions between the origin and one 
+    # datapoint, and if there are not enough of them it also 
+    # uses averages of some of these unit vectors.
+  }
   Bnorm <- apply(B, 1, vecnorm)
-  Bnormr <- Bnorm[Bnorm > 1e-12]
-  m <- length(Bnormr)
-  B <- B[Bnorm > 1e-12, ]
+  nonz <- which(Bnorm > 1e-12) # to avoid dividing by zero
+  Bnormr <- Bnorm[nonz]
+  m <- length(nonz)
+  B <- B[nonz, ]
   A <- diag(1 / Bnormr) %*% B
-  # projected points in columns
-  Y <- Xci %*% t(A)
+  Y <- Xci %*% t(A) # projected points in columns
   Z <- matrix(0, n, m)
   
-  umcds <- estLocScale(Y,nLocScale = DDCpars$nLocScale,
-                       type = "mcd", alpha = alpha, silent = TRUE)
-  zeroscales <- which(umcds$scale < 1e-12)
+  umcds <- cellWise::estLocScale(Y,nLocScale = DDCpars$nLocScale,
+                                 type = "mcd", alpha = alpha,
+                                 center = !fixedCenter,
+                                 silent = TRUE)
   
+  zeroscales <- which(umcds$scale < 1e-12)
   for (i in seq_len(length(zeroscales))) {
-    umcdweights <- unimcd(Y[, zeroscales[i]], alpha = alpha)$weights
+    umcdweights <- unimcd(Y[, zeroscales[i]], alpha = alpha,
+                                     center = !fixedCenter)$weights
     if (robustbase::rankMM(Xci[umcdweights == 1, ]) == 1) {
       stop("At least ", sum(umcdweights),
            " observations are identical.")
     }
   }
   
+  # There should be no more zero scales since we didn't stop.
   Z <- abs(scale(Y, umcds$loc, umcds$scale))
   
   H0 <- order(apply(Z, 1, max))
@@ -349,16 +407,26 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   
   # determine k
   Xcih <- Xci[H0, ]
-  Xcih.SVD <- truncPC(Xcih, ncomp = kmax)
+  Xcih.SVD <- truncPC(Xcih, ncomp = kmax, center = !fixedCenter)
   kmax <- min(Xcih.SVD$rank, kmax)
-  if (!silent) 
-    cat("\nEigenvalues: ", Xcih.SVD$eigenvalues, "\n")
+  
+  if (!silent) {
+    printvals = Xcih.SVD$eigenvalues
+    if(length(printvals) < d)
+      printvals = c(Xcih.SVD$eigenvalues, 0)
+    if(length(printvals) < d){
+      cat("\nInitial eigenvalues:\n", printvals, " ... \n")
+    } else {
+      cat("\nInitial eigenvalues:\n", printvals, "\n")
+    }
+  }
   
   if (k == 0) {
-    # If the user asks help to determine the number of PC's,
+    # To help the user determine the number of PC's, we
     # compute cumulative variability and scree plot and stop.
     # This necessitates computing _all_ eigenvalues:
-    Xcih.SVD <- truncPC(Xcih, ncomp = min(n, d))
+    Xcih.SVD <- truncPC(Xcih, ncomp = min(n, d),
+                         center = !fixedCenter)
     ratios = Xcih.SVD$eigenvalues / Xcih.SVD$eigenvalues[1]
     test <- which(ratios <= 0.001)
     k <- if (length(test) != 0) 
@@ -370,11 +438,11 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
     barplot(Xcih.SVD$eigenvalues[seq_len(k)], main = "scree plot",
             ylab = "eigenvalues", names.arg = seq_len(k))
     
+    roundcumul = round(100 * cumulative, 1)
+    names(roundcumul) = paste("PC", seq_len(length(cumulative)),sep = "")
     cat(paste(c("\nThe cumulative percentage of explained variability",
-                "by the first", k, "components is:\n", 
-                paste(" PC", seq_len(length(cumulative)),sep = ""),
-                "\n", format(round(100 * cumulative, 1), nsmall = 1),
-                "\n", sep = "")))
+                "\nby the first", k, "components is:\n")))
+    print(noquote(format(roundcumul, nsmall=1))) 
     
     if (cumulative[k] > 0.8) {
       kselect <- which(cumulative >= 0.8)[1]
@@ -382,9 +450,9 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
                 " select k = ", kselect, ".\n", sep = ""))
     } else {
       cat(paste("\nThe selected value of kmax does not allow for an explained ",
-                "variance of at least 80%,\n since kmax components only explain ",
-                round(100*cumulative[k], 1),
-                " % of variance. Consider increasing the value of kmax."))
+                "\nvariance of at least 80%, since kmax components only explain\n",
+                roundcumul[k],
+                "% of variance. Consider increasing the value of kmax."))
     }
     cat(paste("\nPlease use this information and the scree plot",
               " to select a value of k",
@@ -393,8 +461,8 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
                 cumulativeVar = cumulative))
   }
   
-  if (!silent) 
-    cat("\nXciSVD$rank, Xcih.SVD$rank, k and kmax: ", XciSVD$rank, 
+  if (!silent)
+    cat("\nXciSVD$rank, Xcih.SVD$rank, k and kmax: ", XciSVD$rank,
         Xcih.SVD$rank, k, kmax, "\n")
   
   
@@ -402,26 +470,27 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   # Step 4: Iterative subspace estimation
   #######################################    
   
-  It <- 0 # this is the iteration index s
-  diff <- 0
-  k <- min(k, Xcih.SVD$rank)
-  Pr <- Xcih.SVD$loadings[, seq_len(k)]
+  It     <- 0 # this is the iteration index s in the paper
+  diff   <- 0
+  k      <- min(k, Xcih.SVD$rank)
+  Pr     <- Xcih.SVD$loadings[, seq_len(k)]
   PrPrev <- Pr
-  mXci <- Xcih.SVD$center # center
+  mXci   <- Xcih.SVD$center # center
   if (any(Xind) & maxiter > 0) { 
     # Step3: Iterate
     diff <- 100
     while (It < maxiter & diff > tol) { # Iterate
-      It <- It + 1;
-      XciC <- sweep(Xci, 2, mXci)  # centered Xci  
-      Tr <- XciC %*% Pr            # scores matrix     
-      Xcihat <- Tr %*% t(Pr)       # fit to XciC                     
-      Xcihat <- sweep(Xcihat, 2, mXci, "+") # fit to Xci  
+      It        <- It + 1;
+      XciC      <- sweep(Xci, 2, mXci) # centered Xci  
+      Tr        <- XciC %*% Pr         # scores matrix     
+      Xcihat    <- Tr %*% t(Pr)        # fit to XciC                     
+      Xcihat    <- sweep(Xcihat, 2, mXci, "+") # fit to Xci  
       Xci[Xind] <- Xcihat[Xind]         
       # impute missings + cellwise outliers
       
       Xcih <- Xci[H0, ]
-      Xcih.SVD <- truncPC(Xcih, ncomp = k)
+      Xcih.SVD <- truncPC(Xcih, ncomp = k,
+                           center = !fixedCenter)
       k <- min(k, Xcih.SVD$rank)
       Pr <- Xcih.SVD$loadings[, seq_len(k)]  # loadings matrix
       mXci <- Xcih.SVD$center        # mean vector
@@ -431,16 +500,16 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
     } # Iteration ends
   } 
   
-  XciC <- sweep(Xci, 2, mXci)   # centered Xci  
-  Tr <- XciC %*% Pr             # scores matrix     
-  Xcihat <- Tr %*% t(Pr)        # fit to XciC                
-  Xcihat <- sweep(Xcihat, 2, mXci, "+")  # fit to Xci 
+  XciC      <- sweep(Xci, 2, mXci) # centered Xci  
+  Tr        <- XciC %*% Pr         # scores matrix
+  Xcihat    <- Tr %*% t(Pr)        # fit to XciC                
+  Xcihat    <- sweep(Xcihat, 2, mXci, "+")  # fit to Xci 
   Xci[Xind] <- Xcihat[Xind]         
   # impute missings + cellwise
   
   Xnai[indNA] <- Xci[indNA] 
   # update imputations of missings in Xnai
-  indrows3 <- setdiff((seq_len(n)), H0) 
+  indrows3    <- setdiff((seq_len(n)), H0) 
   # indrows3 means: all except H0
   
   # initialize Xfi, the fully imputed X
@@ -458,23 +527,25 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   
   if (k < XciSVD$rank) {  
     if (!silent) 
-      cat("\nPerform extra reweighting step (k =", k,
-          "< rank =", XciSVD$rank, ")\n")
+      cat("\nPerformed an extra reweighting step because k =", k,
+          "< rank =", XciSVD$rank, ".\n")
     XciRc  <- Xci - matrix(rep(mXci, times = n), 
                            nrow = n, byrow = TRUE)
     Xcihat <- XciRc %*% Pr %*% t(Pr) # fit to XciRc
     Rdiff  <- XciRc - Xcihat # orthogonal residual
     ODh    <- apply(Rdiff, 1, vecnorm) # norm of residual
-    umcd   <- unimcd(ODh ^ (2 / 3), alpha) # its robust location and scale
+    umcd   <- unimcd(ODh ^ (2 / 3), alpha) 
+    # its robust location and scale
     cutoffODh <- sqrt(qnorm(distprob, umcd$loc, umcd$scale) ^ 3)
     # This is the cutoff on the orthogonal distances of the
     # cell-imputed data.
     
-    Hstar <- (ODh <= cutoffODh) 
+    Hstar    <- (ODh <= cutoffODh) 
     # The set Hstar is denoted $H^*$ in the paper.
     Hstar[indrows2] <- FALSE 
     # removes outlying rows flagged by DDC
-    Xcih.SVD <- truncPC(Xfi[Hstar, ], ncomp = k)
+    Xcih.SVD <- truncPC(Xfi[Hstar, ], ncomp = k,
+                         center = !fixedCenter)
     k <- min(Xcih.SVD$rank, k)
   } else {
     Hstar     <- rep(0, dim(Xci)[1])
@@ -493,16 +564,19 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   }
   
   # compute new center $\mu^*$ and new loading matrix $P^*$:
-  center <- center + Xcih.SVD$center %*% t(rot) # new center
-  rot    <- rot %*% Xcih.SVD$loadings
-  n1     <- sum(Hstar)
-  h1     <- h.alpha.n(alpha, n1, k)
-  Xci1   <- (Xci[Hstar, ] - matrix(rep(Xcih.SVD$center, times = n1), 
-                                   nrow = n1, byrow = TRUE)) %*% Xcih.SVD$loadings
-  Xci1   <- as.matrix(Xci1[, seq_len(k)])
-  rot    <- as.matrix(rot[, seq_len(k)]) # new loading matrix
-  mah    <- mahalanobis(Xci1, center = rep(0, ncol(Xci1)), 
-                        cov = diag(Xcih.SVD$eigenvalues[seq_len(k)], nrow = k))
+  center <- center + Xcih.SVD$center %*% t(rot) # new center,
+  # but in case of fixedCenter the new center remains zero.
+  rot  <- rot %*% Xcih.SVD$loadings
+  n1   <- sum(Hstar)
+  h1   <- h.alpha.n(alpha, n1, k)
+  Xci1 <- (Xci[Hstar, ] - matrix(rep(Xcih.SVD$center, times = n1), 
+                                 nrow = n1, byrow = TRUE)) %*% 
+    Xcih.SVD$loadings
+  Xci1 <- as.matrix(Xci1[, seq_len(k)])
+  rot  <- as.matrix(rot[, seq_len(k)]) # new loading matrix
+  mah  <- mahalanobis(Xci1, center = rep(0, ncol(Xci1)), 
+                      cov = diag(Xcih.SVD$eigenvalues[seq_len(k)], 
+                                 nrow = k))
   
   
   ###############
@@ -510,18 +584,19 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   ###############
   
   oldobj <- prod(Xcih.SVD$eigenvalues[seq_len(k)])
-  niter <- 100
+  niter  <- 100
   for (j in seq_len(niter)) { # This part is from ROBPCA
-    Xcih <- as.matrix(Xci1[order(mah)[seq_len(h1)], ], ncol = k)
-    Xcih.SVD <- truncPC(Xcih, ncomp = k)
-    obj <- prod(Xcih.SVD$eigenvalues)
-    Xci1 <- (Xci1 - matrix(rep(Xcih.SVD$center, times = n1), 
-                           nrow = n1, byrow = TRUE)) %*% Xcih.SVD$loadings
+    Xcih     <- as.matrix(Xci1[order(mah)[seq_len(h1)], ], ncol = k)
+    Xcih.SVD <- truncPC(Xcih, ncomp = k,
+                         center = !fixedCenter)
+    obj    <- prod(Xcih.SVD$eigenvalues)
+    Xci1   <- (Xci1 - matrix(rep(Xcih.SVD$center, times = n1), 
+                             nrow = n1, byrow = TRUE)) %*% Xcih.SVD$loadings
     center <- center + Xcih.SVD$center %*% t(rot)
-    rot <- rot %*% Xcih.SVD$loadings
-    mah <- mahalanobis(Xci1, center = matrix(0, 1, ncol(Xci1)), 
-                       cov = diag(Xcih.SVD$eigenvalues, 
-                                  nrow = length(Xcih.SVD$eigenvalues)))
+    rot    <- rot %*% Xcih.SVD$loadings
+    mah    <- mahalanobis(Xci1, center = matrix(0, 1, ncol(Xci1)), 
+                          cov = diag(Xcih.SVD$eigenvalues, 
+                                     nrow = length(Xcih.SVD$eigenvalues)))
     if (Xcih.SVD$rank == k & abs(oldobj - obj) < 1e-12) 
       break
     oldobj <- obj
@@ -531,41 +606,57 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
     }
   }
   
-  Xci2mcd <- rrcov::CovMcd(Xci1, nsamp = "deterministic", alpha = h1 / n1)
+  if (fixedCenter) {
+    Xci2mcd <- covMcd2(Xci1, nsamp = "deterministic", alpha = h1 / n1,
+                       center = rep(0, ncol(Xci1)))
+  } else {
+    Xci2mcd <- rrcov::CovMcd(Xci1, nsamp = "deterministic", alpha = h1 / n1)
+  }
+  
   eps <- 1e-16
-  if (Xci2mcd@crit < obj + eps) {
-    Xci2cov <- rrcov::getCov(Xci2mcd)
-    Xci2center <- rrcov::getCenter(Xci2mcd)
+  crit <- if (fixedCenter) {prod(eigen(Xci2mcd$cov, only.values = TRUE)$values)} else {Xci2mcd@crit}
+  if (crit < obj + eps) {
+    if (fixedCenter) {
+      Xci2cov    <- Xci2mcd$cov
+      Xci2center <- Xci2mcd$center
+      
+    } else {
+      Xci2cov    <- rrcov::getCov(Xci2mcd)
+      Xci2center <- rrcov::getCenter(Xci2mcd)
+    }
     if (!silent) 
-      cat("\nFinal step: use eigenvectors of MCD scatter.\n")
+      cat("\nThe final step used eigenvectors of MCD scatter.\n")
   } else {
     consistencyfactor <- median(mah) / qchisq(0.5, k)
-    mah <- mah / consistencyfactor
+    mah     <- mah / consistencyfactor
     weights <- ifelse(mah <= qchisq(0.975, k), TRUE, 
                       FALSE)
-    wcov <- cov.wt(x = Xci1, wt = weights, method = "ML")
+    wcov    <- cov.wt(x = Xci1, wt = weights, center = !fixedCenter,
+                      method = "ML")
+    if (fixedCenter) {wcov$center <- rep(0, ncol(Xci1))}
     Xci2center <- wcov$center
-    Xci2cov <- wcov$cov
+    Xci2cov    <- wcov$cov
     if (!silent) 
-      cat("\nFinal step: use eigenvectors of reweighted covariance.\n")
+      cat("\nThe final step used eigenvectors of reweighted covariance.\n")
   }
-  ee <- eigen(Xci2cov)
-  P6 <- ee$vectors
+  ee     <- eigen(Xci2cov)
+  P6     <- ee$vectors
   center <- as.vector(center + Xci2center %*% t(rot))
   eigenvalues <- ee$values
-  loadings <- rot %*% P6
-  ## new: flip signs of final loadings
+  loadings    <- rot %*% P6
+  # flip signs of final loadings to make result more unique:
   flipcolumn = function(x){ 
     if (x[which.max(abs(x))] < 0) {-x} else {x} }
   loadings = apply(loadings, 2L, FUN = flipcolumn)
-  ##
-  dimnames(loadings) <- list(colnames(Xnai), paste("PC", 
-                                                   seq_len(ncol(loadings)), sep = ""))
   
+  dimnames(loadings) <- list(colnames(Xnai), paste(
+    "PC", seq_len(ncol(loadings)), sep = ""))
+  if(!fixedCenter){
+    MacroPCApars["center"] <- NULL # to match pars of old MacroPCA
+  }
   # Start the output list: res
   res <- list(MacroPCApars = MacroPCApars, remX = checkOut$remX,
-              DDC = c(checkOut, resultDDC),
-              scaleX = scaleX, k = k,
+              DDC = c(checkOut, resultDDC), scaleX = scaleX, k = k,
               loadings = loadings, eigenvalues = eigenvalues,
               center = center, alpha = alpha, h = h,
               It = It, diff = diff) 
@@ -580,39 +671,42 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   
   scoresci <- (Xci - matrix(rep(center, times = n), nrow = n, 
                             byrow = TRUE)) %*% loadings
-  Cellimp <- list(scoresci = scoresci)
-  out <- pca.distancesNew(res, Xci, scoresci, XciSVD$rank, distprob)
-  cutoffOD <- out$cutoffOD
+  Cellimp  <- list(scoresci = scoresci)
+  out      <- pca.distancesNew(res, Xci, scoresci,
+                                          XciSVD$rank, distprob)
+  cutoffOD      <- out$cutoffOD
   out$indrowsci <- which(out$OD > cutoffOD)   
-  Cellimp <- c(Cellimp, out); rm(out)
+  Cellimp       <- c(Cellimp, out); rm(out)
   
   
   # NA-imputed data Xnai : scores and distances
   res$X.NAimp <- Xnai
-  scoresnai <- (Xnai - matrix(rep(center, times = n), nrow = n, 
-                              byrow = TRUE)) %*% loadings
-  res$scores <- scoresnai
+  scoresnai   <- (Xnai - matrix(rep(center, times = n), nrow = n, 
+                                byrow = TRUE)) %*% loadings
+  res$scores  <- scoresnai
   
-  NAimp <- list(scoresnai = scoresnai)
-  out <- pca.distancesNew(res, Xnai, scoresnai, XciSVD$rank, distprob)
-  res$OD <- out$OD
-  out$cutoffOD <- cutoffOD
-  res$cutoffOD <- out$cutoffOD
-  res$SD <- out$SD
-  res$cutoffSD <- out$cutoffSD  
+  NAimp          <- list(scoresnai = scoresnai)
+  out            <- pca.distancesNew(res, Xnai, scoresnai,
+                                                XciSVD$rank, distprob)
+  res$OD         <- out$OD
+  out$cutoffOD   <- cutoffOD
+  res$cutoffOD   <- out$cutoffOD
+  res$SD         <- out$SD
+  res$cutoffSD   <- out$cutoffSD  
   out$indrowsnai <- which(out$OD > cutoffOD)
-  res$indrows <- out$indrowsnai  
-  NAimp <- c(NAimp, out); rm(out)  
+  res$indrows    <- out$indrowsnai  
+  NAimp          <- c(NAimp, out); rm(out)  
   
   if (bigOutput) {
     # Fully imputed data Xfi : scores and distances
     scoresfi <- (Xfi - matrix(rep(center, times = n), nrow = n, 
                               byrow = TRUE)) %*% loadings
-    Fullimp <- list(scoresfi = scoresfi)
-    out <- pca.distancesNew(res, Xfi, scoresfi, XciSVD$rank, distprob)
-    out$cutoffOD <- cutoffOD
+    Fullimp  <- list(scoresfi = scoresfi)
+    out      <- pca.distancesNew(res, Xfi, scoresfi, 
+                                            XciSVD$rank, distprob)
+    out$cutoffOD  <- cutoffOD
     out$indrowsfi <- which(out$OD > cutoffOD)
-    Fullimp <- c(Fullimp, out); rm(out)
+    Fullimp  <- c(Fullimp, out); rm(out)
   }
   
   #########################################
@@ -621,7 +715,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   
   # Compute residuals
   # C is for Centering:
-  XOC   <- sweep(XO, 2, center)    # has NA's
+  XOC <- sweep(XO, 2, center) # has NA's
   if (bigOutput) {
     XnaiC <- sweep(Xnai, 2, center)
     XciC  <- sweep(Xci, 2, center)
@@ -629,73 +723,105 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   }
   
   # Compute standardized residuals of XO (with NA's): 
-  stdResid <- XOC - (scoresnai %*% t(loadings))
-  res$residScale <- estLocScale(stdResid, nLocScale = DDCpars$nLocScale,
-                                type = "1stepM",
-                                precScale = DDCpars$precScale,
-                                center = FALSE)$scale
-  res$stdResid <- sweep(stdResid, 2, res$residScale, "/")
-  res$indcells <- which(abs(res$stdResid) >
-                          sqrt(qchisq(DDCpars$tolProb, 1)))
-  
-  if (bigOutput) {
-    # Compute standardized residuals of NA-imputed data:
-    stdResidnai <- XnaiC - (scoresnai %*% t(loadings))
-    NAimp$residScalenai <- estLocScale(stdResidnai, nLocScale = DDCpars$nLocScale,
-                                       type = "1stepM",
-                                       precScale = DDCpars$precScale,
-                                       center = FALSE)$scale
-    NAimp$stdResidnai <- sweep(stdResidnai, 2, NAimp$residScalenai, "/")
-    NAimp$indcellsnai <- which(abs(NAimp$stdResidnai) >
-                                 sqrt(qchisq(DDCpars$tolProb, 1)))
+  if(k < XciSVD$rank){
+    stdResid <- XOC - (scoresnai %*% t(loadings))
+    res$residScale <- cellWise::estLocScale(stdResid, 
+                                            nLocScale = DDCpars$nLocScale,
+                                            type = "1stepM",
+                                            precScale = DDCpars$precScale,
+                                            center = FALSE)$scale
+    res$stdResid <- sweep(stdResid, 2, res$residScale, "/")
+    res$indcells <- which(abs(res$stdResid) >
+                            sqrt(qchisq(DDCpars$tolProb, 1)))
     
-    # Compute standardized residuals of cell-imputed data:
-    stdResidci <- XciC - (scoresci %*% t(loadings))
-    Cellimp$residScaleci <- estLocScale(stdResidci, nLocScale = DDCpars$nLocScale,
-                                        type = "1stepM",
-                                        precScale = DDCpars$precScale,
-                                        center = FALSE)$scale
-    Cellimp$stdResidci <- sweep(stdResidci, 2, Cellimp$residScaleci, "/")
-    Cellimp$indcellsci <- which(abs(Cellimp$stdResidci) >
-                                  sqrt(qchisq(DDCpars$tolProb, 1)))
-    
-    # Compute standardized residuals of fully imputed data:
-    stdResidfi <- XfiC - (scoresfi %*% t(loadings))
-    Fullimp$residScalefi <- estLocScale(stdResidfi, nLocScale = DDCpars$nLocScale,
-                                        type = "1stepM",
-                                        precScale = DDCpars$precScale,
-                                        center = FALSE)$scale
-    Fullimp$stdResidfi <- sweep(stdResidfi, 2, Fullimp$residScalefi, "/")
-    Fullimp$indcellsfi <- which(abs(Fullimp$stdResidfi) >
-                                  sqrt(qchisq(DDCpars$tolProb, 1))) 
-  }
+    if (bigOutput) {
+      # Compute standardized residuals of NA-imputed data:
+      stdResidnai <- XnaiC - (scoresnai %*% t(loadings))
+      NAimp$residScalenai <- cellWise::estLocScale(
+        stdResidnai + 0*res$stdResid, # puts in NA's
+        nLocScale = DDCpars$nLocScale, type = "1stepM",
+        precScale = DDCpars$precScale, center = FALSE)$scale
+      NAimp$stdResidnai <- sweep(stdResidnai, 2, NAimp$residScalenai, "/")
+      NAimp$indcellsnai <- which(abs(NAimp$stdResidnai) >
+                                   sqrt(qchisq(DDCpars$tolProb, 1)))
+      
+      # Compute standardized residuals of cell-imputed data:
+      stdResidci <- XciC - (scoresci %*% t(loadings))
+      Cellimp$residScaleci <- cellWise::estLocScale(
+        stdResidci + 0*res$stdResid, # puts in NA's, 
+        nLocScale = DDCpars$nLocScale, type = "1stepM",
+        precScale = DDCpars$precScale, center = FALSE)$scale
+      Cellimp$stdResidci <- sweep(stdResidci, 2, Cellimp$residScaleci, "/")
+      Cellimp$indcellsci <- which(abs(Cellimp$stdResidci) >
+                                    sqrt(qchisq(DDCpars$tolProb, 1)))
+      
+      # Compute standardized residuals of fully imputed data:
+      stdResidfi <- XfiC - (scoresfi %*% t(loadings))
+      Fullimp$residScalefi <- cellWise::estLocScale(
+        stdResidfi + 0*res$stdResid, # puts in NA's
+        nLocScale = DDCpars$nLocScale, type = "1stepM",
+        precScale = DDCpars$precScale, center = FALSE)$scale
+      Fullimp$stdResidfi <- sweep(stdResidfi, 2, Fullimp$residScalefi, "/")
+      Fullimp$indcellsfi <- which(abs(Fullimp$stdResidfi) >
+                                    sqrt(qchisq(DDCpars$tolProb, 1))) 
+    }
+  } else { # for k >= rank all residuals are zero, so we
+    # cannot standardize them.
+    res$stdResid <- 0*XOC # keeps the NA's
+    res$residScale <- rep(0,d)
+    res$indcells <- integer(0)
+    if (bigOutput) {
+      # residuals of NA-imputed data:
+      NAimp$stdResidnai <- 0*XnaiC
+      NAimp$residScalenai <- rep(0,d) 
+      NAimp$indcellsnai <- integer(0)
+      # residuals of cell-imputed data:
+      Cellimp$stdResidci <- 0*XciC
+      Cellimp$residScaleci <- rep(0,d)
+      Cellimp$indcellsci <- integer(0)
+      # residuals of fully imputed data:
+      Fullimp$stdResidfi <- 0*XfiC
+      Fullimp$residScalefi <- rep(0,d)
+      Fullimp$indcellsfi <- integer(0)
+    }
+  }  
   
-  ## unstandardize:
+  ## put scales back:
   res$X.NAimp <- sweep(Xnai, 2, scaleX, "*")
   if (bigOutput) {
     Cellimp$Xci <- sweep(Xci, 2, scaleX, "*")  
     Fullimp$Xfi <- sweep(Xfi, 2, scaleX, "*")
   }
-  res$center  <- center * scaleX
   
-  names(res$center) <- colnames(checkOut$remX)
-  names(res$scaleX) <- colnames(checkOut$remX)
+  ## update center:
+  if(fixedCenter == TRUE){
+    res$center  <- givenCenter
+    res$X.NAimp <- sweep(res$X.NAimp, 2, givenCenter, "+")
+    if (bigOutput) {
+      Cellimp$Xci <- sweep(Cellimp$Xci, 2, givenCenter, "+")
+      Fullimp$Xfi <- sweep(Fullimp$Xfi, 2, givenCenter, "+")      
+    }
+  } else {
+    res$center <- center * scaleX
+  }
+  
+  names(res$center)     <- colnames(checkOut$remX)
+  names(res$scaleX)     <- colnames(checkOut$remX)
   names(res$residScale) <- colnames(checkOut$remX)
   if (bigOutput) {
+    names(NAimp$residScalenai)  <- colnames(checkOut$remX)
     names(Cellimp$residScaleci) <- colnames(checkOut$remX)
     names(Fullimp$residScalefi) <- colnames(checkOut$remX)
-    names(NAimp$residScalenai) <- colnames(checkOut$remX)
   }
   
   # add remainder of output:
-  # res$scaleX   <- scaleX
   if (bigOutput) {
-    res$NAimp    <- NAimp
-    res$Cellimp  <- Cellimp   
-    res$Fullimp  <- Fullimp
+    res$NAimp   <- NAimp
+    res$Cellimp <- Cellimp   
+    res$Fullimp <- Fullimp
   }
   return(res)
-} # ends MacroPCA
+}
 
 
 ## AUXILIARY FUNCTIONS:
@@ -783,19 +909,16 @@ critOD <- function(OD, crit = 0.99, umcd = FALSE, alpha, classic = FALSE)
 }
 
 
-makeDirections <- function(data, ndirect, all = TRUE)
-{ # extracts directions between pairs of points
-  #
-  # We first make two functions:
-  
+makeDirections <- function(data, ndirect, all = TRUE, 
+                            fixedCenter = FALSE)
+{
   uniran <- function(seed = 0) {
     seed <- floor(seed * 5761) + 999
-    quot <- floor(seed / 65536)
+    quot <- floor(seed/65536)
     seed <- floor(seed) - floor(quot * 65536)
-    random <- seed / 65536
+    random <- seed/65536
     list(seed = seed, random = random)
   }
-  
   randomset <- function(n, k, seed) {
     ranset <- vector(mode = "numeric", length = k)
     for (j in seq_len(k)) {
@@ -816,22 +939,49 @@ makeDirections <- function(data, ndirect, all = TRUE)
     ans$ranset <- ranset
     ans
   }
-  
-  # Now the actual computation:
-  if (all) {
-    cc <- utils::combn(nrow(data), 2)
-    B2 <- data[cc[1, ], ] - data[cc[2, ], ]
-  } else {
-    n <- nrow(data)
-    p <- ncol(data)
-    r <- 1
-    B2 <- matrix(0, ndirect, p)
-    seed <- 0
-    while (r <= ndirect) {
-      sseed <- randomset(n, 2, seed)
-      seed  <- sseed$seed
-      B2[r, ] <- data[sseed$ranset[1], ] - data[sseed$ranset[2], ]
-      r <- r + 1
+  if (fixedCenter) {
+    if (nrow(data) >= ndirect) { 
+      # when n >= maxdir we draw a random sample from the rows:
+      set.seed(0)
+      sseed <- sample(1:nrow(data), size = ndirect,
+                      replace = FALSE)
+      B2 <- data[sseed, ]
+    }
+    else { # when n < maxdir we have to add more directions:
+      ## In the main code we already took out the directions
+      ## where vecnorm is zero first.
+      data <- sweep(data, 1, apply(data, 1, function(x) sqrt(sum(x^2))), "/")
+      # B2 <- data
+      B2_add <- matrix(0, ndirect - nrow(data), ncol(data))
+      seed <- 0
+      r <- 1
+      while (r <= ndirect - nrow(data)) {
+        sseed <- randomset(nrow(data), 2, seed)
+        seed <- sseed$seed
+        B2_add[r, ] <- (data[sseed$ranset[1], ] + data[sseed$ranset[2], ])/2
+        r <- r + 1
+      }
+      B2 <- rbind(data, B2_add)
+    }
+  } # ends fixedCenter == T   
+  else { # no fixed center
+    if (all) {
+      cc <- utils::combn(nrow(data), 2)
+      B2 <- data[cc[1, ], ] - data[cc[2, ], ]
+    }
+    else {
+      n <- nrow(data)
+      p <- ncol(data)
+      r <- 1
+      B2 <- matrix(0, ndirect, p)
+      seed <- 0
+      while (r <= ndirect) {
+        sseed <- randomset(n, 2, seed)
+        seed <- sseed$seed
+        B2[r, ] <- data[sseed$ranset[1], ] - data[sseed$ranset[2],
+        ]
+        r <- r + 1
+      }
     }
   }
   return(B2)
@@ -850,16 +1000,10 @@ maxAngle <- function(Ptrue, Phat) {
 
 
 
-truncPC <- function(X, ncomp = NULL, scale = FALSE, center = TRUE, 
-                    signflip = TRUE, via.svd = NULL, scores = FALSE) {
-  # Performs PCA by truncated SVD. Requires library(svd) .
-  # Similar usage to robustbase::classPC() except for the
-  # new argument ncomp which is the desired number of components.
-  # Only this many PC's are computed, in order to save computation 
-  # time. If ncomp is not specified, all components are computed.
-  # The classPC option by.svd is in the list for compatibility,
-  # but it is ignored since truncPC always uses the SVD.
-  #
+truncPC = function (X, ncomp = NULL, scale = FALSE, center = TRUE, 
+                     signflip = TRUE, via.svd = NULL, scores = FALSE) 
+{ # heb ik lichtjes aangepast zodat het center als een vector
+  # output wordt, wat ettelijke lijnen uitspaart in MacroPCA2
   if (!is.numeric(X)) 
     stop(" X must be numeric.")
   Y <- as.matrix(X)
@@ -870,19 +1014,24 @@ truncPC <- function(X, ncomp = NULL, scale = FALSE, center = TRUE,
   if (n < 2) 
     stop(" The number of rows must be at least 2.")
   Y <- scale(Y, center = center, scale = scale)
-  if (isTRUE(scale))
+  if (isTRUE(scale)) 
     scale <- attr(Y, "scaled:scale")
-  if (isTRUE(center))
-    center <- attr(Y, "scaled:center")
+  if (isTRUE(center)) { center <- attr(Y, "scaled:center") # PR
+  } else { center = rep(0, d) }                            # PR
   if (is.null(ncomp)) {
+    # options(warn = 2) # should treat warnings as errors,
+    # but then does this for whole session?
     SvdY <- try(svd::propack.svd(Y, neig = min(n, d)), silent = TRUE)
     if (inherits(SvdY, "try-error")) {
       SvdY <- svd(Y, nu = min(n, d), nv = min(n, d))
     }
-  } else {
+  }
+  else {
     if (!(ncomp >= 1)) 
       stop(" ncomp must be at least 1")
     ncomp <- min(ncomp, n, d)
+    # options(warn = 2) # should treat warnings as errors,
+    # but then does this for whole session?
     SvdY <- try(svd::propack.svd(Y, neig = ncomp), silent = TRUE)
     if (inherits(SvdY, "try-error")) {
       SvdY <- svd(Y, nu = ncomp, nv = ncomp)
@@ -892,7 +1041,7 @@ truncPC <- function(X, ncomp = NULL, scale = FALSE, center = TRUE,
   rank <- sum(eigvals > 1e-10)
   if (rank == 0) 
     stop(" The data has rank zero")
-  eigvals <- (eigvals[seq_len(rank)])^2 / (n - 1)
+  eigvals <- (eigvals[seq_len(rank)])^2/(n - 1)
   loadings <- SvdY$v
   dim(loadings)
   loadings <- loadings[, seq_len(rank), drop = FALSE]
@@ -900,7 +1049,8 @@ truncPC <- function(X, ncomp = NULL, scale = FALSE, center = TRUE,
     flipcolumn <- function(x) {
       if (x[which.max(abs(x))] < 0) {
         -x
-      } else {
+      }
+      else {
         x
       }
     }
@@ -912,12 +1062,13 @@ truncPC <- function(X, ncomp = NULL, scale = FALSE, center = TRUE,
 }
 
 
-unimcd <- function(y, alpha = NULL) {
+unimcd <- function(y, alpha = NULL, center = TRUE) {
   
   if (is.null(alpha)) {
     alpha <- 0.5
   }
-  res <- tryCatch(.Call('_cellWise_unimcd_cpp', y, alpha, PACKAGE = 'cellWise'),
+  center <- as.numeric(center)
+  res <- tryCatch(.Call('_cellWise_unimcd_cpp', y, alpha, center, PACKAGE = 'cellWise'),
                   "std::range_error" = function(e){conditionMessage(e)})
   return(list(loc = res$loc, scale = res$scale, weights = drop(res$weights)))
 }
