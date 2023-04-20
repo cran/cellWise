@@ -57,14 +57,11 @@ Now we analyze the data using DDC to identify suspicious cells:
 
 ```{r}
 DDC.out <- DDC(S)
-ggp <- cellMap(R = DDC.out$stdResid,               
-               indcells = DDC.out$indcells,
-               indrows = DDC.out$indrows,
+ggp <- cellMap(R = DDC.out$stdResid,
                mTitle = "",
                rowtitle = "countries",
-               columntitle = "brackets    ",
-               sizetitles = 2,
-               drawCircles = F)
+               columntitle = "brackets",
+               sizetitles = 2)
 
 # pdf("clothes_cellmap.pdf", width = 4, height = 8)
 plot(ggp)
@@ -81,7 +78,7 @@ import unusually much or little from.
 
 For instance, the cellmap suggests that GB imports a lot
 of cheap clothing. The webpage
-https://wits.worldbank.org/CountryProfile/en/Country/GBR/Year/2019/TradeFlow/Import/Partner/BY-COUNTRY/Product/50-63_TextCloth
+<!-- https://wits.worldbank.org/CountryProfile/en/Country/GBR/Year/2019/TradeFlow/Import/Partner/BY-COUNTRY/Product/50-63_TextCloth -->
 says that much is imported from Bangladesh, China, and India.
 
 ```{r}
@@ -192,14 +189,11 @@ Now we continue by executing DDC to identify suspicious cells.
 
 ```{r}
 DDC.out <- DDC(S)
-ggp     <- cellMap(R = DDC.out$stdResid,                        
-                    indcells = DDC.out$indcells,
-                    indrows = DDC.out$indrows,
-                    mTitle = "",
-                    rowtitle = "brands",
-                    columntitle = "perceptions   ",
-                    sizetitles = 2.3,
-                    drawCircles = F)
+ggp     <- cellMap(R = DDC.out$stdResid,
+                   mTitle = "",
+                   rowtitle = "brands",
+                   columntitle = "perceptions",
+                   sizetitles = 2.3)
 #pdf("brands_cellmap.pdf", width = 6, height = 13)
 plot(ggp)
 #dev.off()

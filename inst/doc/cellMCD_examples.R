@@ -200,7 +200,7 @@ library(robustbase)
 data(aircraft)
 X      <- as.matrix(aircraft)[, 1:4]
 pairs(X) 
-X      <- transfo(X)$Zt
+X      <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd     <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975,ncol(X)))
@@ -221,12 +221,12 @@ cellout <- cellMCD(X)
 
 ## -----------------------------------------------------------------------------
 y <- X[, 5]
-y <- transfo(y)$Zt
+y <- transfo(y)$Y
 
 ## -----------------------------------------------------------------------------
 data(alcohol, package = "robustbase")
 X <- as.matrix(alcohol)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 eigen(rowout$cov)$values
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
@@ -240,7 +240,7 @@ round(cor(rd, cd),3)
 ## -----------------------------------------------------------------------------
 data(Animals2)
 X <- as.matrix(log(Animals2))
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cellout <- cellMCD(X)
@@ -251,7 +251,7 @@ round(cor(rd, cd), 3)
 ## -----------------------------------------------------------------------------
 data(bushfire)
 X <- as.matrix(bushfire)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X,center=rowout$center,cov=rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -263,7 +263,7 @@ round(cor(rd, cd), 3)
 ## -----------------------------------------------------------------------------
 data(cloud)
 X <- as.matrix(cloud)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cellout <- cellMCD(X) 
@@ -274,7 +274,7 @@ round(cor(rd,cd),3)
 ## -----------------------------------------------------------------------------
 data(delivery)
 X <- as.matrix(delivery)[, 1:2]
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -286,7 +286,7 @@ round(cor(rd, -cd), 3)
 ## -----------------------------------------------------------------------------
 data(delivery)
 X <- as.matrix(delivery)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -298,7 +298,7 @@ round(cor(rd, cd), 3)
 ## -----------------------------------------------------------------------------
 data(exAM)
 X <- as.matrix(exAM)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -310,7 +310,7 @@ round(cor(rd, cd), 3)
 ## -----------------------------------------------------------------------------
 data(hbk)
 X <- as.matrix(hbk)[, 1:3]
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -322,7 +322,7 @@ round(cor(rd, cd), 3)
 ## -----------------------------------------------------------------------------
 data(hbk)
 X <- as.matrix(hbk)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -334,7 +334,7 @@ round(cor(rd, cd), 3)
 ## -----------------------------------------------------------------------------
 data(kootenay)
 X <- as.matrix(kootenay)
-X <- transfo(X)$Zt 
+X <- transfo(X)$Y 
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -346,12 +346,12 @@ round(cor(rd, cd), 3)
 ## ---- error=TRUE--------------------------------------------------------------
 data(lactic)
 X <- as.matrix(lactic)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 
 ## -----------------------------------------------------------------------------
 data(milk)
 X <- as.matrix(milk)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cellout <- cellMCD(X)
@@ -361,12 +361,12 @@ round(cor(rd, cd), 3)
 ## ---- error=TRUE--------------------------------------------------------------
 data(pension)
 X <- as.matrix(pension)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 
 ## -----------------------------------------------------------------------------
 data(phosphor)
 X <- as.matrix(phosphor)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cellout <- cellMCD(X)
@@ -376,7 +376,7 @@ round(cor(rd, cd), 3)
 ## -----------------------------------------------------------------------------
 data(pilot)
 X <- as.matrix(pilot)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -393,7 +393,7 @@ cellout$S - (n - 1) * cov(X) / n
 ## -----------------------------------------------------------------------------
 data(radarImage)
 X <- as.matrix(radarImage)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 pairs(X) 
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
@@ -406,7 +406,7 @@ round(cor(rd,cd),3)
 ## -----------------------------------------------------------------------------
 data(salinity)
 X <- as.matrix(salinity)[, 1:3]
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -418,7 +418,7 @@ round(cor(rd,cd),3)
 ## -----------------------------------------------------------------------------
 data(salinity)
 X <- as.matrix(salinity)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -430,7 +430,7 @@ round(cor(rd, cd), 3)
 ## -----------------------------------------------------------------------------
 data(starsCYG)
 X <- as.matrix(starsCYG)
-X <- transfo(X, nbsteps = 1)$Zt
+X <- transfo(X, nbsteps = 1)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -443,16 +443,16 @@ round(cor(rd,cd),3)
 data(telef)
 X <- as.matrix(telef)
 # plot(X)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 
 ## ---- error = TRUE------------------------------------------------------------
 data(toxicity)
 X <- as.matrix(toxicity)
-X <- transfo(X, nbsteps = 1)$Zt
+X <- transfo(X, nbsteps = 1)$Y
 
 ## -----------------------------------------------------------------------------
 data(wood)
 X <- as.matrix(wood)
-X <- transfo(X, nbsteps = 1)$Zt
+X <- transfo(X, nbsteps = 1)$Y
 cellout <- cellMCD(X)
 

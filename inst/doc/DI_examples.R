@@ -1,8 +1,8 @@
 ## ---- echo = FALSE------------------------------------------------------------
 knitr::opts_chunk$set(
- fig.width = 8 ,
- fig.height = 12,
- fig.align ='center'
+  fig.width = 8 ,
+  fig.height = 12,
+  fig.align ='center'
 )
 
 ## -----------------------------------------------------------------------------
@@ -44,22 +44,16 @@ length(intersect(data$indcells, flaggedCells_marginal))
 
 
 cellMap(D = X, R = DI.out$Zres, indcells = flaggedCells, 
-                  columnlabels = 1:10,
-                  rowlabels = 1:100,
-                  mTitle = "cellHandler",
-                  rowtitle = "",
-                  columntitle = "",
-                  sizetitles = 2,
-                  drawCircles = F)
+        mTitle = "cellHandler",
+        rowtitle = "",
+        columntitle = "",
+        sizetitles = 2)
 
 cellMap(D = X, R = Z, indcells = flaggedCells_marginal, 
-                  columnlabels = 1:10,
-                  rowlabels = 1:100,
-                  mTitle = "marginal analysis",
-                  rowtitle = "",
-                  columntitle = "",
-                  sizetitles = 2,
-                  drawCircles = F)
+        mTitle = "marginal analysis",
+        rowtitle = "",
+        columntitle = "",
+        sizetitles = 2)
 
 ## -----------------------------------------------------------------------------
 data("data_VOC")
@@ -80,7 +74,8 @@ range(data_VOC$RIDAGEYR)
 
 ## -----------------------------------------------------------------------------
 X <- data_VOC[, -c(17:19)] # extract the VOC data
-
+dim(X)
+rownames(X) = 1:512
 # Run the Detection Imputation (DI) algorithm:
 tic = Sys.time()
 DI.out = DI(X)
@@ -89,20 +84,18 @@ DI.out$nits
 # the algorithm converges in 4 iterations and takes roughly 2 seconds
 
 Zres     <- DI.out$Zres
+dimnames(Zres) <- dimnames(X)
 indcells <- DI.out$indcells
 # Draw cellmap:
 # pdf("VOCs_20_cellmap.pdf", height = 6)
 rowsToShow = 1:20
-cellMap(D = X, R = Zres, 
-                  indcells = indcells, 
-                  columnlabels = colnames(X),
-                  showrows = rowsToShow,
-                  rowlabels = 1:512,
-                  mTitle = "VOCs in children",
-                  rowtitle = "first 20 children",
-                  columntitle = "volatile components",
-                  sizetitles = 2,
-                  drawCircles = F)
+cellMap(Zres,
+        showrows = rowsToShow,
+        mTitle = "VOCs in children",
+        rowtitle = "first 20 children",
+        columntitle = "volatile components",
+        sizetitles = 2)
+
 # dev.off()
 rm(rowsToShow)
 
@@ -166,7 +159,7 @@ nonsmokers = which(data_VOC$SMD460 == 0)
 length(nonsmokers) 
 # at least one adult smokes, but not in the home:
 noneInHome = which((data_VOC$SMD460 > 0) &
-                      (data_VOC$SMD470 == 0))
+                     (data_VOC$SMD470 == 0))
 length(noneInHome)
 # children with 1 person smoking in their home:
 oneInHome = which(data_VOC$SMD470 == 1)
@@ -185,41 +178,30 @@ length(which(Zres[twoInHome,8] > 0))/length(twoInHome)
 # 63% of the children living in a house with two smokers
 # have suspiciously high levels for this biomarker.
 
-cellMap(D = X, R = Zres, 
-                  indcells = which(W == 1), 
-                  columnlabels = colnames(X),
-                  showrows = oneInHome,
-                  rowlabels = 1:512,
-                  mTitle = "VOCs in children",
-                  rowtitle = "",
-                  columntitle = "volatile components",
-                  sizetitles = 2,
-                  drawCircles = F)
+cellMap(Zres,
+        showrows = oneInHome,
+        mTitle = "VOCs in children",
+        rowtitle = "",
+        columntitle = "volatile components",
+        sizetitles = 2)
 
-cellMap(D = X, R = Zres, 
-                  indcells = which(W == 1), 
-                  columnlabels = colnames(X),
-                  showrows = twoInHome,
-                  rowlabels = 1:512,
-                  mTitle = "VOCs in children",
-                  rowtitle = "",
-                  columntitle = "volatile components",
-                  sizetitles = 2,
-                  drawCircles = F)
+cellMap(Zres,
+        showrows = twoInHome,
+        mTitle = "VOCs in children",
+        rowtitle = "",
+        columntitle = "volatile components",
+        sizetitles = 2)
 
 # For one or more smokers in the house:
 smokeInHome = c(oneInHome,twoInHome)
 length(smokeInHome) 
-cellMap(D = X, R = Zres, 
-                  indcells = which(W == 1), 
-                  columnlabels = colnames(X),
-                  showrows = smokeInHome,
-                  rowlabels = 1:512,
-                  mTitle = "VOCs in children",
-                  rowtitle = "",
-                  columntitle = "volatile components",
-                  sizetitles = 2,
-                  drawCircles = F)
+cellMap(Zres,
+        showrows = smokeInHome,
+        mTitle = "VOCs in children",
+        rowtitle = "",
+        columntitle = "volatile components",
+        sizetitles = 2)
+
 
 # In all of these cellmaps the variable URXCYM stands out!
 

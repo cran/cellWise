@@ -16,11 +16,16 @@ cellMap(R, indcells = NULL, indrows = NULL, standOD = NULL,
           columnlabels = NULL, mTitle = "cell map",
           rowtitle = "cases", columntitle = "variables", 
           showrows = NULL, showcolumns = NULL,
-          nrowsinblock = 1, ncolumnsinblock = 1, 
+          nrowsinblock = NULL,  ncolumnsinblock = NULL, 
+          manualrowblocksizes = NULL,
+          manualcolumnblocksizes = NULL,
+          rowblocklabels = NULL, columnblocklabels = NULL,
           autolabel = TRUE, columnangle = 90, sizemain = 2,
           sizetitles = 1.1, adjustrowlabels = 1, 
-          adjustcolumnlabels = 1, colContrast = 1, outlyingGrad = TRUE, 
-          darkestColor = sqrt(qchisq(0.999, 1)), drawCircles = TRUE) 
+          adjustcolumnlabels = 1, colContrast = 1,
+          outlyingGrad = TRUE, 
+          darkestColor = sqrt(qchisq(0.999, 1)),
+          drawCircles = FALSE) 
 }
 
 \arguments{
@@ -28,7 +33,7 @@ cellMap(R, indcells = NULL, indrows = NULL, standOD = NULL,
   Matrix of standardized residuals of the cells (required input argument). After running \code{\link{DDC}}, \code{\link{DDCpredict}},  \code{\link{MacroPCA}} or \code{\link{MacroPCApredict}} this is typically their value \code{$stdResid}.
   }
   \item{indcells}{
-  Indices of outlying cells. Defaults to \code{NULL}, which indicates the cells for which
+  Indices of flagged cells. Defaults to \code{NULL}, which flags the cells for which
 \eqn{|\code{R}| > \sqrt(qchisq(0.99,1))}.
   }
   \item{indrows}{
@@ -44,10 +49,11 @@ cellMap(R, indcells = NULL, indrows = NULL, standOD = NULL,
   A matrix of data values, of the same dimensions as \code{R}. Default is \code{NULL}. \code{D} is only required when the data values are to be shown in the cellmap, by the option \code{showVals = "D"}. After running \code{\link{DDC}} or \code{\link{MacroPCA}}, \code{D} is typically their value \code{$remX}. After running \code{\link{DDCpredict}} or \code{\link{MacroPCApredict}} it is their argument \code{$newX}.
   }
   \item{rowlabels}{
-  Labels of the rows. If \code{NULL}, row labels are taken from the argument \code{R}.
+  Labels of the rows of the matrix \code{R}. If \code{NULL}, these labels are taken as rownames(\code{R}), and failing that they are \code{1:nrow(R)}.
   }
   \item{columnlabels}{
-  Labels of the columns. If \code{NULL}, column labels are taken from the argument \code{R}.
+  Labels of the columns of the matrix \code{R}. If \code{NULL}, these labels are taken as colnames(\code{R}), and failing that they are \code{1:ncol(R)}.
+
   }
   \item{mTitle}{
   Main title of the cellMap. Defaults to "cell map".
@@ -70,15 +76,18 @@ cellMap(R, indcells = NULL, indrows = NULL, standOD = NULL,
   Indices of the columns to be shown. Defaults to \code{NULL} which means all columns are shown.
   }
   \item{nrowsinblock}{
-  How many rows are combined in a block. Defaults to \eqn{1}.
+  How many rows are combined in a block. Defaults to \code{NULL}, which asks not to block rows. The argument \code{nrowsinblock} is overruled by the argument \code{manualrowblocksizes} when the latter is specified.
   }
   \item{ncolumnsinblock}{
-  How many columns are combined in a block. Defaults to \eqn{1}.
+  Defaults to \code{NULL}, which asks not to block columns. The argument \code{ncolumnsinblock} is overruled by the argument \code{manualcolumnblocksizes} when the latter is specified.
   }
+  
+  \item{manualrowblocksizes}{This allows the user to specify their own row blocks, unlike the argument nrowsinblock which makes all row blocks the same length. The argument takes the form \code{c(a,b,...)} where \code{a} is the length of the first block, \code{b} is the length of the second, and so on. The numbers \code{a,b,...} must be strictly positive integers, adding up to at most \code{nrow(R)}. They cannot all be 1, which would mean no blocking of rows. Defaults to \code{NULL}.}
+\item{manualcolumnblocksizes}{Analogous to manualrowblocksizes but for columns. It is allowed for one of them to be \code{NULL} while the other is not.}
+\item{rowblocklabels}{This allows the user to specify labels for the row blocks, whether obtained from \code{nrowsinblock} or from \code{manualrowblocksizes}. Defaults to \code{NULL}. Will throw an error if the number of row labels does not match the number of blocks.}
+\item{columnblocklabels}{Analogous to \code{rowblocklabels} but for columns. It is allowed for one of them to be \code{NULL} while the other is not.}
   \item{autolabel}{
-  Automatically combines labels of cells in blocks.  
-  If \code{FALSE}, you must provide the final columnlabels and/or rowlabels.
-  Defaults to \code{TRUE}.
+  (obsolete) Whether to automatically combine labels of cells in blocks. This argument no longer has an effect because \code{\link{cellMap}} now carries out this combination whenever it is needed, that is, when no block labels have been specified.
   }
   \item{columnangle}{
   Angle of the column labels. Defaults to \eqn{90} so the column labels are vertical.
@@ -99,7 +108,7 @@ cellMap(R, indcells = NULL, indrows = NULL, standOD = NULL,
   Standardized residuals bigger than this will get the darkest color.
   }
   \item{drawCircles}{
-  Whether or not to draw black circles indicating the outlying rows.
+  Whether or not to draw circles indicating the outlying rows.
   }
 }
 

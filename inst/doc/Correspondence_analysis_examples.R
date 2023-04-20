@@ -31,14 +31,11 @@ d <- ncol(S)
 
 ## -----------------------------------------------------------------------------
 DDC.out <- DDC(S)
-ggp <- cellMap(R = DDC.out$stdResid,               
-               indcells = DDC.out$indcells,
-               indrows = DDC.out$indrows,
+ggp <- cellMap(R = DDC.out$stdResid,
                mTitle = "",
                rowtitle = "countries",
-               columntitle = "brackets    ",
-               sizetitles = 2,
-               drawCircles = F)
+               columntitle = "brackets",
+               sizetitles = 2)
 
 # pdf("clothes_cellmap.pdf", width = 4, height = 8)
 plot(ggp)
@@ -135,14 +132,11 @@ d <- ncol(S)
 
 ## -----------------------------------------------------------------------------
 DDC.out <- DDC(S)
-ggp     <- cellMap(R = DDC.out$stdResid,                        
-                    indcells = DDC.out$indcells,
-                    indrows = DDC.out$indrows,
-                    mTitle = "",
-                    rowtitle = "brands",
-                    columntitle = "perceptions   ",
-                    sizetitles = 2.3,
-                    drawCircles = F)
+ggp     <- cellMap(R = DDC.out$stdResid,
+                   mTitle = "",
+                   rowtitle = "brands",
+                   columntitle = "perceptions",
+                   sizetitles = 2.3)
 #pdf("brands_cellmap.pdf", width = 6, height = 13)
 plot(ggp)
 #dev.off()

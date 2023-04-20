@@ -1,106 +1,19 @@
-
-transfo <- function(X, type = "YJ", robust = TRUE, lambdarange = NULL,
-                    prestandardize = TRUE, prescaleBC = F, scalefac = 1,
-                    quant = 0.99, nbsteps = 2, checkPars = list()) {
-  #
-  # Function for fitting the Box-Cox (BC) or Yeo-Johnson (YJ) 
-  # transformation to the columns of X, as described in:
-  # 
-  # J. Raymaekers and P.J. Rousseeuw, "Transforming variables to 
-  #   central normality," https://arxiv.org/abs/2005.07946 .
-  #
-  # Arguments: 
-  #   X              : a data matrix of dimensions n x d. Its columns
-  #                    are the variables to be transformed.
-  #   type           : one of the following:
-  #                    "BC" : Box-Cox power transformation. Only works
-  #                           for strictly positive variables. If this type
-  #                           is given but a variable is not strictly
-  #                           positive, the function stops with a
-  #                           message about that variable.
-  #                    "YJ" : Yeo-Johnson power transformation. The data
-  #                           may have positive as well as negative values.
-  #                    "bestObj" : for strictly positive variables both BC
-  #                                and YJ are run, and the solution with
-  #                                lowest objective is kept. On the other
-  #                                variables YJ is run.
-  #   robust         : if TRUE the proposed RewML (Reweighted Maximum 
-  #                    Likelihood) method is used, which first
-  #                    computes a robust initial estimate of the
-  #                    transformation parameter lambda. If FALSE
-  #                    the classical ML method is used.
-  #   lambdarange    : range of lambda values that will be optimized over. 
-  #                    If NULL, the range goes from -4 to 6.    
-  #   prestandardize : whether to standardize the variables _before_ the
-  #                    power transformation.
-  #                    For BC the variable is divided by its median.
-  #                    For YJ it subtracts a location estimate and 
-  #                    divides by a scale estimate.
-  #   prescaleBC     : for BC only. This standardizes the logarithm of
-  #                    original variable by subtracting its median and
-  #                    dividing by its mad, after which exp() turns
-  #                    the result into a positive variable again.
-  #   scalefac       : when YJ is fit and prestandardize = T, the 
-  #                    standardized data is multiplied by scalefac. 
-  #                    When BC is fit and prescaleBC = T the same happens 
-  #                    to the standardized log of the original variable.
-  #   quant          : quantile for determining the weights in the 
-  #                    reweighting step (ignored when robust=F).
-  #   nbsteps        : number of reweighting steps (ignored when 
-  #                    robust=F).
-  # 
-  # Results:
-  #   lambdahats  : the estimated lambda parameter for each column of x
-  #   Xt          : each column is the transformed version of the
-  #                 corresponding column of x
-  #   muhat       : the estimated location of each column of Xt
-  #   sigmahat    : the estimated scale of each column of Xt
-  #   Zt          : Xt poststandardized by the centers in muhat and the
-  #                 scales in sigmahat. Is always provided.
-  #   weights     : the final weights from the reweighting.
-  #   ttypes      : the type of transform used in each column.
-  
-  # check for too many outliers. Gives warning in this case
-  
+transfo = function(X, type = "YJ", robust = TRUE,
+                   standardize = TRUE, 
+                   prestandardize = NULL,
+                   quant = 0.99, nbsteps = 2, 
+                   checkPars = list()) {
   if (is.vector(X)) {
     X <- matrix(X, ncol = 1)
   }
-  X      <- as.matrix(X)
-  locsca <- cellWise::estLocScale(X)
-  Xs     <- scale(X, center = locsca$loc, scale = locsca$scale)
-  cutf   <- sqrt(qchisq(0.99, df = 1))
-  fract  <- colMeans(abs(Xs) > cutf)
-  outl   <- which(fract >= 0.25)
-  if (length(outl) == 1) {
-    if (ncol(X) == 1) {
-      warning(paste0("The data has ",round(100 * fract[outl], 2),
-                     "% of outliers, but\n", "this function ",
-                     "was designed for less than 25% of outliers."))
-    } else {
-      message("The following variable has 25% or more outliers:")
-      print(round(100 * fract[outl], 2))
-      warning(paste0("It is recommended not to transform the\n",
-                     "variable ", colnames(X)[outl], 
-                     " or to do so manually."))
-    }
-  }
-  if (length(outl) > 1) {
-    message(paste0("Several variables have 25% or more outliers.",
-                   "\nThe percentages per variable are:"))
-    print(round(100 * fract[outl],2))
-    message("It is recommended not to transform the variables")
-    print(colnames(X)[outl])
-    message("or to do so manually.")
-    warning("There are variables with 25% or more outliers.")
-  }
-  
-  # parameter checks
+  X <- as.matrix(X)
+  dorig = ncol(X) # added
+  colnamX = colnames(X)
+  if(is.null(colnamX)) { colnamX = seq_len(dorig) }
   
   if (nbsteps < 1) {
     stop("nbsteps should be at least 1.")
   }
-  
-  # parameters for checkDataSet
   if (!"coreOnly" %in% names(checkPars)) {
     checkPars$coreOnly <- FALSE
   }
@@ -113,126 +26,346 @@ transfo <- function(X, type = "YJ", robust = TRUE, lambdarange = NULL,
   if (!"precScale" %in% names(checkPars)) {
     checkPars$precScale <- 1e-12
   }
-  
-  # Start with checkDataSet to avoid transforming too discrete variables
   out <- NULL
   if (!checkPars$coreOnly) {
-    # Check the data set and set aside columns and rows that do
-    # not satisfy the conditions:
-    out <- checkDataSet(X,
-                        fracNA = 1,
-                        numDiscrete = checkPars$numDiscrete,
-                        precScale = checkPars$precScale,
+    out <- checkDataSet(X, fracNA = 1, numDiscrete = checkPars$numDiscrete, 
+                        precScale = checkPars$precScale, 
                         silent = checkPars$silent)
-    
-    X <- out$remX 
-  } 
-  
-  # The code of the main function starts here.
-  #
+    X <- out$remX
+  }
   n <- nrow(X)
-  d <- ncol(X)
-  n ; d
-  Xt         <- X
+  d <- ncol(X) # from here on, only that many columns and entries
+  Xt <- X
   lambdahats <- rep(1, d)
-  ttypes     <- rep(NA, d)
-  objective  <- rep(NA, d)
-  weights    <- matrix(0, n, d)
-  muhat      <- rep(0, d)
-  sigmahat   <- rep(1, d)
-  if (is.null(lambdarange)) { lambdarange <- c(-4, 6) }
-  for (j in seq_len(d)) { # loop over the columns of X
-    x         <- X[, j]
-    goodInds  <- which(!is.na(x))
-    x         <- x[goodInds]
-    ttype     <- getTtype(x, type, j)   
+  ttypes <- rep(NA, d)
+  objective <- rep(NA, d)
+  weights <- matrix(0, n, d)
+  muhat <- locx <- rep(0, d)
+  sigmahat <- scalex <- rep(1, d)
+  if (!is.null(prestandardize)) {
+    standardize <- prestandardize
+  }
+  lambdarange <- c(-4, 6)
+  for (j in seq_len(d)) { # j=1
+    x <- X[, j]
+    goodInds <- which(!is.na(x))
+    x <- x[goodInds]
+    ttype <- getTtype(x, type, j)
     ttypes[j] <- ttype
-    if (robust == TRUE) { 
+    if (robust == TRUE) {
       order.x <- order(x)
-      xsort   <- x[order.x] # the estimation code uses the sorted data
-      # throughout, to avoid sorting many times.
+      xsort <- x[order.x]
       if (ttype == "BC" || ttype == "bestObj") {
-        est.out.BC <- RewML_BC(xsort, lambdarange = lambdarange,
-                               prestandardize = prestandardize, 
-                               init = "BCr", quant = quant,
-                               nbsteps = nbsteps,
-                               prescaleBC = prescaleBC,
-                               scalefac = scalefac)
-        lambdahats[j]                 <- est.out.BC$lambdahat.rew
-        objective[j]                  <- est.out.BC$critval.rew
-        Xt[goodInds[order.x], j]      <- est.out.BC$yt.rew
+        lambdarangetemp <- lambdarange
+        converged <- FALSE
+        while (!converged) {
+          est.out.BC <- RewML_BC(xsort, 
+                                 lambdarange = lambdarangetemp, 
+                                 standardize = standardize, 
+                                 init = "BCr", 
+                                 quant = quant, nbsteps = nbsteps)
+          converged <- min(abs(est.out.BC$lambdahat.rew - 
+                                 lambdarangetemp)) > diff(lambdarangetemp) * 
+            0.05
+          lambdarangetemp <- 1 + (lambdarangetemp - 1) * 
+            (1 + (abs(est.out.BC$lambdahat.rew - lambdarangetemp) == 
+                    min(abs(est.out.BC$lambdahat.rew - lambdarangetemp))) + 
+               0)
+        }
+        lambdahats[j] <- est.out.BC$lambdahat.rew
+        objective[j] <- est.out.BC$critval.rew
+        Xt[goodInds[order.x], j] <- est.out.BC$yt.rew
         weights[goodInds[order.x], j] <- est.out.BC$weights
-        muhat[j]                      <- est.out.BC$muhat
-        sigmahat[j]                   <- est.out.BC$sigmahat
+        muhat[j] <- est.out.BC$muhat
+        sigmahat[j] <- est.out.BC$sigmahat
+        locx[j] <- est.out.BC$locx
+        scalex[j] <- est.out.BC$scalex
       }
       if (ttype == "YJ" || ttype == "bestObj") {
-        est.out.YJ <- RewML_YJ(xsort, lambdarange = lambdarange,
-                               prestandardize = prestandardize,
-                               init = "YJr", quant = quant,
-                               nbsteps = nbsteps,
-                               scalefac = scalefac)
-        lambdahats[j]                 <- est.out.YJ$lambdahat.rew
-        objective[j]                  <- est.out.YJ$critval.rew
-        Xt[goodInds[order.x], j]      <- est.out.YJ$yt.rew
+        lambdarangetemp <- lambdarange
+        converged <- FALSE
+        while (!converged) {
+          est.out.YJ <- RewML_YJ(xsort,
+                                 lambdarange = lambdarangetemp, 
+                                 standardize = standardize, 
+                                 init = "YJr", 
+                                 quant = quant, nbsteps = nbsteps)
+          converged <- min(abs(est.out.YJ$lambdahat.rew - 
+                                 lambdarangetemp)) > diff(lambdarangetemp) * 
+            0.05
+          lambdarangetemp <- 1 + (lambdarangetemp - 1) * 
+            (1 + (abs(est.out.YJ$lambdahat.rew - lambdarangetemp) == 
+                    min(abs(est.out.YJ$lambdahat.rew - lambdarangetemp))) + 
+               0)
+        }
+        lambdahats[j] <- est.out.YJ$lambdahat.rew
+        objective[j] <- est.out.YJ$critval.rew
+        Xt[goodInds[order.x], j] <- est.out.YJ$yt.rew
         weights[goodInds[order.x], j] <- est.out.YJ$weights
-        muhat[j]                      <- est.out.YJ$muhat
-        sigmahat[j]                   <- est.out.YJ$sigmahat
+        muhat[j] <- est.out.YJ$muhat
+        sigmahat[j] <- est.out.YJ$sigmahat
+        locx[j] <- est.out.YJ$locx
+        scalex[j] <- est.out.YJ$scalex
       }
       if (ttype == "bestObj") {
         if (est.out.BC$critval.rew < est.out.YJ$critval.rew) {
-          # RewML minimizes its objective
-          lambdahats[j]                 <- est.out.BC$lambdahat.rew
-          objective[j]                  <- est.out.BC$critval.rew
-          Xt[goodInds[order.x], j]      <- est.out.BC$yt.rew
+          lambdahats[j] <- est.out.BC$lambdahat.rew
+          objective[j] <- est.out.BC$critval.rew
+          Xt[goodInds[order.x], j] <- est.out.BC$yt.rew
           weights[goodInds[order.x], j] <- est.out.BC$weights
-          ttypes[j]                     <- "BC"
-          muhat[j]                      <- est.out.BC$muhat
-          sigmahat[j]                   <- est.out.BC$sigmahat
           ttypes[j] <- "BC"
-        } else {
+          muhat[j] <- est.out.BC$muhat
+          sigmahat[j] <- est.out.BC$sigmahat
+          locx[j] <- est.out.BC$locx
+          scalex[j] <- est.out.BC$scalex
+          ttypes[j] <- "BC"
+        }
+        else {
           ttypes[j] <- "YJ"
         }
       }
-    } else {# robust = F so classical ML
+    }
+    else { # robust = F
       if (ttype == "BC" || ttype == "bestObj") {
-        est.out.BC           <- estML(x, type = "BC", lambdarange = lambdarange,
-                                      prestandardize = prestandardize,
-                                      prescaleBC = prescaleBC,
-                                      scalefac = scalefac)
-        lambdahats[j]        <- est.out.BC$lambda
-        objective[j]         <- est.out.BC$objective
-        Xt[goodInds, j]      <- est.out.BC$xt
+        lambdarangetemp <- lambdarange
+        converged <- FALSE
+        while (!converged) {
+          est.out.BC <- estML(x, type = "BC", 
+                              lambdarange = lambdarangetemp, 
+                              standardize = standardize)
+          converged <- min(abs(est.out.BC$lambda - lambdarangetemp)) > 
+            diff(lambdarangetemp) * 0.05
+          lambdarangetemp <- 1 + (lambdarangetemp - 1) * 
+            (1 + (abs(est.out.BC$lambda - lambdarangetemp) == 
+                    min(abs(est.out.BC$lambda - lambdarangetemp))) + 
+               0)
+        }
+        lambdahats[j] <- est.out.BC$lambda
+        objective[j] <- est.out.BC$objective
+        locx[j] <- est.out.BC$locx
+        scalex[j] <- est.out.BC$scalex
+        Xt[goodInds, j] <- est.out.BC$xt
         weights[goodInds, j] <- est.out.BC$weights
       }
       if (ttype == "YJ" || ttype == "bestObj") {
-        est.out.YJ           <- estML(x, type = "YJ", lambdarange = lambdarange,
-                                      prestandardize = prestandardize,
-                                      scalefac = scalefac)
-        lambdahats[j]        <- est.out.YJ$lambda
-        objective[j]         <- est.out.YJ$objective
-        Xt[goodInds, j]      <- est.out.YJ$xt
-        weights[goodInds, j] <- est.out.YJ$weights        
+        lambdarangetemp <- lambdarange
+        converged <- FALSE
+        while (!converged) {
+          est.out.YJ <- estML(x, type = "YJ", 
+                              lambdarange = lambdarangetemp, 
+                              standardize = standardize)
+          converged <- min(abs(est.out.YJ$lambda - lambdarangetemp)) > 
+            diff(lambdarangetemp) * 0.05
+          lambdarangetemp <- 1 + (lambdarangetemp - 1) * 
+            (1 + (abs(est.out.YJ$lambda - lambdarangetemp) == 
+                    min(abs(est.out.YJ$lambda - lambdarangetemp))) + 
+               0)
+        }
+        lambdahats[j] <- est.out.YJ$lambda
+        objective[j] <- est.out.YJ$objective
+        locx[j] <- est.out.YJ$locx
+        scalex[j] <- est.out.YJ$scalex
+        Xt[goodInds, j] <- est.out.YJ$xt
+        weights[goodInds, j] <- est.out.YJ$weights
       }
       if (ttype == "bestObj") {
         if (est.out.BC$objective > est.out.YJ$objective) {
-          # ML maximizes its objective
-          lambdahats[j]        <- est.out.BC$lambda
-          objective[j]         <- est.out.BC$objective
-          Xt[goodInds, j]      <- est.out.BC$xt
+          lambdahats[j] <- est.out.BC$lambda
+          objective[j] <- est.out.BC$objective
+          locx[j] <- est.out.BC$locx
+          scalex[j] <- est.out.BC$scalex
+          Xt[goodInds, j] <- est.out.BC$xt
           weights[goodInds, j] <- est.out.BC$weights
           ttypes[j] <- "BC"
-        } else {
+        }
+        else {
           ttypes[j] <- "YJ"
         }
       }
-      muhat[j]    <- mean(Xt[,j], na.rm = TRUE)
-      sigmahat[j] <- sd(Xt[,j], na.rm = TRUE)
-    } # ends classical ML
-  } # ends loop over columns of X
-  Zt <- scale(Xt, center = muhat, scale = sigmahat)
-  return(c(list(lambdahats = lambdahats, objective = objective,
-              Xt = Xt, Zt = Zt, weights = weights, ttypes = ttypes, 
-              muhat = muhat, sigmahat = sigmahat), out))
+      muhat[j] <- mean(Xt[, j], na.rm = TRUE)
+      sigmahat[j] <- sd(Xt[, j], na.rm = TRUE)
+    }
+  }
+  # Zt <- scale(Xt, center = muhat, scale = sigmahat)
+  Y <- if (standardize) { scale(Xt, center = muhat, scale = sigmahat)
+  }
+  else {
+    Xt
+  }
+  # must add dorig to output list
+  return(c(list(lambdahats = lambdahats, objective = objective, 
+                Y = Y, weights = weights, ttypes = ttypes, muhat = muhat, 
+                sigmahat = sigmahat, locx = locx, scalex = scalex, 
+                standardize = standardize), out, list(dorig = dorig,
+                                                      colnamX = colnamX) ) )
+}
+
+
+transfo_newdata = function(Xnew, transfo.out) {
+  if (is.vector(Xnew)) {
+    Xnew <- matrix(Xnew, ncol = 1)
+  }
+  Xnew <- as.matrix(Xnew)
+  d = ncol(Xnew)
+  dorig = transfo.out$dorig
+  if(d != dorig) stop(paste0(
+    "Xnew should have ",dorig," columns like the original data."))
+  colnamnew = colnames(Xnew)
+  if(is.null(colnamnew)) { colnamnew = seq_len(d) }
+  if(all.equal(colnamnew, transfo.out$colnamX) != TRUE) stop(
+    "Xnew should have the same column names as the original data.")
+  colInA <- seq_len(d)
+  if (!is.null(transfo.out$out$colInAnalysis)) {
+    colInA <- transfo.out$out$colInAnalysis
+  }
+  standardize <- transfo.out$standardize
+  locx <- transfo.out$locx
+  scalex <- transfo.out$scalex
+  muhat <- transfo.out$muhat
+  sigmahat <- transfo.out$sigmahat
+  ttypes <- transfo.out$ttypes
+  lambdas <- transfo.out$lambdahats
+  Ynew <- Xnew
+  for (j in colInA) {
+    xnewt <- Xnew[, colInA[j]] # actual column
+    if (ttypes[j] == "YJ") {
+      ynewt <- xnewt
+      if (standardize) {
+        ynewt <- scale(ynewt, locx[j], scalex[j])
+      }
+      ynewt <- YJ(ynewt, lambdas[j], stdToo = FALSE)$yt
+      if (standardize) {
+        ynewt <- scale(ynewt, muhat[j], sigmahat[j])
+      }
+      Ynew[, j] <- ynewt
+    }
+    else if (ttypes[j] == "BC") {
+      ynewt <- xnewt
+      if (standardize) {
+        ynewt <- ynewt/scalex[j]
+      }
+      if(min(ynewt) <= 0) stop(paste0(
+        "Column ",j," has some value(s) <= 0, but in the original data\n",
+        "it was transformed by Box-Cox. You have to either make all\n",
+        "values in this column strictly positive, or apply transfo()\n",
+        "again to the original data but with type = \"YJ\"."))
+      ynewt <- BC(ynewt, lambdas[j], stdToo = FALSE)$yt
+      if (standardize) {
+        ynewt <- scale(ynewt, muhat[j], sigmahat[j])
+      }
+      Ynew[, j] <- ynewt
+    }
+    else {
+      stop(paste0("Invalid transformation type ",ttypes[j],
+                  " for column ",j))
+    }
+  }
+  return(Ynew)
+}
+
+
+transfo_transformback = function (Ynew, transfo.out) {
+  if (is.vector(Ynew)) {
+    Ynew <- matrix(Ynew, ncol = 1)
+  }
+  Ynew <- as.matrix(Ynew)
+  d = ncol(Ynew)
+  dorig = transfo.out$dorig
+  if(d != transfo.out$dorig) stop(paste0(
+    "Ynew should have ",dorig," columns like the original ",
+    "transformed data."))
+  colnamnew = colnames(Ynew)
+  if(is.null(colnamnew)) { colnamnew = seq_len(d) }
+  if(all.equal(colnamnew, transfo.out$colnamX) != TRUE) stop(paste0(
+    "Ynew should have the same column names as the original ",
+    "transformed data."))
+  standardize <- transfo.out$standardize
+  locx <- transfo.out$locx
+  scalex <- transfo.out$scalex
+  ttypes <- transfo.out$ttypes
+  lambdas <- transfo.out$lambdahats
+  muhat <- transfo.out$muhat
+  sigmahat <- transfo.out$sigmahat
+  colInAnalysis <- seq_len(ncol(Ynew))
+  # if (!is.null(transfo.out$out$colInAnalysis)) {
+  #   colInAnalysis <- transfo.out$out$colInAnalysis
+  # }
+  Xnew <- Ynew # initialization
+  for (j in colInAnalysis) {
+    # Shouldn't we step over j in seq_len(length(colInAnalysis)) ?
+    ynewt <- Ynew[, j]
+    if (ttypes[j] == "YJ") {
+      xnewt <- ynewt
+      stan = " "
+      if (standardize) {
+        xnewt <- xnewt * sigmahat[j] + muhat[j]
+        stan = " destandardized "
+      }
+      if(lambdas[j] > 2){
+        lowerb = -1/abs(lambdas[j] - 2)
+        newlowerb = 0.95*lowerb
+        if(min(xnewt) < lowerb) warning(paste0(
+          "The lowest",stan,"value in column ",j," was ",min(xnewt),
+          " .\n","This is below the expected lower bound ",lowerb,
+          " .\n","Such low",stan,"values were put equal to ",
+          newlowerb,"\nso they could be transformed back."))
+        xnewt = pmax(xnewt, newlowerb)
+      }
+      if(lambdas[j] < 0){
+        upperb = 1/abs(lambdas[j])
+        newupperb = 0.95*upperb
+        if(max(xnewt) > upperb) warning(paste0(
+          "The highest",stan,"value in column ",j," was ",max(xnewt),
+          " .\n","This is above the expected upper bound ",upperb,
+          " .\n","Such high",stan,"values were put equal to ",
+          newupperb,"\nso they could be transformed back."))
+        xnewt = pmin(xnewt, newupperb)
+      }
+      xnewt <- iYJ(xnewt, lambdas[j], stdToo = FALSE)$yt
+      if (standardize) {
+        xnewt <- xnewt * scalex[j] + locx[j]
+      }
+      Xnew[, j] <- xnewt
+    }
+    else if (ttypes[j] == "BC") {
+      xnewt <- ynewt
+      stan = " "
+      if (standardize) {
+        xnewt <- xnewt * sigmahat[j] + muhat[j]
+        stan = " destandardized "
+      }
+      if(lambdas[j] > 0){
+        lowerb = -1/abs(lambdas[j])
+        newlowerb = 0.95*lowerb
+        if(min(xnewt) < lowerb) warning(paste0(
+          "The lowest",stan,"value in column ",j," was ",min(xnewt),
+          " .\n","This is below the expected lower bound ",lowerb,
+          " .\n","Such low",stan,"values were put equal to ",
+          newlowerb,"\nso they could be transformed back."))
+        xnewt = pmax(xnewt, newlowerb)  
+      }
+      if(lambdas[j] < 0){
+        upperb = 1/abs(lambdas[j])
+        newupperb = 0.95*upperb
+        if(max(xnewt) > upperb) warning(paste0(
+          "The highest",stan,"value in column ",j," was ",max(xnewt),
+          " .\n","This is above the expected upper bound ",upperb,
+          " .\n","Such high",stan,"values were put equal to ",
+          newupperb,"\nso they could be transformed back."))
+        xnewt = pmin(xnewt, newupperb)
+      }
+      xnewt <- iBC(xnewt, lambdas[j], stdToo = FALSE)$yt
+      if (standardize) {
+        xnewt <- xnewt * scalex[j]
+      }
+      Xnew[, j] <- xnewt
+    }
+    else {
+      stop(paste0("Invalid transformation type ",ttypes[j],
+                  " for column ",j))
+    }
+  }
+  return(Xnew)
 }
 
 
@@ -271,9 +404,7 @@ getTtype <- function(x, type, j=NULL) {
 
 RewML_BC <- function(x,
                      lambdarange = NULL,
-                     prestandardize = TRUE,
-                     prescaleBC = F,
-                     scalefac = 1,
+                     standardize = TRUE,
                      init = "BCr",
                      quant = 0.99,
                      nbsteps = 2) {
@@ -300,14 +431,12 @@ RewML_BC <- function(x,
   } else {
     x.order <- NULL
   }
-  
-  if (prestandardize) {
-    x <- x / median(x) # so median is 1
-    if (prescaleBC){ 
-      if(is.null(scalefac)) { scalefac = 1 }
-      x <- exp( scalefac*log(x)/mad(log(x)) ) # median stays 1
-      if(min(x) < 1e-6) { x <- x + 1e-6 }
-    }
+  scalex <- 1
+  if (standardize) {
+    scalex <- median(x)
+    x <- x / scalex # so median is 1
+    # x <- exp(log(x)/mad(log(x)) ) # median stays 1
+    #  if(min(x) < 1e-6) { x <- x + 1e-6 }
   }
   
   # Range of lambda over which to optimize:
@@ -335,7 +464,7 @@ RewML_BC <- function(x,
                          lambdahat.raw = lambdahat.raw, 
                          lambdarange = lambdarange, quant = quant,
                          nbsteps = nbsteps,
-                         prestandardize = prestandardize)
+                         standardize = standardize)
   BC.out.rew    <- rew.out$BC.out.rew
   yt.rew        <- BC.out.rew$yt
   zt.rew        <- BC.out.rew$zt
@@ -361,7 +490,9 @@ RewML_BC <- function(x,
               zt.rew = zt.rew,
               critval.rew = critval.rew, 
               muhat = muhat,
-              sigmahat = sigmahat))
+              sigmahat = sigmahat,
+              locx = 0,
+              scalex = scalex))
 }
 
 
@@ -369,8 +500,7 @@ RewML_YJ <- function(x,
                      lambdarange = NULL, 
                      quant = 0.99, 
                      init = "YJr",
-                     prestandardize = TRUE, 
-                     scalefac = 1,
+                     standardize = TRUE, 
                      nbsteps = 2) {
   # The reweighted ML estimator for the Yeo-Johnson transformation parameter.
   #
@@ -397,9 +527,12 @@ RewML_YJ <- function(x,
     x.order <- NULL
   }
   
-  if (prestandardize) {
-    if(is.null(scalefac)) { scalefac = 1 }
-    x <- scalefac*(x - median(x))/mad(x)
+  locx <- 0
+  scalex <- 1
+  if (standardize) {
+    locx <- median(x)
+    scalex <- mad(x)
+    x <- (x - locx) / scalex
   }
   
   # Range of lambda over which to optimize:
@@ -453,7 +586,9 @@ RewML_YJ <- function(x,
               yt.rew = yt.rew,
               zt.rew = zt.rew, 
               muhat = muhat,
-              sigmahat = sigmahat))
+              sigmahat = sigmahat,
+              locx = locx,
+              scalex = scalex))
 }
 
 
@@ -483,7 +618,7 @@ reweightYJr <- function(x,
   # YJ transform with weighted ML:
   for (k in seq_len(nbsteps)) {
     lambdahat.rew <- estML(x = x.rew, lambdarange = lambdarange, 
-                           type = "YJ", prestandardize = F)$lambda
+                           type = "YJ", standardize = FALSE)$lambda
     YJ.out.rew    <- YJ(x.all, lambdahat.rew)
     wgts    <- abs(YJ.out.rew$zt) <= sqrt(qchisq(quant,1))
     rewinds <- which(wgts == 1)
@@ -542,7 +677,7 @@ getChangepointBCr <- function(y, lambda, fac = 1.5, eps = 1e-5) {
 
 
 reweightBCr <- function(x, zt.raw, lambdahat.raw, lambdarange, quant = 0.99,
-                        nbsteps = 2, prestandardize = TRUE) {
+                        nbsteps = 2, standardize = TRUE) {
   # function for reweighted maximum likelihood, based on an initial estimate.
   # args: 
   #   x              : vector of sorted original observations
@@ -565,7 +700,7 @@ reweightBCr <- function(x, zt.raw, lambdahat.raw, lambdarange, quant = 0.99,
   #
   for (k in seq_len(nbsteps)) {
     lambdahat.rew <- estML(x = x.rew, lambdarange = lambdarange, 
-                           type = "BC", prestandardize = F)$lambda
+                           type = "BC", standardize = FALSE)$lambda
     BC.out.rew <- BC(x.all, lambdahat.rew)
     wgts       <- abs(BC.out.rew$zt) <= sqrt(qchisq(quant,1))
     rewinds    <- which(wgts == 1)
@@ -581,8 +716,7 @@ reweightBCr <- function(x, zt.raw, lambdahat.raw, lambdarange, quant = 0.99,
 
 
 estML <- function(x, lambdarange = NULL, type = "BC",
-                  prestandardize = TRUE,
-                  prescaleBC = F, scalefac = 1) {
+                  standardize = TRUE) {
   # Computes the ML estimator of the parameter lambda in the BC 
   # and YJ transformation, for a vector x (corresponding to a
   # column of the input data X).
@@ -591,9 +725,12 @@ estML <- function(x, lambdarange = NULL, type = "BC",
   n <- length(x)
   if (is.null(lambdarange)) { lambdarange <- c(-4, 6) }
   if (type == "YJ") { # Yeo-Johnson
-    if (prestandardize) {
-      if(is.null(scalefac)) { scalefac = 1 }
-      x <- scalefac*scale(x)
+    locx <- 0
+    scalex <- 1
+    if (standardize) {
+      locx <- mean(x)
+      scalex <- sd(x)
+      x <- (x - locx) / scalex
     }
     tempfunc <- function(lambdatemp) {
       xyj    <- YJ(x, lambdatemp, stdToo = FALSE)$yt
@@ -610,13 +747,14 @@ estML <- function(x, lambdarange = NULL, type = "BC",
     xt <- YJ(x, opt.out$maximum, stdToo = FALSE)$yt
     zt <- scale(xt)
   } else {# Box-Cox
-    if (prestandardize) {
-      x <- x/median(x)
-      if (prescaleBC){ 
-        if(is.null(scalefac)) { scalefac = 1 }
-        x <- exp( scalefac*log(x)/sd(log(x)) ) # median stays 1
-        if(min(x) < 1e-6) { x <- x + 1e-6 }
-      }
+    locx <- 0
+    scalex <- 1
+    if (standardize) {
+      scalex <- median(x)
+      x <- x / scalex
+      #x <- exp( log(x)/sd(log(x)) ) # median stays 1
+      #if(min(x) < 1e-6) { x <- x + 1e-6 }
+      
     }
     tempfunc <- function(lambdatemp) {
       xyj    <- BC(x, lambdatemp, stdToo = FALSE)$yt
@@ -632,7 +770,8 @@ estML <- function(x, lambdarange = NULL, type = "BC",
   }
   return(list(lambda = opt.out$maximum,
               lambdarange = lambdarange, objective = objective,
-              xt = xt, zt = zt, weights = rep(1, n)))
+              xt = xt, zt = zt, weights = rep(1, n),
+              locx = locx, scalex = scalex))
 }
 
 
@@ -663,8 +802,8 @@ BC <- function(y, lambda, chg = NULL, stdToo = TRUE) {
   }
   if (stdToo) {
     if (length(y) > 1) {
-      locScale <- cellWise::estLocScale(matrix(yt, ncol = 1), 
-                                        type = "hubhub")
+      locScale <- estLocScale(matrix(yt, ncol = 1), 
+                              type = "hubhub")
       zt <- (yt - locScale$loc) / locScale$scale
     } else { 
       zt <- yt
@@ -711,8 +850,8 @@ YJ <- function(y, lambda, chg = NULL, stdToo = TRUE) {
   }
   if (stdToo) {
     if (length(y) > 1) {
-      locScale <- cellWise::estLocScale(matrix(y, ncol = 1), 
-                                        type = "hubhub")
+      locScale <- estLocScale(matrix(y, ncol = 1), 
+                              type = "hubhub")
       zt <- (y - locScale$loc) / locScale$scale
     } else {
       zt <- y
@@ -756,7 +895,7 @@ YJprimex <- function(x, lambda) {
 
 estMTL <- function(x, alpha = 0.95,
                    lambdagrid = NULL, type = "YJ",
-                   prestandardize = TRUE) {
+                   standardize = TRUE) {
   # The Maximum Trimmed Likelihood estimator.
   # 
   if (is.null(lambdagrid)) {
@@ -765,7 +904,7 @@ estMTL <- function(x, alpha = 0.95,
   result  <- rep(0, length(lambdagrid))
   n       <- length(x)
   h       <- ceiling(alpha * n)
-  if (prestandardize) {
+  if (standardize) {
     if (type == "YJ") {
       x <- (x - median(x))/mad(x)
     }
@@ -909,8 +1048,8 @@ BCr = function(y, lambda, chg = NULL, stdToo = TRUE) {
   }
   if (stdToo) {
     if (length(y) > 1) {
-      locScale <- cellWise::estLocScale(matrix(yt, ncol = 1), 
-                                        type = "hubhub")
+      locScale <- estLocScale(matrix(yt, ncol = 1), 
+                              type = "hubhub")
       zt <- (yt - locScale$loc)/locScale$scale
     } else {
       zt <- yt
@@ -982,8 +1121,8 @@ YJr = function(y, lambda, chg = NULL, prec = 1e-10, stdToo = TRUE) {
   } 
   if (stdToo) {
     if (length(y) > 1) {
-      locScale <- cellWise::estLocScale(matrix(yt, ncol = 1), 
-                                        type = "hubhub")
+      locScale <- estLocScale(matrix(yt, ncol = 1), 
+                              type = "hubhub")
       zt <- (yt - locScale$loc) / locScale$scale
     } else { 
       zt <- yt
@@ -1013,8 +1152,8 @@ robnormality <- function(y, b = 0.5) {
   # 
   sy       <- y[!is.na(y)]
   n        <- length(sy)
-  locScale <- cellWise::estLocScale(matrix(sy, ncol = 1), 
-                                    type = "hubhub")
+  locScale <- estLocScale(matrix(sy, ncol = 1), 
+                          type = "hubhub")
   sy       <- (sy - locScale$loc) / locScale$scale
   # Theoretical quantiles and differences:
   hprobs     <- ((seq_len(n)) - 1/3)/(n + 1/3)

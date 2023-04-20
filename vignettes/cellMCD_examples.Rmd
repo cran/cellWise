@@ -257,7 +257,7 @@ par(mfrow=c(1,1))
 
 # Comparison of cellMCD with covMCD
 
-In the following, we compare covMCD and cellMCD on benchmark datasets with casewise outliers. Since some datasets have skewed variables, we always run  X = transfo(X)$Zt before both estimators. We will stop if some variables have 25% or more outliers, as in telef. The easiest way to compare both fits is to plot(rd,cd) and report cor(rd,cd).
+In the following, we compare covMCD and cellMCD on benchmark datasets with casewise outliers. Since some datasets have skewed variables, we always run  X = transfo(X)$Y before both estimators. We will stop if some variables have 25% or more outliers, as in telef. The easiest way to compare both fits is to plot(rd,cd) and report cor(rd,cd).
 As said in the report, we require n/d >= 5.
 
 The robustbase library contains most of the datasets as well as the covMCD function.
@@ -273,7 +273,7 @@ In this dataset we obtain a very high correlation (over 95%) between the robust 
 data(aircraft)
 X      <- as.matrix(aircraft)[, 1:4]
 pairs(X) 
-X      <- transfo(X)$Zt
+X      <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd     <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975,ncol(X)))
@@ -307,7 +307,7 @@ cellout <- cellMCD(X)
 The transfo function also warns for this:
 ```{r}
 y <- X[, 5]
-y <- transfo(y)$Zt
+y <- transfo(y)$Y
 ```
 
 
@@ -319,7 +319,7 @@ Here we obtain a correlation between rd and cd of close to 90%. Note that covMCD
 ```{r}
 data(alcohol, package = "robustbase")
 X <- as.matrix(alcohol)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 eigen(rowout$cov)$values
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
@@ -339,7 +339,7 @@ The original Animals dataset (n=28) is in package MASS and gives a very similar 
 ```{r}
 data(Animals2)
 X <- as.matrix(log(Animals2))
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cellout <- cellMCD(X)
@@ -355,7 +355,7 @@ This dataset yields again a very high correlation between rd and cd of over 97%.
 ```{r}
 data(bushfire)
 X <- as.matrix(bushfire)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X,center=rowout$center,cov=rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -372,7 +372,7 @@ This small dataset does not really contain outliers. No cells are flagged, and t
 ```{r}
 data(cloud)
 X <- as.matrix(cloud)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cellout <- cellMCD(X) 
@@ -389,7 +389,7 @@ Another example without real outliers. The results of cellMCD and covMCD are ver
 ```{r}
 data(delivery)
 X <- as.matrix(delivery)[, 1:2]
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -407,7 +407,7 @@ The output of cellMCD is more informative, pointing to the likely source of outl
 ```{r}
 data(delivery)
 X <- as.matrix(delivery)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -425,7 +425,7 @@ Very similar result between covMCD and cellMCD in terms of location and covarian
 ```{r}
 data(exAM)
 X <- as.matrix(exAM)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -443,7 +443,7 @@ Here we find perfect correlation between rd and cd.
 ```{r}
 data(hbk)
 X <- as.matrix(hbk)[, 1:3]
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -460,7 +460,7 @@ Also here we find perfect correlation between rd and cd.
 ```{r}
 data(hbk)
 X <- as.matrix(hbk)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -477,7 +477,7 @@ Perfect correlation between rd and cd.
 ```{r}
 data(kootenay)
 X <- as.matrix(kootenay)
-X <- transfo(X)$Zt 
+X <- transfo(X)$Y 
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -494,7 +494,7 @@ This data set is too discrete. It has only 5 unique values for the first variabl
 ```{r, error=TRUE}
 data(lactic)
 X <- as.matrix(lactic)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 ```
 
 ## milk (n=68, d=8)
@@ -504,7 +504,7 @@ Despite substantial numbers of cells flagged in several variables, the correlati
 ```{r}
 data(milk)
 X <- as.matrix(milk)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cellout <- cellMCD(X)
@@ -519,7 +519,7 @@ This dataset has more than 25% outliers in its second variable. The transfo func
 ```{r, error=TRUE}
 data(pension)
 X <- as.matrix(pension)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 ```
 
 ## phosphor (n=18, d=3)
@@ -529,7 +529,7 @@ Another data set with very similar rd and cd.
 ```{r}
 data(phosphor)
 X <- as.matrix(phosphor)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cellout <- cellMCD(X)
@@ -544,7 +544,7 @@ This dataset has a very strong correlation between the variables, but no outlier
 ```{r}
 data(pilot)
 X <- as.matrix(pilot)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -568,7 +568,7 @@ cellMCd and covMCD again yield a perfect correlation between their robust distan
 ```{r}
 data(radarImage)
 X <- as.matrix(radarImage)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 pairs(X) 
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
@@ -586,7 +586,7 @@ There are some differences between cellMCD and covMCD on this dataset. Visually,
 ```{r}
 data(salinity)
 X <- as.matrix(salinity)[, 1:3]
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -602,7 +602,7 @@ Now the results between covMCD and cellMCD are a little closer. CellMCD flags tw
 ```{r}
 data(salinity)
 X <- as.matrix(salinity)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -620,7 +620,7 @@ On this data the results of covMCD and cellMCD are very close.
 ```{r}
 data(starsCYG)
 X <- as.matrix(starsCYG)
-X <- transfo(X, nbsteps = 1)$Zt
+X <- transfo(X, nbsteps = 1)$Y
 rowout <- robustbase::covMcd(X)
 rd <- sqrt(mahalanobis(X, center = rowout$center, cov = rowout$cov))
 cutoff <- sqrt(qchisq(0.975, ncol(X)))
@@ -639,7 +639,7 @@ The transfo function finds too many outliers in Y and gives a warning.
 data(telef)
 X <- as.matrix(telef)
 # plot(X)
-X <- transfo(X)$Zt
+X <- transfo(X)$Y
 ```
 
 ## toxicity (n=38, d=10) does not satisfy n/d > 5
@@ -648,7 +648,7 @@ This dataset does not satisy n/d > 5, and there are too many marginal outliers s
 ```{r, error = TRUE}
 data(toxicity)
 X <- as.matrix(toxicity)
-X <- transfo(X, nbsteps = 1)$Zt
+X <- transfo(X, nbsteps = 1)$Y
 ```
 
 ## wood without response n=20, d=5
@@ -658,7 +658,7 @@ This data also does not satisfy n/d < 5. cellMCD throws a warning in this case, 
 ```{r}
 data(wood)
 X <- as.matrix(wood)
-X <- transfo(X, nbsteps = 1)$Zt
+X <- transfo(X, nbsteps = 1)$Y
 cellout <- cellMCD(X)
 ```
 

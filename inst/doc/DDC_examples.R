@@ -1,8 +1,8 @@
 ## ---- echo = FALSE------------------------------------------------------------
 knitr::opts_chunk$set(
- fig.width  = 5 ,
- fig.height = 3.5,
- fig.align  = 'center'
+  fig.width  = 5 ,
+  fig.height = 3.5,
+  fig.align  = 'center'
 )
 
 ## -----------------------------------------------------------------------------
@@ -344,14 +344,16 @@ ggpMCDphilips = cellMap(data_philips,
                         indrows=indrowsMCD,
                         mTitle="MCD",
                         nrowsinblock=15,
-                        ncolumnsinblock=1)
+                        ncolumnsinblock=1,
+                        drawCircles = TRUE)
 plot(ggpMCDphilips)
 
 ggpDDCphilips = cellMap(DDCphilips$stdResid,
                         indrows=DDCphilips$indrows,
                         mTitle="DetectDeviatingCells",
                         nrowsinblock=15,
-                        ncolumnsinblock=1)
+                        ncolumnsinblock=1,
+                        drawCircles = TRUE)
 plot(ggpDDCphilips)
 # dev.copy(pdf,"Figure_philips_right.pdf",width=6,height=12)
 # dev.off()
@@ -363,6 +365,7 @@ dim(data_mortality)
 rownames(data_mortality)[1:5] 
 colnames(data_mortality)[1:5] 
 
+DDCpars = list(fastDDC = FALSE, silent = TRUE)
 DDCmortality = DDC(data_mortality,DDCpars) # 1 second
 
 remX = DDCmortality$remX
@@ -381,7 +384,9 @@ ggpROBPCA = cellMap(remX,
                     ncolumnsinblock=5, 
                     rowtitle = "Years",
                     columntitle = "Age",
-                    sizetitles = 2.0)
+                    sizetitles = 2.0,
+                    drawCircles = TRUE)
+
 plot(ggpROBPCA)
 
 ggpDDC = cellMap(DDCmortality$stdResid,
@@ -391,15 +396,37 @@ ggpDDC = cellMap(DDCmortality$stdResid,
                  ncolumnsinblock=5,
                  rowtitle = "Years",
                  columntitle = "Age",
-                 sizetitles = 2.0)
+                 sizetitles = 2.0,
+                 drawCircles = TRUE)
 plot(ggpDDC) # Leads to a detailed interpretation:
 
 # pdf("cellmap_mortality.pdf",width=14,height=12)
 # gridExtra::grid.arrange(ggpROBPCA,ggpDDC,nrow=1)
 # dev.off()
 
+## ----fig.height=8,fig.width=6-------------------------------------------------
+rowblocksizes = c(84,14,5,21,6,35,33)
+rowlabels = c("19th century","1900-1913","WW1","1919-1939",
+"WW2","1946-1980","recent")
+colblocksizes = c(5,5,10,10,10,10,10,10,10,10,1)
+collabels = c("upto 4","5 to 9","10 to 19","20 to 29","30 to 39","40 to 49","50 to 59","60 to 69","70 to 79","80 to 89","90+")
+
+ggpDDC = cellMap(DDCmortality$stdResid,
+                 mTitle = "Cellmap with manual blocks",
+                 manualrowblocksizes = rowblocksizes,
+                 rowblocklabels = rowlabels,
+                 manualcolumnblocksizes = colblocksizes,
+                 columnblocklabels = collabels,
+                 rowtitle = "Epochs",
+                 columntitle = "Age groups",
+                 sizetitles = 2.0)
+# pdf("cellmap_mortality_manual_blocks.pdf",width=8,height=5)
+plot(ggpDDC)
+# dev.off()
+
 ## -----------------------------------------------------------------------------
 data(data_glass)
+DDCpars = list(fastDDC = FALSE, silent = TRUE)
 DDCglass = DDC(data_glass,DDCpars) # takes 8 seconds
 remX = DDCglass$remX
 # With DDCpars$silent = FALSE we obtain more information:
@@ -463,8 +490,8 @@ columnlabels[floor(d/ncolumnsinblock)] = "d"
 
 ggpROBPCA = cellMap(matrix(0,n,d),
                     indrows=which(PCAglass@flag==FALSE),
-                    rowlabels=rowlabels,
-                    columnlabels=columnlabels,
+                    rowblocklabels=rowlabels,
+                    columnblocklabels=columnlabels,
                     mTitle="By row",
                     nrowsinblock=5,
                     ncolumnsinblock=5,
@@ -472,13 +499,13 @@ ggpROBPCA = cellMap(matrix(0,n,d),
                     rowtitle="glass samples",
                     columntitle="wavelengths",
                     sizetitles=1.5,
-                    autolabel=F)
+                    drawCircles = TRUE)
 plot(ggpROBPCA)
 
 ggpDDC = cellMap(DDCglass$stdResid,
                  indrows=DDCglass$indrows,
-                 rowlabels=rowlabels,
-                 columnlabels=columnlabels,
+                 rowblocklabels=rowlabels,
+                 columnblocklabels=columnlabels,
                  mTitle="DDC",
                  nrowsinblock=5,
                  ncolumnsinblock=5,
@@ -486,7 +513,7 @@ ggpDDC = cellMap(DDCglass$stdResid,
                  rowtitle="glass samples",
                  columntitle="wavelengths",
                  sizetitles=1.5,
-                 autolabel=F)
+                 drawCircles = TRUE)
 plot(ggpDDC)
 # pdf("cellmap_glass_ROBPCA_DDC.pdf",width=16,height=10)
 # gridExtra::grid.arrange(ggpROBPCA,ggpDDC,ncol=1)
@@ -494,8 +521,8 @@ plot(ggpDDC)
 
 ggpfastDDC = cellMap(fastDDCglass$stdResid,
                      indrows=fastDDCglass$indrows,
-                     rowlabels=rowlabels,
-                     columnlabels=columnlabels,
+                     rowblocklabels=rowlabels,
+                     columnblocklabels=columnlabels,
                      mTitle="fast DDC",
                      nrowsinblock=5,
                      ncolumnsinblock=5,
@@ -503,7 +530,7 @@ ggpfastDDC = cellMap(fastDDCglass$stdResid,
                      rowtitle="glass samples",
                      columntitle="wavelengths",
                      sizetitles=1.5,
-                     autolabel=F)
+                     drawCircles = TRUE)
 plot(ggpfastDDC)
 # pdf("cellmap_glass_DDC_fastDDC.pdf",width=16,height=10)
 # gridExtra::grid.arrange(ggpDDC,ggpfastDDC,ncol=1)

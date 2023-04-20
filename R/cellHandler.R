@@ -44,10 +44,10 @@ cellHandler <- function(X, mu, Sigma, quant = 0.99) {
     response <- Sigmaisqrt %*% (x - mu)
     weights  <- huberweights(x = (x - mu) / scales, b = 1.5)
     larOut   <- findCellPath_cpp(predictors = predictors,
-                                            response = response,
-                                            weights = weights,
-                                            Sigmai = Sigmai,
-                                            naMask = naMask[i, ])
+                                 response = response,
+                                 weights = weights,
+                                 Sigmai = Sigmai,
+                                 naMask = naMask[i, ])
     cellPaths[i, ] <- larOut$ordering
     deltas   <- abs(diff(larOut$RSS))
     badCells <- which(deltas > qchisq(quant, 1))
@@ -72,23 +72,26 @@ cellHandler <- function(X, mu, Sigma, quant = 0.99) {
         badinds <- unique(indNA, badinds)
       }
       
-      W[i, badinds] <- 1
-      #
-      if (length(badinds) == d) {
-        Ximp[i, ] <- mu
-        Zres_num[i, ] <- (X[i, ] - mu)
-        Zres_denom[i, ] <- sqrt(diag(Sigma))
-        Zres[i, ] <-  Zres_num[i, ] / Zres_denom[i, ]
-      } else {
-        replacement <- X[i, ]
-        replacement[badinds] <- mu[badinds] +  Sigma[badinds, -badinds] %*%
-          solve(Sigma[-badinds, -badinds]) %*% (replacement[-badinds] - mu[-badinds])
-        Ximp[i, ] <- replacement
-        residual  <- X[i, ] - replacement
-        Zres_num[i, badinds]   <- residual[badinds]
-        Zres_denom[i, badinds] <- sqrt(diag(Sigma[badinds, badinds] - Sigma[badinds, -badinds] %*%
-                                              solve(Sigma[-badinds, -badinds]) %*% Sigma[-badinds, badinds]))
-        Zres[i, badinds] <- Zres_num[i, badinds] / Zres_denom[i, badinds] 
+      if (length(badinds) > 0) {
+        
+        W[i, badinds] <- 1
+        #
+        if (length(badinds) == d) {
+          Ximp[i, ] <- mu
+          Zres_num[i, ] <- (X[i, ] - mu)
+          Zres_denom[i, ] <- sqrt(diag(Sigma))
+          Zres[i, ] <-  Zres_num[i, ] / Zres_denom[i, ]
+        } else {
+          replacement <- X[i, ]
+          replacement[badinds] <- mu[badinds] +  Sigma[badinds, -badinds] %*%
+            solve(Sigma[-badinds, -badinds]) %*% (replacement[-badinds] - mu[-badinds])
+          Ximp[i, ] <- replacement
+          residual  <- X[i, ] - replacement
+          Zres_num[i, badinds]   <- residual[badinds]
+          Zres_denom[i, badinds] <- sqrt(diag(Sigma[badinds, badinds] - Sigma[badinds, -badinds] %*%
+                                                solve(Sigma[-badinds, -badinds]) %*% Sigma[-badinds, badinds]))
+          Zres[i, badinds] <- Zres_num[i, badinds] / Zres_denom[i, badinds] 
+        }
       }
     }
   }
@@ -317,7 +320,7 @@ DI = function(X,
   }
   X <- as.matrix(X)
   
-    # parameters for checkDataSet
+  # parameters for checkDataSet
   if (!"coreOnly" %in% names(checkPars)) {
     checkPars$coreOnly <- FALSE
   }
@@ -339,10 +342,10 @@ DI = function(X,
     # Check the data set and set aside columns and rows that do
     # not satisfy the conditions:
     CD_out <- checkDataSet(X,
-                        fracNA = checkPars$fracNA,
-                        numDiscrete = checkPars$numDiscrete,
-                        precScale = checkPars$precScale,
-                        silent = checkPars$silent)
+                           fracNA = checkPars$fracNA,
+                           numDiscrete = checkPars$numDiscrete,
+                           precScale = checkPars$precScale,
+                           silent = checkPars$silent)
     X <- CD_out$remX
   } 
   

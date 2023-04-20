@@ -10,8 +10,9 @@ Box-Cox or Yeo-Johnson transformation to each variable in a dataset.
 Note that this function first calls \code{\link{checkDataSet}} to ensure that the variables to be transformed are not too discrete.
 }
 \usage{
-transfo(X, type = "YJ", robust = TRUE, lambdarange = NULL,
-        prestandardize = TRUE, prescaleBC = F, scalefac = 1,
+transfo(X, type = "YJ", robust = TRUE,
+        standardize = TRUE,
+                    prestandardize = NULL,
         quant = 0.99, nbsteps = 2, checkPars = list())
 }
 %- maybe also 'usage' for other objects documented here.
@@ -39,23 +40,12 @@ transfo(X, type = "YJ", robust = TRUE, lambdarange = NULL,
    computes a robust initial estimate of the
  transformation parameter lambda. If \code{FALSE} the classical ML method is used.
  }
- \item{lambdarange}{ range of lambda values that will be optimized over. 
-      If \code{NULL}, the range goes from -4 to 6.
-      }
- \item{prestandardize}{ whether to standardize the variables \strong{before} the
- power transformation.For BC the variable is divided by its median.
-For YJ and \code{robust = TRUE} this subtracts its median and divides by its mad (median absolute deviation). For YJ and \code{robust = F} this subtracts the mean and divides by the standard deviation.
+ \item{standardize}{ whether to standardize the variables \strong{before and after} the
+ power transformation. See Details below.
  }
- \item{prescaleBC}{ for BC only. This standardizes the logarithm of the
-   original variable by subtracting its median and
-  dividing by its mad, after which the exponential function turns
-  the result into a positive variable again.
-  }
-  \item{scalefac}{when YJ is fit and \code{prestandardize = TRUE}, the 
-  standardized data is multiplied by \code{scalefac}. 
-  When BC is fit and \code{prescaleBC = TRUE} the same happens 
-  to the standardized log of the original variable.
-  }
+ \item{prestandardize}{ For backwards compatibility. \code{NULL} by default. If not NULL, overrules the \code{standardize} argument.
+ }
+ 
  \item{quant}{quantile for determining the weights in the 
    reweighting step (ignored when \code{robust=FALSE}).
    }
@@ -90,9 +80,10 @@ A list with components: \cr
     \item{\code{lambdahats} \cr
     the estimated transformation parameter for each column of \code{X}.
     }
-    \item{\code{Xt} \cr
+    \item{\code{Y} \cr
     A matrix in which each column is the transformed version of the
    corresponding column of \code{X}.
+   The transformed version includes pre- and post-standardization if \code{standardize=TRUE}.
     }
       \item{\code{muhat} \cr
     The estimated location of each column of \code{Xt}.
@@ -101,10 +92,6 @@ A list with components: \cr
     The estimated scale of each column of \code{Xt}.
     }
      
-     \item{\code{Zt} \cr
-    \code{Xt} poststandardized by the centers in \code{muhat} and the
-    scales in \code{sigmahat}. Is always provided.
-    }
      \item{\code{weights} \cr
     The final weights from the reweighting.
     }
@@ -114,14 +101,27 @@ A list with components: \cr
      \item{\code{objective} \cr
      Value of the (reweighted) maximum likelihood objective function.
     }
+    \item{\code{transfunctions}\cr
+    A list containing the transformation functions for each variable. The functions include pre- and post-standardization if \code{standardize=TRUE}.}
+     \item{\code{backtransfunctions}\cr
+    A list containing the inverse transformation functions for each variable. The functions include post- and pre-standardization if \code{standardize=TRUE}.}
               
     }
+}
+
+\details{
+In case \code{standardize = TRUE}, the variables is standardized before and after transformation. 
+For BC the variable is divided by its median before transformation.
+For YJ and \code{robust = TRUE} this subtracts its median and divides by its mad (median absolute deviation) before transformation. For YJ and \code{robust = FALSE} this subtracts the mean and divides by the standard deviation before transformation. For the standardization after the transformation, the classical mean and standard deviation are used in case  \code{robust = FALSE}. If \code{robust = TRUE}, the mean and standard deviation are calculated robustly on a subset of inliers.  
 }
 \references{
 J. Raymaekers and P.J. Rousseeuw (2021). Transforming variables to central normality. \emph{Machine Learning}. \doi{10.1007/s10994-021-05960-5}{(link to open access pdf)}
 }
 \author{
 J. Raymaekers and P.J. Rousseeuw
+}
+\seealso{
+\code{\link{transfo_newdata}}, \code{\link{transfo_transformback}}
 }
 
 \examples{
@@ -135,13 +135,11 @@ transfo.out$lambdahat
 # value of the objective function:
 transfo.out$objective
 # the transformed variable:
-transfo.out$Xt
-# the poststandardized transformed variable:
-transfo.out$Zt
+transfo.out$Y
 # the type of transformation used:
 transfo.out$ttypes
-# qqplot of the poststandardized transformed variable:
-qqnorm(transfo.out$Zt); abline(0,1)
+# qqplot of the transformed variable:
+qqnorm(transfo.out$Y); abline(0,1)
 
 # For more examples, we refer to the vignette:
 \dontrun{

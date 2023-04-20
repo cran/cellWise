@@ -153,7 +153,8 @@ ggpICPCA = cellMap(ICPCAtransTG$stdResid,
                    showVals="D",
                    D=tempTG,
                    mTitle="ICPCA residual map",
-                   showrows=showrows)
+                   showrows=showrows, drawCircles = TRUE)
+
 plot(ggpICPCA)
 
 ggpMacroPCA = cellMap(MacroPCAtransTG$stdResid,
@@ -162,7 +163,7 @@ ggpMacroPCA = cellMap(MacroPCAtransTG$stdResid,
                       showVals="D",
                       D=tempTG,
                       mTitle="MacroPCA residual map",
-                      showrows=showrows)
+                      showrows=showrows, drawCircles = TRUE)
 plot(ggpMacroPCA)
 
 # Creating the combined pdf:
@@ -260,7 +261,7 @@ ggpMacroPCAres = cellMap(MacroPCAtransTG$stdResid,
                          standOD=MacroPCAtransTG$NAimp$OD/MacroPCAtransTG$NAimp$cutoffOD,
                          showVals="R",
                          mTitle="MacroPCA residual map",
-                         showrows=showrows) 
+                         showrows=showrows, drawCircles = TRUE) 
 plot(ggpMacroPCAres)
 
 # Define the "initial" dataset as the rows not in these 24:
@@ -299,7 +300,7 @@ ggpMacroPCApredict = cellMap(predictMacroPCA$stdResid,
                              indrows=predictMacroPCA$indrows,
                              standOD=predictMacroPCA$OD/predictMacroPCA$cutoffOD,
                              showVals="R",
-                             mTitle="MacroPCApredict residual map")
+                             mTitle="MacroPCApredict residual map", drawCircles = TRUE)
 plot(ggpMacroPCApredict) # is very similar to that based on all the data!
 
 # Creating the combined pdf:
@@ -374,28 +375,30 @@ columnlabels[floor(d/ncolumnsinblock)] = "d"
 ggpICPCA <- cellMap(ICPCAglass$stdResid,
                     indrows=ICPCAglass$indrows,
                     standOD=ICPCAglass$OD/ICPCAglass$cutoffOD,
-                    rowlabels=rowlabels,    
-                    columnlabels=columnlabels,
+                    rowblocklabels=rowlabels,    
+                    columnblocklabels=columnlabels,
                     mTitle="ICPCA residual map",
                     rowtitle="glass samples",
                     columntitle="wavelengths",
                     nrowsinblock=5,
                     ncolumnsinblock=5,
                     autolabel=FALSE,
-                    sizetitles=1.75)
+                    sizetitles=1.75,
+                    drawCircles = TRUE)
 
 ggpMacroPCA <- cellMap(MacroPCAglass$stdResid,
                        indrows=MacroPCAglass$indrows,
                        standOD=MacroPCAglass$OD/MacroPCAglass$cutoffOD,
-                       rowlabels=rowlabels,
-                       columnlabels=columnlabels,
+                       rowblocklabels=rowlabels,
+                       columnblocklabels=columnlabels,
                        mTitle="MacroPCA residual map",
                        rowtitle="glass samples",
                        columntitle="wavelengths",
                        nrowsinblock=5,
                        ncolumnsinblock=5,
                        autolabel=FALSE,
-                       sizetitles=1.75)
+                       sizetitles=1.75,
+                       drawCircles = TRUE)
 
 
 grid.arrange(ggpMacroPCA,ggpICPCA,nrow=2) 
@@ -421,15 +424,16 @@ ROBPCAindcells = which(abs(stdResidROBPCA) > cutoffResid)
 
 ggpROBPCA <- cellMap(stdResidROBPCA,
                      indrows=ROBPCAindrows,
-                     rowlabels=rowlabels,
-                     columnlabels=columnlabels,
+                     rowblocklabels=rowlabels,
+                     columnblocklabels=columnlabels,
                      mTitle="ROBPCA residual map",
                      rowtitle="glass samples",
                      columntitle="wavelengths",
                      nrowsinblock=5,
                      ncolumnsinblock=5,
                      autolabel=FALSE,
-                     sizetitles=1.75)
+                     sizetitles=1.75,
+                     drawCircles = TRUE)
 
 grid.arrange(ggpMacroPCA,ggpROBPCA,nrow=2) 
 # pdfName = "Glass_MacroPCA_ROBPCA_residualMap.pdf"
@@ -447,15 +451,16 @@ fastMacroPCAglass = MacroPCA(data_glass,k=4,MacroPCApars=fastMacroPCApars) # 2 s
 ggpfastMacroPCA <- cellMap(fastMacroPCAglass$stdResid,
                            indrows=fastMacroPCAglass$indrows,
                            standOD=fastMacroPCAglass$OD/fastMacroPCAglass$cutoffOD,
-                           columnlabels=columnlabels,
-                           rowlabels=rowlabels,
+                           columnblocklabels=columnlabels,
+                           rowblocklabels=rowlabels,
                            mTitle="MacroPCA with fastDDC=T",
                            columntitle="wavelengths",
                            rowtitle="glass samples",
                            ncolumnsinblock=5,
                            nrowsinblock=5,
                            autolabel=FALSE,
-                           sizetitles=1.75)
+                           sizetitles=1.75,
+                           drawCircles = TRUE)
 
 grid.arrange(ggpMacroPCA,ggpfastMacroPCA,nrow=2) # The results are similar:
 # pdfName = "Glass_MacroPCA_residualMaps.pdf"
@@ -608,16 +613,14 @@ rowlabels = c("OS1","OS2","OS3","OS4","OS5","OS6",
 ggpICPCAdposs = cellMap(ICPCAdposs$stdResid,
                         indrows=ICPCAdposs$indrows,
                         standOD=ICPCAdposs$OD/ICPCAdposs$cutoffOD,
-                        showVals=NULL,
-                        rowlabels=rowlabels,
+                        rowblocklabels=rowlabels,
                         mTitle="ICPCA residual map",
                         rowtitle="",
-                        columntitle="variables",
                         showrows=showrowsdposs,
                         nrowsinblock=25,
                         ncolumnsinblock=1,
-                        autolabel=F,
-                        sizetitles=1.75)
+                        sizetitles=1.75,
+                        drawCircles = TRUE)
 plot(ggpICPCAdposs) # not much to see:
 # dev.copy(pdf,"DPOSS_ICPCA_residualMap.pdf",width=8,height=6)
 # dev.off()
@@ -626,15 +629,14 @@ plot(ggpICPCAdposs) # not much to see:
 ggpMacroPCAdposs = cellMap(MacroPCAdposs$stdResid, 
                            indrows=MacroPCAdposs$indrows,
                            standOD=MacroPCAdposs$OD/MacroPCAdposs$cutoffOD,
-                           rowlabels=rowlabels,
+                           rowblocklabels=rowlabels,
                            mTitle="MacroPCA residual map",
                            rowtitle="",
-                           columntitle="variables",
                            showrows=showrowsdposs,
                            nrowsinblock=25,
                            ncolumnsinblock=1,
-                           autolabel=F,
-                           sizetitles=1.75)
+                           sizetitles=1.75,
+                           drawCircles = TRUE)
 plot(ggpMacroPCAdposs) # interesting structure:
 # dev.copy(pdf,"DPOSS_MacroPCA_residualMap.pdf",width=8,height=6)
 # dev.off()
