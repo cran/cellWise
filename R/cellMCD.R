@@ -47,8 +47,8 @@ cellMCD <- function(X, alpha = 0.75, quant = 0.99, crit = 1e-4,
   
   lmax <- NULL # upper bound on maximum eigenvalue. not used
   
-  Cstep <- function(X, W, mu, Sigma, Sigmai, lambdas, h, noits, 
-                   precScale=1e-12, nWupdates=1){
+  Cstep <- function(X, W, mu, Sigma, Sigmai, lambdas, h,
+                   precScale=1e-12){
     # Performs the C-step for cellMCD.
     # Part 1 updates W for fixed mu and Sigma,
     # Part 2 updates mu and Sigma for fixed W.
@@ -58,11 +58,10 @@ cellMCD <- function(X, alpha = 0.75, quant = 0.99, crit = 1e-4,
     d    <- dims[2]
     #
     # Part 1: start by updating W. 
-    for (jjj in seq_len(nWupdates)) {
-      W <- updateW_cpp(X = X, W = W, mu = mu,
-                       Sigma = Sigma, Sigmai = Sigmai,
-                       lambda = lambdas, h = h)
-    }
+    W <- updateW_cpp(X = X, W = W, mu = mu,
+                     Sigma = Sigma, Sigmai = Sigmai,
+                     lambda = lambdas, h = h)
+    
     
     # Part 2: now execute one EM-step. 
     #
@@ -110,14 +109,12 @@ cellMCD <- function(X, alpha = 0.75, quant = 0.99, crit = 1e-4,
                      precScale=1e-12,
                      crit=1e-4,
                      noCits=100,
-                     noEMits=1,
-                     nWupdates=1,
                      lmin = NULL,
                      lmax = NULL,
                      silent) {
     #
     if (!is.list(initEst)) stop("initEst should be a list") 
-    h <- round(alpha * dim(X)[1])
+    h <- ceiling(alpha * dim(X)[1])
     p <- ncol(X)
     n <- nrow(X)
     
@@ -141,8 +138,7 @@ cellMCD <- function(X, alpha = 0.75, quant = 0.99, crit = 1e-4,
     
     while (convcrit > crit && nosteps < noCits) {
       Cresult  <- Cstep(X = X, W = W, mu = mu, Sigma = Sigma,
-                       Sigmai = Sigmai, lambdas = lambdas, h = h, 
-                       noits = noEMits, nWupdates = nWupdates)
+                       Sigmai = Sigmai, lambdas = lambdas, h = h)
       convcrit <- max(abs((Cresult$Sigma - Sigma))) 
       W       <- Cresult$W
       mu      <- Cresult$mu
@@ -192,6 +188,16 @@ cellMCD <- function(X, alpha = 0.75, quant = 0.99, crit = 1e-4,
                       precScale = checkPars$precScale, 
                       silent = checkPars$silent)$remX
   }
+  # check dimension of the data w.r.t. the sample size
+  if (nrow(X) < 5 * ncol(X)) {
+    warning(paste0("There are fewer than 5 cases per dimension",
+                   " in this data set.\n",
+                   "It is not recommended to run cellMCD",
+                   " on these data.\n",
+                   "Consider reducing the number of variables."))
+  }
+  if (lmin < 1e-6) stop("lmin should be at least 1e-6.")
+  
   #
   # Robustly standardize the data
   #
@@ -201,9 +207,7 @@ cellMCD <- function(X, alpha = 0.75, quant = 0.99, crit = 1e-4,
   #
   # Check whether there are not too many bad cells:
   #
-  Z        <- Xs
-  cutf     <- sqrt(qchisq(quant, df = 1))
-  margfrac <- colSums(abs(Z) > cutf, na.rm = TRUE) / nrow(Z)
+  margfrac <- colSums(abs(Xs) > sqrt(qchisq(0.99,1)), na.rm = TRUE) / nrow(Xs)
   if (max(margfrac) > 1 - alpha) {
     cat(paste0("\nAt least one variable of X has more than ",
                "100*(1-alpha)% = ", 100 * (1 - alpha), "%",
@@ -212,8 +216,7 @@ cellMCD <- function(X, alpha = 0.75, quant = 0.99, crit = 1e-4,
     print(round(100 * margfrac, 2))
     stop("Too many marginal outliers.")
   }
-  Z[which(abs(Z) > cutf)] <- NA
-  badfrac <- colMeans(is.na(Z)) # also includes real NAs in X
+  badfrac <- colMeans((abs(Xs) > sqrt(qchisq(0.99,1))) | (is.na(Xs))) # also includes real NAs in X
   if (max(badfrac) > 1 - alpha) {
     cat(paste0("\nAt least one variable of X has more than ",
                "100*(1-alpha)% = ", 100 * (1 - alpha), "%",
@@ -222,15 +225,6 @@ cellMCD <- function(X, alpha = 0.75, quant = 0.99, crit = 1e-4,
     print(round(100 * badfrac, 2))
     stop("Too many marginal outliers plus NA's.")
   }
-  #
-  if (nrow(X) < 5 * ncol(X)) {
-    warning(paste0("There are fewer than 5 cases per dimension",
-                   " in this data set.\n",
-                   "It is not recommended to run cellMCD",
-                   " on these data.\n",
-                   "Consider reducing the number of variables."))
-  }
-  if (lmin < 1e-6) stop("lmin should be at least 1e-6.")
   #
   DDCWout <- DDCWcov(Xs, maxCol = 1 - alpha, lmin = lmin, lmax = lmax)
   initEst <- list(mu = DDCWout$center, Sigma = DDCWout$cov)
@@ -243,7 +237,7 @@ cellMCD <- function(X, alpha = 0.75, quant = 0.99, crit = 1e-4,
   lambdas <- cutoff + logC + log(2 * pi)
   temp    <- iterMCD(Xs, initEst = initEst, alpha = alpha, lambdas = lambdas, 
                      precScale = checkPars$precScale, crit = crit, 
-                     noCits = noCits, noEMits = 1, nWupdates = 1, 
+                     noCits = noCits,  
                      lmin = lmin, lmax = lmax, 
                      silent = checkPars$silent)
   W <- temp$W
@@ -257,25 +251,28 @@ cellMCD <- function(X, alpha = 0.75, quant = 0.99, crit = 1e-4,
   if (min(as.vector(cvars)) <= 0) stop("There are cvars <= 0 !")
   rownames(preds) <- rownames(cvars) <- rownames(X)
   colnames(preds) <- colnames(cvars) <- colnames(X)
-  S <- diag(rscales) %*% temp$Sigma %*% diag(rscales)
+  
   if (!checkPars$silent) {
     percflag <- 100 * colMeans(1 - W, na.rm = TRUE)
     cat("Percentage of flagged cells per variable:\n")
     print(round(percflag,2))
   }
   mu    <- locsca$loc + temp$mu * rscales
+  raw.S <- diag(rscales) %*% temp$Sigma %*% diag(rscales)
+  S <- diag(rscales) %*% cov2cor(temp$Sigma) %*% diag(rscales)
+  colnames(S) = rownames(S) = colnames(raw.S) = rownames(raw.S) = colnames(X)
+  
   preds <- scale(preds, center = FALSE, scale = 1 / rscales)
   preds <- scale(preds, center = -locsca$loc, scale = FALSE)
   csds  <- scale(sqrt(cvars), center = FALSE, scale = 1 / rscales)
   Ximp  <- X
   Ximp[which(W == 0)] <- preds[which(W == 0)]
   Zres  <- (X - preds) / csds
-  locsc <- cellWise::estLocScale(Zres, center = FALSE)
-  Zres  <- scale(Zres, center = FALSE, scale = locsc$scale)
   return(list(mu = mu, S = S,
               W = W, preds = preds,
               csds = csds, Ximp = Ximp,
-              Zres = Zres, rscales = rscales,
+              Zres = Zres, raw.S = raw.S,
+              locsca = locsca,
               nosteps = temp$nosteps,
               X = X, quant = quant))
 } 
@@ -438,15 +435,11 @@ plot_cellMCD = function(cellout, type = "Zres/X", whichvar = NULL,
         varlab = whichvar
       } else { stop(paste0("whichvar = ",whichvar," is not valid")) }
     }
-    flagged = which(cellout$W[,j] == 0) 
     Xj     = X[,j]
     preds  = cellout$preds[,j]
-    csds   = cellout$csds[,j]
-    Zres   = (Xj - preds)/csds # standardized residuals
-    locsc  = cellWise::estLocScale(Zres, center=F)
-    Zres   = scale(Zres, center=F, scale=locsc$scale) 
-    lspred = cellWise::estLocScale(preds)
-    lsX    = cellWise::estLocScale(Xj)
+    
+    Zres = cellout$Zres[, j]
+    flagged = which(abs(Zres) > cutf)
     #
     if(type == "index"){
       ycoord = Zres 

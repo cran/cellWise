@@ -12,7 +12,6 @@ Note that this function first calls \code{\link{checkDataSet}} to ensure that th
 \usage{
 transfo(X, type = "YJ", robust = TRUE,
         standardize = TRUE,
-                    prestandardize = NULL,
         quant = 0.99, nbsteps = 2, checkPars = list())
 }
 %- maybe also 'usage' for other objects documented here.
@@ -43,9 +42,6 @@ transfo(X, type = "YJ", robust = TRUE,
  \item{standardize}{ whether to standardize the variables \strong{before and after} the
  power transformation. See Details below.
  }
- \item{prestandardize}{ For backwards compatibility. \code{NULL} by default. If not NULL, overrules the \code{standardize} argument.
- }
- 
  \item{quant}{quantile for determining the weights in the 
    reweighting step (ignored when \code{robust=FALSE}).
    }
@@ -86,10 +82,10 @@ A list with components: \cr
    The transformed version includes pre- and post-standardization if \code{standardize=TRUE}.
     }
       \item{\code{muhat} \cr
-    The estimated location of each column of \code{Xt}.
+    The estimated location of each column of \code{Y}.
     }
       \item{\code{sigmahat} \cr
-    The estimated scale of each column of \code{Xt}.
+    The estimated scale of each column of \code{Y}.
     }
      
      \item{\code{weights} \cr
@@ -101,11 +97,7 @@ A list with components: \cr
      \item{\code{objective} \cr
      Value of the (reweighted) maximum likelihood objective function.
     }
-    \item{\code{transfunctions}\cr
-    A list containing the transformation functions for each variable. The functions include pre- and post-standardization if \code{standardize=TRUE}.}
-     \item{\code{backtransfunctions}\cr
-    A list containing the inverse transformation functions for each variable. The functions include post- and pre-standardization if \code{standardize=TRUE}.}
-              
+    \item{values of \code{\link{checkDataSet}}, unless \code{coreOnly} is \code{TRUE}.}
     }
 }
 
@@ -115,7 +107,7 @@ For BC the variable is divided by its median before transformation.
 For YJ and \code{robust = TRUE} this subtracts its median and divides by its mad (median absolute deviation) before transformation. For YJ and \code{robust = FALSE} this subtracts the mean and divides by the standard deviation before transformation. For the standardization after the transformation, the classical mean and standard deviation are used in case  \code{robust = FALSE}. If \code{robust = TRUE}, the mean and standard deviation are calculated robustly on a subset of inliers.  
 }
 \references{
-J. Raymaekers and P.J. Rousseeuw (2021). Transforming variables to central normality. \emph{Machine Learning}. \doi{10.1007/s10994-021-05960-5}{(link to open access pdf)}
+J. Raymaekers and P.J. Rousseeuw (2021). Transforming variables to central normality. \emph{Machine Learning}. \doi{10.1007/s10994-021-05960-5}(link to open access pdf)
 }
 \author{
 J. Raymaekers and P.J. Rousseeuw

@@ -1,14 +1,14 @@
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 knitr::opts_chunk$set(
-  fig.width = 8 ,
-  fig.height = 12,
+  fig.width = 6,
+  fig.height = 6,
   fig.align ='center'
 )
 
 ## -----------------------------------------------------------------------------
 library("cellWise")
 
-## -----------------------------------------------------------------------------
+## ----fig.height=8,fig.width=8-------------------------------------------------
 d     <- 10
 mu    <- rep(0, 10)
 Sigma <- generateCorMat(d = d, corrType = "A09")
@@ -24,7 +24,7 @@ X <- data$X
 pairs(X)
 # we clearly see some marginal outliers, but also some more tricky ones.
 
-## ----fig.height=10,fig.width=8------------------------------------------------
+## ----fig.height=15,fig.width=8------------------------------------------------
 tic = Sys.time()
 DI.out = DI(X)
 toc = Sys.time(); toc - tic 
@@ -44,16 +44,10 @@ length(intersect(data$indcells, flaggedCells_marginal))
 
 
 cellMap(D = X, R = DI.out$Zres, indcells = flaggedCells, 
-        mTitle = "cellHandler",
-        rowtitle = "",
-        columntitle = "",
-        sizetitles = 2)
+        mTitle = "cellHandler")
 
 cellMap(D = X, R = Z, indcells = flaggedCells_marginal, 
-        mTitle = "marginal analysis",
-        rowtitle = "",
-        columntitle = "",
-        sizetitles = 2)
+        mTitle = "marginal analysis")
 
 ## -----------------------------------------------------------------------------
 data("data_VOC")
@@ -66,13 +60,11 @@ data("data_VOC")
 
 colnames(data_VOC)
 
-
 range(data_VOC$RIDAGEYR)
 # the subjects in this dataset are children between 3 and 10
 
 
-
-## -----------------------------------------------------------------------------
+## ----fig.height=6,fig.width=6-------------------------------------------------
 X <- data_VOC[, -c(17:19)] # extract the VOC data
 dim(X)
 rownames(X) = 1:512
@@ -87,20 +79,17 @@ Zres     <- DI.out$Zres
 dimnames(Zres) <- dimnames(X)
 indcells <- DI.out$indcells
 # Draw cellmap:
-# pdf("VOCs_20_cellmap.pdf", height = 6)
+# pdf("VOCs_20_cellmap.pdf", height = 5, width = 5)
 rowsToShow = 1:20
-cellMap(Zres,
-        showrows = rowsToShow,
+cellMap(Zres, showrows = rowsToShow,
         mTitle = "VOCs in children",
         rowtitle = "first 20 children",
-        columntitle = "volatile components",
-        sizetitles = 2)
-
+        columntitle = "volatile components")
 # dev.off()
 rm(rowsToShow)
 
 
-## -----------------------------------------------------------------------------
+## ----fig.height=6,fig.width=6-------------------------------------------------
 W <- matrix(0, nrow(X), ncol(X))
 W[indcells] <- 1
 # Variable 8 has a substantial number of red cells.
@@ -149,7 +138,7 @@ abline(v=-cutoff, col="red")
 # compounds (variables) in the same person.
 
 
-## -----------------------------------------------------------------------------
+## ----fig.height=6,fig.width=6-------------------------------------------------
 # Look at the residuals for the children who 
 # live together with people who smoke.
 # We consider 4 categories:
@@ -182,15 +171,16 @@ cellMap(Zres,
         showrows = oneInHome,
         mTitle = "VOCs in children",
         rowtitle = "",
-        columntitle = "volatile components",
-        sizetitles = 2)
+        columntitle = "volatile components")
 
+## ----fig.height=5,fig.width=4,fig.align ='center'-----------------------------
 cellMap(Zres,
         showrows = twoInHome,
         mTitle = "VOCs in children",
         rowtitle = "",
-        columntitle = "volatile components",
-        sizetitles = 2)
+        columntitle = "volatile components")
+
+## ----fig.height=7,fig.width=6-------------------------------------------------
 
 # For one or more smokers in the house:
 smokeInHome = c(oneInHome,twoInHome)
@@ -199,15 +189,9 @@ cellMap(Zres,
         showrows = smokeInHome,
         mTitle = "VOCs in children",
         rowtitle = "",
-        columntitle = "volatile components",
-        sizetitles = 2)
+        columntitle = "volatile components")
 
-
-# In all of these cellmaps the variable URXCYM stands out!
-
-# If we would use a univariate detection bound, many of these values
-# wouldn't be considered suspicious:
-
+## ----fig.height=6,fig.width=6-------------------------------------------------
 length(which(Z[nonsmokers] > cutoff))/length(nonsmokers) 
 length(which(Z[noneInHome] > cutoff))/length(noneInHome)
 length(which(Z[oneInHome] > cutoff))/length(oneInHome) 

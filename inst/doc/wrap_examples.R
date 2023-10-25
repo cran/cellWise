@@ -1,14 +1,14 @@
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 knitr::opts_chunk$set(
- fig.width = 8 ,
- fig.height = 5,
+ fig.width = 6,
+ fig.height = 6,
  fig.align ='center'
 )
 
 ## -----------------------------------------------------------------------------
 library("cellWise")
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 # load the data
 
 X <- robustbase::starsCYG; plot(X)
@@ -63,8 +63,8 @@ plot(X, xlab = "X1", ylab = "X2", main = "Stars: classical and wrapping ellipse"
 points(ell1, type = "l", lwd = 1.5, col = "red")
 points(ell2, type = "l", lwd = 1.5, col = "blue")
 
-## -----------------------------------------------------------------------------
-?robustbase::bushfire
+## ----fig.width = 5, fig.height = 5--------------------------------------------
+
 X <- as.matrix(robustbase::bushfire); pairs(X)
 
 cutoff <- sqrt(qchisq(0.975, ncol(X))); cutoff
@@ -144,7 +144,7 @@ pairs(X, panel = function(x, y) {
         i <<- i + 1
       })
 
-## ----fig.height=4,fig.width=3-------------------------------------------------
+## ----fig.height=4, fig.width=5------------------------------------------------
 data(data_dogWalker)
 # keep a copy of the data for later:
 X <- data_dogWalker
@@ -199,6 +199,7 @@ res.med <- median(X.rresidual)
 res.mad <-  mad(X.rresidual) 
 res <- (X.rresidual - res.med) / res.mad
 
+## ----fig.height=3, fig.width=7------------------------------------------------
 # Make plots
 frameinds <- c(10, 20, 30, 40)
 cutoff <- 200

@@ -71,7 +71,9 @@ wrap <- function(X, locX = NULL, scaleX = NULL,
                           silent = checkPars$silent)
       
       colInWrap <- out$colInAnalysis 
-    } 
+    } else {
+      colInWrap <- 1:(ncol(X))
+    }
     locScale.out <- estLocScale(X[, , drop = FALSE], silent = TRUE)
     locX   <- locScale.out$loc
     scaleX <- locScale.out$scale

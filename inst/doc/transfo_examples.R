@@ -1,7 +1,7 @@
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 knitr::opts_chunk$set(
-  fig.width  = 5 ,
-  fig.height = 3.5,
+  fig.width  = 5,
+  fig.height = 5,
   fig.align  = 'center'
 )
 
@@ -9,8 +9,7 @@ knitr::opts_chunk$set(
 library(cellWise)
 library(robustHD) # for the TopGear data
 
-
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 set.seed(1)
 X = rnorm(100) 
 X[50] = NA
@@ -20,18 +19,18 @@ qqnorm(X)
 ML.out <- transfo(X, type = "bestObj", robust=FALSE)
 ML.out$lambdahat
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 ML.out$objective
 ML.out$Y[45:55] 
-ML.out$muhat 
-ML.out$sigmahat 
+ML.out$muhat[1:20] 
+ML.out$sigmahat[1:20] 
 qqnorm(ML.out$Y); abline(0,1)
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 3.5------------------------------------------
 plot(ML.out$weights)
-ML.out$ttypes 
+ML.out$ttypes[1:20] 
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 RewML.out <- transfo(X, type = "bestObj", robust=TRUE)
 RewML.out$lambdahat 
 RewML.out$objective 
@@ -40,7 +39,7 @@ RewML.out$muhat
 RewML.out$sigmahat 
 qqnorm(RewML.out$Y); abline(0,1)
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 3.5------------------------------------------
 plot(RewML.out$weights) 
 X[61] 
 RewML.out$ttypes 
@@ -49,19 +48,19 @@ RewML.out$ttypes
 X = exp(X) 
 
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 ML.out <- transfo(X, type = "BC", robust=FALSE)
 ML.out$lambdahat 
 ML.out$objective 
 ML.out$Y[45:55]  
 qqnorm(ML.out$Y); abline(0,1)
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 3.5------------------------------------------
 plot(ML.out$weights) 
 ML.out$ttypes 
 
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 RewML.out <- transfo(X, type = "bestObj", robust=TRUE)
 RewML.out$lambdahat 
 RewML.out$objective 
@@ -69,7 +68,7 @@ RewML.out$Y[45:55]
 qqnorm(RewML.out$Y); abline(0,1)
 RewML.out$ttypes 
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 set.seed(123); tempraw <- matrix(rnorm(2000), ncol = 2)
 tempx <- cbind(tempraw[, 1],exp(tempraw[, 2]))
 tempy <- 0.5 * tempraw[, 1] + 0.5 * tempraw[, 2] + 1
@@ -86,7 +85,7 @@ xtnew <- transfo_newdata(xnew, tx.out)
 yhatnew <- cbind(1, xtnew) %*% lm.out$coefficients 
 plot(tempy[901:1000], yhatnew); abline(0, 1)
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 set.seed(123); x <- matrix(rnorm(2000), ncol = 2)
 y <- sqrt(abs(0.3 * x[, 1] + 0.5 * x[, 2] + 4))
 ty.out <- transfo(y, type = "BC")
@@ -115,7 +114,7 @@ RewML.out <- transfo(X, type = "BC", robust=T)
 ML.out$lambdahat[7] 
 RewML.out$lambdahat[7] 
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 qqnorm(X[, 7], main = "", cex.lab = 1.5, cex.axis = 1.5)
 
 qqnorm(ML.out$Y[, 7], main = "Classical transform",
@@ -126,11 +125,11 @@ qqnorm(RewML.out$Y[, 7], main = "Robustly transformed",
        cex.lab = 1.5, cex.axis = 1.5)
 abline(0, 1)
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 ML.out$lambdahat[8] 
 RewML.out$lambdahat[8] 
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 qqnorm(X[, 8], main = "Original variable", 
        cex.lab = 1.5, cex.axis = 1.5)
 
@@ -156,7 +155,7 @@ dim(Z)
 ML.out    <- transfo(Z, type = "YJ", robust=F)
 RewML.out <- transfo(Z, type = "YJ", robust=T)
 
-## -----------------------------------------------------------------------------
+## ----fig.width  = 8, fig.height = 4-------------------------------------------
 indcells_clas = which(abs(ML.out$Y) > sqrt(qchisq(0.99, 1)))
 indcells_rob  = which(abs(RewML.out$Y) > sqrt(qchisq(0.99, 1)))
 n = dim(ML.out$Y)[1]
@@ -166,7 +165,6 @@ rowlabels = rep("", floor(n/nrowsinblock));
 ncolumnsinblock = 5
 columnlabels = rep("",floor(d/ncolumnsinblock));
 columnlabels[3] = "1";
-columnlabels[62] = "wavelengths";
 columnlabels[floor(d/ncolumnsinblock)] = "500"
 
 CM_clas = cellMap(ML.out$Y, 
@@ -175,8 +173,7 @@ CM_clas = cellMap(ML.out$Y,
                   rowblocklabels = rowlabels,
                   columnblocklabels = columnlabels,
                   mTitle = "YJ transformed variables by ML",
-                  rowtitle = "",
-                  columntitle = "",
+                  rowtitle = "", columntitle = "wavelengths",
                   columnangle = 0) 
 plot(CM_clas)
 
@@ -186,12 +183,11 @@ CM_rob = cellMap(RewML.out$Y,
                  rowblocklabels = rowlabels,
                  columnblocklabels = columnlabels,
                  mTitle = "YJ transformed variables by RewML",
-                 rowtitle = "",
-                 columntitle = "",
+                 rowtitle = "", columntitle = "wavelengths",
                  columnangle = 0) 
 plot(CM_rob)
 
-# pdf("Glass_YJ_ML_RewML.pdf",width=10,height=6)
+# pdf("Glass_YJ_ML_RewML.pdf",width=8,height=8)
 # gridExtra::grid.arrange(CM_clas, CM_rob,ncol=1)
 # dev.off()
 
@@ -229,11 +225,11 @@ indx = which(rowSums(missmat[,8:14]) ==0)
 dpossJ = data_dposs[indx,8:14]
 dim(dpossJ) 
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 par(mfrow = c(1, 1))
 boxplot(scale(dpossJ)) 
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 transfoJ_YJ <- transfo(dpossJ, type = "YJ", robust = T)
 plot(transfoJ_YJ$lambdahat) 
 dpossJ_YJ = transfoJ_YJ$Y
@@ -244,7 +240,7 @@ MacroPCAPars = list(DDCpars=DDCPars,scale=TRUE,silent=T)
 MacroPCAdpossJ = MacroPCA(dpossJ,k=4,MacroPCApars=MacroPCAPars) 
 MacroPCAdpossJ_YJ = MacroPCA(dpossJ_YJ,k=4,MacroPCApars=MacroPCAPars) 
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 6, fig.height = 6--------------------------------------------
 MacroPCAdpossJ_YJ$scores[, 1] <- -MacroPCAdpossJ_YJ$scores[, 1] 
 cols <- rep("black", dim(MacroPCAdpossJ$scores)[1])
 cols[c(98, 10894)] <- "darkorange"
@@ -255,7 +251,7 @@ cols[which(MacroPCAdpossJ_YJ$SD > 25)] <- "firebrick"
 pairs(MacroPCAdpossJ_YJ$scores,gap=0,main="",pch=19,col=cols)
 # dev.off()
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 6, fig.height = 5--------------------------------------------
 # pdf("dpossJ_outliermap_YJ.pdf",height=5,width=5)
 outlierMap(MacroPCAdpossJ_YJ, title="Outlier map of transformed data", col=cols, labelOut=FALSE)
 # dev.off()

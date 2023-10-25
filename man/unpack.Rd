@@ -29,8 +29,7 @@ unpack(X,W)
 }
 
 \references{
-P.J. Rousseeuw (2022). Analyzing cellwise weighted data, ArXiv:2209.12697.
-\href{https://arxiv.org/abs/2209.12697}{(link to open access pdf)}
+P.J. Rousseeuw (2023). Analyzing cellwise weighted data. Econometrics and Statistics, appeared online. \doi{10.1016/j.ecosta.2023.01.007}(link to open access pdf)
 }
 
 

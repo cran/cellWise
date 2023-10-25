@@ -141,7 +141,7 @@ to allow to deal with high dimensions. Defaults to \code{TRUE} for \eqn{d > 750}
     Indices of the cells which were flagged in the analysis.
     }
     \item{\code{Ti} \cr
-    Outlyingness (test) value of each row.         
+    Outlyingness value of each row.         
     }
     \item{\code{medTi} \cr
     Median of the Ti values.      
@@ -189,8 +189,7 @@ x[sample(1:(n * d), 50, FALSE)] <- 10
 x[sample(1:(n * d), 50, FALSE)] <- -10
 x <- cbind(1:n, x)
 DDCx <- DDC(x)
-cellMap(D = DDCx$remX, R = DDCx$stdResid,
-columnlabels = 1:d, rowlabels = 1:n)
+cellMap(DDCx$stdResid)
 
 # For more examples, we refer to the vignette:
 \dontrun{

@@ -1,7 +1,7 @@
 Package: cellWise
 Type: Package
-Version: 2.5.2
-Date: 2023-04-16
+Version: 2.5.3
+Date: 2023-10-25
 Title: Analyzing Data with Cellwise Outliers
 Authors@R: c(
             person(given="Jakob",family="Raymaekers", role = c("aut","cre"),
@@ -23,7 +23,7 @@ Description: Tools for detecting cellwise outliers and robust methods to analyze
     Raymaekers and Rousseeuw (2021) <doi:10.1007/s10994-021-05960-5> (open access),
     Raymaekers and Rousseeuw (2021) <doi:10.52933/jdssv.v1i3.18> (open access),
     Raymaekers and Rousseeuw (2022) <arXiv:2207.13493> (open access)
-    Rousseeuw (2022) <arXiv:2209.12697> (open access).
+    Rousseeuw (2022) <doi:10.1016/j.ecosta.2023.01.007> (open access).
     Examples can be found in the vignettes:
     "DDC_examples", "MacroPCA_examples", "wrap_examples", "transfo_examples",
     "DI_examples", "cellMCD_examples" , "Correspondence_analysis_examples",
@@ -38,6 +38,6 @@ Maintainer: Jakob Raymaekers <jakob.raymaekers@kuleuven.be>
 VignetteBuilder: knitr
 RoxygenNote: 7.1.2
 NeedsCompilation: yes
-Packaged: 2023-04-20 15:12:15 UTC; u0105404
+Packaged: 2023-10-25 12:14:44 UTC; u0105404
 Repository: CRAN
-Date/Publication: 2023-04-20 22:22:30 UTC
+Date/Publication: 2023-10-25 13:00:02 UTC

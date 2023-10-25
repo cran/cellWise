@@ -1,12 +1,13 @@
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 knitr::opts_chunk$set(
- fig.width = 8 ,
- fig.height = 12,
+ fig.width = 6,
+ fig.height = 6,
  fig.align ='center'
 )
 
 ## -----------------------------------------------------------------------------
 library("cellWise")
+
 n = 10
 d = 3
 A = matrix(0.7, d, d); diag(A) = 1
@@ -18,6 +19,8 @@ colnames(X) = c("X1","X2","X3")
 X[1,3] = X[2,2] = X[3,1] = X[4,1] = X[6,2] = NA
 X # rows 1, 2, 3, 4, 6 have NAs
 w = c(1,2,1,1,2,2,1,1,1,1) # rowwise weights
+
+## ----fig.width = 5, fig.height = 5--------------------------------------------
 out = weightedEM(X,w,crit=1e-12,computeloglik=T)
 out$niter # number of iteration steps taken
 out$mu
@@ -28,6 +31,7 @@ plot(1:out$niter, out$loglikhd[1:out$niter], type='l',
 tail(out$loglikhd) # would have NAs for computeloglik=F
 out$impX # imputed data, has no NA's
 
+## -----------------------------------------------------------------------------
 # The weights may be multiplied by a constant:
 #
 (w = c(1,2,1,1,2,2,1,1,1,1)/3) # divide weights by 3
@@ -122,7 +126,8 @@ round(cov(X), 2) # unweighted
 
 round(eigen(cov(X))$values, 2)
 
-## -----------------------------------------------------------------------------
+## ----fig.width = 5, fig.height = 5--------------------------------------------
+
 ellips = function(covmat, mu, quant=0.95, npoints = 120)
 { # computes points of the ellipse t(X-mu)%*%covmat%*%(X-mu) = c
   # with c = qchisq(quant,df=2)

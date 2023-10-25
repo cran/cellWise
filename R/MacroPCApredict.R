@@ -1,9 +1,6 @@
-
-MacroPCApredict <- function(Xnew, InitialMacroPCA, MacroPCApars = NULL) 
-{ # Added a check whether the number of columns of Xnew
-  # matches that of InitialMacroPCA, and cleaned up code.
+MacroPCApredict <- function(Xnew, InitialMacroPCA, MacroPCApars = NULL) { 
   if (is.null(MacroPCApars)) {
-    MacroPCApars = InitialMacroPCA$MacroPCApars
+    MacroPCApars <- InitialMacroPCA$MacroPCApars
   }
   else {
     if (!is.list(MacroPCApars)) {
@@ -27,10 +24,19 @@ MacroPCApredict <- function(Xnew, InitialMacroPCA, MacroPCApars = NULL)
   Xnew <- as.matrix(Xnew)
   n <- nrow(Xnew)
   d <- ncol(Xnew)
-  dold = ncol(InitialMacroPCA$remX)
+  dold <- ncol(InitialMacroPCA$remX)
   if(d != dold) stop(paste0(
     "Xnew should have ",dold," columns, that correspond\n",
     "  to those of InitialMacroPCA$remX"))
+  oldcolnames <- colnames(InitialMacroPCA$remX)
+  newcolnames <- colnames(Xnew)
+  # print(oldcolnames)
+  # print(newcolnames)
+  if(!is.null(oldcolnames) & !is.null(newcolnames)){
+    if(all.equal(newcolnames, oldcolnames) != TRUE) stop(
+      paste0("Xnew should have the same column names",
+             " as InitialMacroPCA$remX"))
+  }
   InitialDDC  <- InitialMacroPCA$DDC
   DDCpars     <- MacroPCApars$DDCpars
   scaleX      <- InitialMacroPCA$scaleX
@@ -41,8 +47,7 @@ MacroPCApredict <- function(Xnew, InitialMacroPCA, MacroPCApars = NULL)
   resultDDC   <- DDCpredict(Xnew, InitialDDC, DDCpars)
   DDCpars     <- resultDDC$DDCpars
   DDCimp      <- sweep(resultDDC$Ximp, 2, scaleX, "/")
-  Xnew        <- sweep(Xnew, 2, scaleX, "/")
-  XO          <- Xnew; rm(Xnew)
+  XO          <- sweep(Xnew, 2, scaleX, "/"); rm(Xnew)
   Xfi         <- XO
   indcells    <- resultDDC$indcells
   indNA       <- which(is.na(XO))
@@ -81,21 +86,22 @@ MacroPCApredict <- function(Xnew, InitialMacroPCA, MacroPCApars = NULL)
               It = It, diff = diff)
   Xnai <- XO
   Xnai[indNA]    <- Xfi[indNA]
+  res$Xnew.NAimp <- sweep(Xnai, 2, scaleX, "*")
   XnaiC          <- sweep(Xnai, 2, center)
   scoresnai      <- XnaiC %*% loadings
   res$scores     <- scoresnai
   NAimp          <- list(scoresnai = scoresnai)
   cutoffOD       <- InitialMacroPCA$cutoffOD
   out <- pca.distancesNew(res, Xnai, scoresnai, ncol(Xnai), 
-                                     distprob, cutOD = cutoffOD)
+                          distprob, cutOD = cutoffOD)
   res$OD         <- out$OD
   out$cutoffOD   <- cutoffOD
   res$cutoffOD   <- out$cutoffOD
   res$SD         <- out$SD
   out$cutoffSD   <- InitialMacroPCA$cutoffSD
   res$cutoffSD   <- out$cutoffSD
-  out$indrowsnai <- which(out$OD > out$cutoffOD)
-  res$indrows    <- out$indrowsnai
+  res$highOD     <- which(out$OD > out$cutoffOD)
+  res$highSD     <- which(out$SD > out$cutoffSD)
   NAimp          <- c(NAimp, out)
   rm(out)
   XOC            <- sweep(XO, 2, center)
@@ -104,8 +110,8 @@ MacroPCApredict <- function(Xnew, InitialMacroPCA, MacroPCApars = NULL)
   res$stdResid   <- sweep(stdResid, 2, res$residScale, "/")
   cellcutoff     <- sqrt(qchisq(DDCpars$tolProb, 1))
   res$indcells   <- which(abs(res$stdResid) > cellcutoff)
-  res$X.NAimp    <- sweep(Xnai, 2, scaleX, "*")
-  res$center     <- center * scaleX
+  # res$Xnew.NAimp    <- sweep(Xnai, 2, scaleX, "*")
+  res$center     <- center * scaleX # replaces earlier value
   names(res$scaleX)     <- colnames(Xnai)
   names(res$center)     <- colnames(Xnai)
   names(res$residScale) <- colnames(Xnai)
@@ -120,15 +126,18 @@ MacroPCApredict <- function(Xnew, InitialMacroPCA, MacroPCApars = NULL)
     res$NAimp <- NAimp
     #
     Xci <- Xfi
-    Xci[res$indrows] <- Xnai[res$indrows]
+    Xci[res$highOD] <- Xnai[res$highOD]
     XciC <- sweep(Xci, 2, center)
     scoresci <- XciC %*% loadings
     Cellimp <- list(scoresci = scoresci)
     out <- pca.distancesNew(res, Xci, scoresci, ncol(Xci), 
-                                       distprob, cutOD = cutoffOD)
+                            distprob, cutOD = cutoffOD)
+    names(out)[1] <- "ODci"
+    names(out)[3] <- "SDci"
     out$cutoffOD <- cutoffOD
     out$cutoffSD <- InitialMacroPCA$cutoffSD
-    out$indrowsci <- which(out$OD > out$cutoffOD)
+    out$highODci <- which(out$ODci > out$cutoffOD)
+    out$highSDci <- which(out$SDci > out$cutoffSD)
     Cellimp <- c(Cellimp, out)
     rm(out)
     stdResidci <- XciC - (scoresci %*% t(loadings))
@@ -144,10 +153,13 @@ MacroPCApredict <- function(Xnew, InitialMacroPCA, MacroPCApars = NULL)
     scoresfi      <- XfiC %*% loadings
     Fullimp       <- list(scoresfi = scoresfi)
     out <- pca.distancesNew(res, Xfi, scoresfi, ncol(Xfi), 
-                                       distprob, cutOD = cutoffOD)
+                            distprob, cutOD = cutoffOD)
+    names(out)[1] <- "ODfi"
+    names(out)[3] <- "SDfi"
     out$cutoffOD  <- cutoffOD
     out$cutoffSD  <- InitialMacroPCA$cutoffSD
-    out$indrowsfi <- which(out$OD > out$cutoffOD)
+    out$highODfi  <- which(out$ODfi > out$cutoffOD)
+    out$highSDfi  <- which(out$SDfi > out$cutoffSD)
     Fullimp       <- c(Fullimp, out)
     rm(out)
     stdResidfi <- XfiC - (scoresfi %*% t(loadings))

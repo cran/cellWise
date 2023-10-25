@@ -1,6 +1,5 @@
 transfo = function(X, type = "YJ", robust = TRUE,
                    standardize = TRUE, 
-                   prestandardize = NULL,
                    quant = 0.99, nbsteps = 2, 
                    checkPars = list()) {
   if (is.vector(X)) {
@@ -42,9 +41,6 @@ transfo = function(X, type = "YJ", robust = TRUE,
   weights <- matrix(0, n, d)
   muhat <- locx <- rep(0, d)
   sigmahat <- scalex <- rep(1, d)
-  if (!is.null(prestandardize)) {
-    standardize <- prestandardize
-  }
   lambdarange <- c(-4, 6)
   for (j in seq_len(d)) { # j=1
     x <- X[, j]
@@ -414,7 +410,6 @@ RewML_BC <- function(x,
   #   x:              vector of _sorted_ observations
   #   lambdarange:        grid of lambda values. If NULL, a grid between 
   #                   -2 and 4 is chosen
-  #   prestandardize: whether to start by robustly standardizing the data
   #   init:           initial estimator. should be "BCr" or "BC"
   #   quant:          quantile for determining the weights in the 
   #                   reweighting step
@@ -508,7 +503,6 @@ RewML_YJ <- function(x,
   #   x             : vector of _sorted_ observations
   #   lambdarange       : grid of lambda values. If NULL, a grid between 
   #                   -2 and 4 is chosen
-  #   prestandardize: whether to start by robustly standardizing the data
   #   init          : initial estimator. should be "YJr" or "YJ"
   #   quant         : quantile for determining the weights in the
   #                   reweighting step
@@ -685,7 +679,6 @@ reweightBCr <- function(x, zt.raw, lambdahat.raw, lambdarange, quant = 0.99,
   #                    (from the initial lambdahat)
   #   lambdahat.raw  : initial estimate for transformation parameter lambda
   #   lambdarange    : range of lambda values.
-  #   prestandardize : whether to start by robustly standardizing the data
   #   quant          : quantile for determining the weights in the 
   #                    reweighting step
   #   nbsteps        : number of reweighting steps

@@ -28,26 +28,26 @@ maxCol = 0.25, checkPars = list())
   \item{checkPars}{Optional list of parameters used in the call to
  \code{\link{checkDataSet}}. The options are:
   \itemize{
-  \item{ \code{coreOnly} \cr
-      If \code{TRUE}, skip the execution of checkDataset. Defaults to \code{FALSE}}
-       \item{\code{numDiscrete}\cr
+  \item \code{coreOnly} \cr
+      If \code{TRUE}, skip the execution of checkDataset. Defaults to \code{FALSE}
+       \item\code{numDiscrete}\cr
   A column that takes on numDiscrete or fewer values
   will be considered discrete and not retained in the cleaned data.
   Defaults to \eqn{5}.
-}
-\item{fracNA}{
+
+\item \code{fracNA}
    Only retain columns and rows with fewer NAs than this fraction.
    Defaults to \eqn{0.15}.
-}
-  \item{\code{precScale} \cr
+
+  \item\code{precScale} \cr
   Only consider columns whose scale is larger than precScale.
   Here scale is measured by the median absolute deviation.
   Defaults to \eqn{1e-12}.
-}
- \item{\code{silent}\cr
+
+ \item \code{silent}\cr
   Whether or not the function progress messages should be suppressed.
   Defaults to \code{FALSE}.
-}
+
       }
    }
   }
@@ -55,40 +55,40 @@ maxCol = 0.25, checkPars = list())
 \value{
  A list with components: \cr
   \itemize{
-   \item{\code{center} \cr
+   \item \code{center} \cr
     The final estimate of the center of the data.
-    }
-     \item{\code{cov} \cr
+    
+     \item \code{cov} \cr
     The final estimate of the covariance matrix.
-    }
-    \item{\code{nits} \cr
+    
+    \item \code{nits} \cr
     Number of DI-iterations executed to reach convergence.
-    }
-    \item{\code{Ximp} \cr
+    
+    \item \code{Ximp} \cr
     The imputed data.
-    }
-    \item{\code{indcells} \cr
+    
+    \item \code{indcells} \cr
     Indices of the cells which were flagged in the analysis.
-    }
-    \item{\code{indNAs} \cr
+    
+    \item \code{indNAs} \cr
     Indices of the NAs in the data. 
-    }
-     \item{\code{Zres} \cr
+    
+     \item \code{Zres} \cr
     Matrix with standardized cellwise residuals of the flagged cells. Contains zeroes in the unflagged cells.
-    }
-    \item{\code{Zres_denom} \cr
+    
+    \item \code{Zres_denom} \cr
     Denominator of the standardized cellwise residuals.
-    }
-    \item{\code{cellPaths} \cr
+    
+    \item \code{cellPaths} \cr
     Matrix with the same dimensions as X, in which each row contains the path of least angle regression through the cells of that row, i.e. the order of the coordinates in the path (1=first, 2=second,...)
-    }
-    \item{\code{checkDataSet_out} \cr
+    
+    \item \code{checkDataSet_out} \cr
     Output of the call to \code{\link{checkDataSet}} which is used to clean the data.
-    }
+    
     }
 }
 \references{
-J. Raymaekers and P.J. Rousseeuw (2020). Handling cellwise outliers by sparse regression and robust covariance. \emph{Journal of Data Science, Statistics, and Visualisation}. \doi{10.52933/jdssv.v1i3.18}{(link to open access pdf)}
+J. Raymaekers and P.J. Rousseeuw (2020). Handling cellwise outliers by sparse regression and robust covariance. \emph{Journal of Data Science, Statistics, and Visualisation}. \doi{10.52933/jdssv.v1i3.18}(link to open access pdf)
 }
 \author{
 J. Raymaekers and P.J. Rousseeuw

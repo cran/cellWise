@@ -1,5 +1,5 @@
 ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
-                 tolProb = 0.99, distprob = 0.99) {
+                  tolProb = 0.99, distprob = 0.99) {
   #  
   #   This function is based on a Matlab function from
   #   Missing Data Imputation Toolbox v1.0
@@ -44,7 +44,8 @@ ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
   # cutoffOD    : cutoff value for the OD.
   # SD          : score distances of the rows of X.NAimp
   # cutoffSD    : cutoff value for the SD.
-  # indrows     : row numbers of rowwise outliers.
+  # highOD      : row numbers of observations with OD > cutoffOD.
+  # highSD      : row numbers of observations with SD > cutoffSD.
   # residScale  : scale of the residuals.
   # stdResid    : standardized residuals. Note that these are NA
   #               for all missing values of the data X.
@@ -87,7 +88,7 @@ ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
       It <- It + 1;
       # Xmis <- Xnai[mis]        # current imputations
       mXnai <- colMeans(Xnai)       # mean vector
-      Xnaic <- sweep(Xnai,2,mXnai)  # centered Xnai
+      Xnaic <- sweep(Xnai, 2, mXnai)  # centered Xnai
       if (n < p) {
         XnaicSVD <- svd(t(Xnaic))
         Pr <- as.matrix(XnaicSVD$u[, seq_len(k)]) 
@@ -102,7 +103,7 @@ ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
       Xnaihat <- sweep(Xnaihat, 2, mXnai, "+") # fit to Xnai
       Xnai[mis] <- Xnaihat[mis]         # impute missings
       # d <- (Xnai[mis]-Xmis)^2       
-      if (It > 1) diff <- maxAngle(Pr,PrPrev)
+      if (It > 1) diff <- maxAngle(Pr, PrPrev)
       PrPrev <- Pr
     } 
   } else {# if there are no missings
@@ -129,7 +130,8 @@ ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
   res <- list(loadings = Pr, eigenvalues = (XnaicSVD$d ^ 2) / (n - 1),
               center = center, k = k, h = n, alpha = 1,  scores = Tr)
   NAimp <- pca.distances.classic(res, Xnai, rank, distprob)
-  NAimp$indrowsnai <- which(NAimp$OD > NAimp$cutoffOD)
+  NAimp$highOD <- which(NAimp$OD > NAimp$cutoffOD)
+  NAimp$highSD <- which(NAimp$SD > NAimp$cutoffSD)
   
   # Compute standardized residuals with NA's
   stdResid   <- XO - Xnaihat
@@ -137,8 +139,8 @@ ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
   stdResid   <- sweep(stdResid, 2, residScale, "/")
   indcells   <- which(abs(stdResid) > sqrt(qchisq(tolProb, 1)))
   
-  Xnai = sweep(Xnai, 2, scaleX, "*") # unstandardize
-  center = center * scaleX
+  Xnai <- sweep(Xnai, 2, scaleX, "*") # unstandardize
+  center <- center * scaleX
   
   return(list(scaleX = scaleX,
               k = k,
@@ -154,7 +156,8 @@ ICPCA <- function(X, k, scale = FALSE, maxiter = 20, tol = 0.005,
               cutoffOD = NAimp$cutoffOD,
               SD = NAimp$SD,
               cutoffSD = NAimp$cutoffSD,              
-              indrows = NAimp$indrowsnai,
+              highOD = NAimp$highOD,
+              highSD = NAimp$highSD,
               residScale = residScale,
               stdResid = stdResid,
               indcells = indcells))
@@ -169,9 +172,9 @@ pca.distances.classic <- function(obj, data, r, crit = 0.99) {
   smat <- diag(obj$eigenvalues, ncol = q)
   nk <- min(q, rankMM(smat))
   if (nk < q) warning(paste("The smallest eigenvalue is ", 
-                           obj$eigenvalues[q], 
-                           " so the diagonal matrix of the eigenvalues",
-                           "cannot be inverted!", sep = ""))  
+                            obj$eigenvalues[q], 
+                            " so the diagonal matrix of the eigenvalues",
+                            "cannot be inverted!", sep = ""))  
   mySd <- sqrt(mahalanobis(as.matrix(obj$scores[, seq_len(nk)]),
                            rep(0, nk), diag(obj$eigenvalues[seq_len(nk)], ncol = nk)))
   cutoffSD <- sqrt(qchisq(crit, obj$k))
@@ -187,4 +190,3 @@ pca.distances.classic <- function(obj, data, r, crit = 0.99) {
     out$cutoffOD <- critOD(out$OD, crit = crit, classic = TRUE) }
   return(out)
 }
-

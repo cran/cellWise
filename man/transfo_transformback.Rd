@@ -12,8 +12,8 @@ transfo_transformback(Ynew, transfo.out)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{Ynew}{A data matrix of dimensions n x d.
-  Its columns are the variables to be backtransformed.
+  \item{Ynew}{A data matrix with d columns, which contain the variables to be backtransformed. The number of columns must be the same as the output \code{Y} of the run of \code{\link{transfo}} on the  original data. The number of rows may be different.
+
 }
 \item{transfo.out}{
 The output of a call to \code{\link{transfo}}.
@@ -24,7 +24,7 @@ The output of a call to \code{\link{transfo}}.
 Returns a matrix with backtransformed variables.
 }
 \references{
-J. Raymaekers and P.J. Rousseeuw (2021). Transforming variables to central normality. \emph{Machine Learning}. \doi{10.1007/s10994-021-05960-5}{(link to open access pdf)}
+J. Raymaekers and P.J. Rousseeuw (2021). Transforming variables to central normality. \emph{Machine Learning}. \doi{10.1007/s10994-021-05960-5}(link to open access pdf)
 }
 \author{
 J. Raymaekers and P.J. Rousseeuw

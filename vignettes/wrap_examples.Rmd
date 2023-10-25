@@ -1,6 +1,6 @@
 ---
 title: "wrap examples"
-author: "Raymaekers, J."
+author: "Raymaekers, J. and Rousseeuw, P.J."
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -11,8 +11,8 @@ vignette: >
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
- fig.width = 8 ,
- fig.height = 5,
+ fig.width = 6,
+ fig.height = 6,
  fig.align ='center'
 )
 ```
@@ -24,9 +24,10 @@ This file contains some examples of the functions related to the Wrap routine. M
 ```{r}
 library("cellWise")
 ```
-# Simple example: Stars data
 
-```{r}
+Simple example: Stars data
+
+```{r, fig.width = 5, fig.height = 5}
 # load the data
 
 X <- robustbase::starsCYG; plot(X)
@@ -84,8 +85,8 @@ points(ell2, type = "l", lwd = 1.5, col = "blue")
 
 Bushfire dataset: a 5-dimensional example
 
-```{R}
-?robustbase::bushfire
+```{R, fig.width = 5, fig.height = 5}
+
 X <- as.matrix(robustbase::bushfire); pairs(X)
 
 cutoff <- sqrt(qchisq(0.975, ncol(X))); cutoff
@@ -168,7 +169,7 @@ pairs(X, panel = function(x, y) {
 
 # Dog walker video example
 
-```{r,fig.height=4,fig.width=3}
+```{r, fig.height=4, fig.width=5}
 data(data_dogWalker)
 # keep a copy of the data for later:
 X <- data_dogWalker
@@ -222,7 +223,9 @@ grid::grid.raster(rim1, interpolate = FALSE)
 res.med <- median(X.rresidual) 
 res.mad <-  mad(X.rresidual) 
 res <- (X.rresidual - res.med) / res.mad
+```
 
+```{r, fig.height=3, fig.width=7}
 # Make plots
 frameinds <- c(10, 20, 30, 40)
 cutoff <- 200

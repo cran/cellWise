@@ -11,8 +11,8 @@ vignette: >
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
-  fig.width  = 5 ,
-  fig.height = 3.5,
+  fig.width  = 5,
+  fig.height = 5,
   fig.align  = 'center'
 )
 ```
@@ -26,15 +26,13 @@ variables toward central normality
 ```{r}
 library(cellWise)
 library(robustHD) # for the TopGear data
-
 ```
 ***
-
 # Small toy example
 
 We start with a small toy example, in which standard normal data with one NA
 is used. 
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 set.seed(1)
 X = rnorm(100) 
 X[50] = NA
@@ -53,24 +51,25 @@ ML.out$lambdahat
 The value of the transformation parameter is close to 1, indicating no transformation
 is necesarry. Among the other outputs are the value of the objective function, 
 the transformed data, estimates of the location and scale of the transformed data:
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 ML.out$objective
 ML.out$Y[45:55] 
-ML.out$muhat 
-ML.out$sigmahat 
+ML.out$muhat[1:20] 
+ML.out$sigmahat[1:20] 
 qqnorm(ML.out$Y); abline(0,1)
 ```
 Additionally, the function returns the weights of the observations and the
 transformation type that was used. The NA observation (number 50) gets weight zero:
-```{r}
+```{r, fig.width = 5, fig.height = 3.5}
 plot(ML.out$weights)
-ML.out$ttypes 
+ML.out$ttypes[1:20] 
 ```
 We can now repeat the same procedure with the robust estimator. 
 This is specified using the `robust = TRUE` argument. The results do not differ
 too much from the classical MLE estimates on this dataset, since there are no 
 outliers.
-```{r}
+
+```{r, fig.width = 5, fig.height = 5}
 RewML.out <- transfo(X, type = "bestObj", robust=TRUE)
 RewML.out$lambdahat 
 RewML.out$objective 
@@ -80,7 +79,8 @@ RewML.out$sigmahat
 qqnorm(RewML.out$Y); abline(0,1)
 ```
 Using the robust estimator, one large observation (number 61) also gets a weight of 0:
-```{r}
+
+```{r, fig.width = 5, fig.height = 3.5}
 plot(RewML.out$weights) 
 X[61] 
 RewML.out$ttypes 
@@ -96,7 +96,7 @@ X = exp(X)
 ```
 We first consider the classical maximum likelihood estimator. We obtain a transformation parameter close to 0, which corresponds with the logarithmic
 transformation.
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 ML.out <- transfo(X, type = "BC", robust=FALSE)
 ML.out$lambdahat 
 ML.out$objective 
@@ -105,13 +105,13 @@ qqnorm(ML.out$Y); abline(0,1)
 ```
 
 The weights are again all equal to 1, except for the NA (number 50) which gets weight zero:
-```{r}
+```{r, fig.width = 5, fig.height = 3.5}
 plot(ML.out$weights) 
 ML.out$ttypes 
 
 ```
 We now repeat the example with the robust transformation. The estimated transformation parameter is again fairly close to 0, as expected.
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 RewML.out <- transfo(X, type = "bestObj", robust=TRUE)
 RewML.out$lambdahat 
 RewML.out$objective 
@@ -120,13 +120,12 @@ qqnorm(RewML.out$Y); abline(0,1)
 RewML.out$ttypes 
 ```
 ***
-
 # Transform new data and transform back
 
 We briefly illustrate the functions transfo_newdata() and tranfo_transformback. We start with transfo_newdata(). Given the output of transfo(), this function applies the fitted transformation to new data.
 
 
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 set.seed(123); tempraw <- matrix(rnorm(2000), ncol = 2)
 tempx <- cbind(tempraw[, 1],exp(tempraw[, 2]))
 tempy <- 0.5 * tempraw[, 1] + 0.5 * tempraw[, 2] + 1
@@ -144,8 +143,8 @@ yhatnew <- cbind(1, xtnew) %*% lm.out$coefficients
 plot(tempy[901:1000], yhatnew); abline(0, 1)
 ```
 
-We now illustrat the transo_transformback() function. Given a transformation fitted by transfo(), this function applies the inverse of this transformation to the input. 
-```{r}
+We now illustrat the transfo_transformback() function. Given a transformation fitted by transfo(), this function applies the inverse of this transformation to the input. 
+```{r, fig.width = 5, fig.height = 5}
 set.seed(123); x <- matrix(rnorm(2000), ncol = 2)
 y <- sqrt(abs(0.3 * x[, 1] + 0.5 * x[, 2] + 4))
 ty.out <- transfo(y, type = "BC")
@@ -199,7 +198,7 @@ The robust method barely transforms the original variable
 with a transformation parameter of 0.84, relatively close to 1.
 The QQplots below suggest that the robust transformation is much more reasonable:
 
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 qqnorm(X[, 7], main = "", cex.lab = 1.5, cex.axis = 1.5)
 
 qqnorm(ML.out$Y[, 7], main = "Classical transform",
@@ -213,7 +212,7 @@ abline(0, 1)
 
 Now consider the transformation of the variable `Weight`.
 
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 ML.out$lambdahat[8] 
 RewML.out$lambdahat[8] 
 ``` 
@@ -222,7 +221,7 @@ a transformation parameter (0.83) relatively close to one,
 whereas the robust transformation finds a parameter (0.09)
 close to the log transform. The QQplots below again suggest that the robust transformation is much more reasonable:
 
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 qqnorm(X[, 8], main = "Original variable", 
        cex.lab = 1.5, cex.axis = 1.5)
 
@@ -270,7 +269,7 @@ RewML.out <- transfo(Z, type = "YJ", robust=T)
 
 We now construct the cellmaps:
 
-```{r}
+```{r, fig.width  = 8, fig.height = 4}
 indcells_clas = which(abs(ML.out$Y) > sqrt(qchisq(0.99, 1)))
 indcells_rob  = which(abs(RewML.out$Y) > sqrt(qchisq(0.99, 1)))
 n = dim(ML.out$Y)[1]
@@ -280,7 +279,6 @@ rowlabels = rep("", floor(n/nrowsinblock));
 ncolumnsinblock = 5
 columnlabels = rep("",floor(d/ncolumnsinblock));
 columnlabels[3] = "1";
-columnlabels[62] = "wavelengths";
 columnlabels[floor(d/ncolumnsinblock)] = "500"
 
 CM_clas = cellMap(ML.out$Y, 
@@ -289,8 +287,7 @@ CM_clas = cellMap(ML.out$Y,
                   rowblocklabels = rowlabels,
                   columnblocklabels = columnlabels,
                   mTitle = "YJ transformed variables by ML",
-                  rowtitle = "",
-                  columntitle = "",
+                  rowtitle = "", columntitle = "wavelengths",
                   columnangle = 0) 
 plot(CM_clas)
 
@@ -300,12 +297,11 @@ CM_rob = cellMap(RewML.out$Y,
                  rowblocklabels = rowlabels,
                  columnblocklabels = columnlabels,
                  mTitle = "YJ transformed variables by RewML",
-                 rowtitle = "",
-                 columntitle = "",
+                 rowtitle = "", columntitle = "wavelengths",
                  columnangle = 0) 
 plot(CM_rob)
 
-# pdf("Glass_YJ_ML_RewML.pdf",width=10,height=6)
+# pdf("Glass_YJ_ML_RewML.pdf",width=8,height=8)
 # gridExtra::grid.arrange(CM_clas, CM_rob,ncol=1)
 # dev.off()
 ```
@@ -358,7 +354,7 @@ dim(dpossJ)
 
 A quick exploration of the skewness in the data shows that there is 
 skewness in both directions:
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 par(mfrow = c(1, 1))
 boxplot(scale(dpossJ)) 
 ``` 
@@ -368,7 +364,7 @@ data with the estimated parameters. The analysis shows that there are both
 lambdas larger than 1 and smaller than 1, corresponding with the skewness in
 both directions.
 
-```{r}
+```{r, fig.width = 5, fig.height = 5}
 transfoJ_YJ <- transfo(dpossJ, type = "YJ", robust = T)
 plot(transfoJ_YJ$lambdahat) 
 dpossJ_YJ = transfoJ_YJ$Y
@@ -384,7 +380,7 @@ MacroPCAdpossJ_YJ = MacroPCA(dpossJ_YJ,k=4,MacroPCApars=MacroPCAPars)
 ```
 
 Let's make a plot of the scores of YJ-transformed data:
-```{r}
+```{r, fig.width = 6, fig.height = 6}
 MacroPCAdpossJ_YJ$scores[, 1] <- -MacroPCAdpossJ_YJ$scores[, 1] 
 cols <- rep("black", dim(MacroPCAdpossJ$scores)[1])
 cols[c(98, 10894)] <- "darkorange"
@@ -398,7 +394,7 @@ pairs(MacroPCAdpossJ_YJ$scores,gap=0,main="",pch=19,col=cols)
 
 We finally show the outlier maps on the transformed and the untransformed data:
 
-```{r}
+```{r, fig.width = 6, fig.height = 5}
 # pdf("dpossJ_outliermap_YJ.pdf",height=5,width=5)
 outlierMap(MacroPCAdpossJ_YJ, title="Outlier map of transformed data", col=cols, labelOut=FALSE)
 # dev.off()

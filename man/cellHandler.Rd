@@ -25,29 +25,27 @@ cellHandler(X, mu, Sigma, quant = 0.99)
 \value{
  A list with components: \cr
   \itemize{
-    \item{\code{Ximp} \cr
+    \item \code{Ximp} \cr
     The imputed data matrix.
-    }
-      \item{\code{indcells} \cr
+  
+      \item \code{indcells} \cr
     Indices of the cells which were flagged in the analysis.
-    }
-    \item{\code{indNAs} \cr
-    Indices of the NAs in the data. 
-    }
-    \item{\code{Zres} \cr
-    Matrix with standardized cellwise residuals of the flagged cells. Contains zeroes in the unflagged cells.
-    }
-    \item{\code{Zres_denom} \cr
-    Denominator of the standardized cellwise residuals.
-    }
-    \item{\code{cellPaths} \cr
-    Matrix with the same dimensions as X, in which each row contains the path of least angle regression through the cells of that row, i.e. the order of the coordinates in the path (1=first, 2=second,...)
-    }
     
+    \item \code{indNAs} \cr
+    Indices of the NAs in the data. 
+    
+    \item \code{Zres} \cr
+    Matrix with standardized cellwise residuals of the flagged cells. Contains zeroes in the unflagged cells.
+    
+    \item \code{Zres_denom} \cr
+    Denominator of the standardized cellwise residuals.
+    
+    \item \code{cellPaths} \cr
+    Matrix with the same dimensions as X, in which each row contains the path of least angle regression through the cells of that row, i.e. the order of the coordinates in the path (1=first, 2=second,...)
     }
 }
 \references{
-J. Raymaekers and P.J. Rousseeuw (2020). Handling cellwise outliers by sparse regression and robust covariance. \emph{Journal of Data Science, Statistics, and Visualisation}. \doi{10.52933/jdssv.v1i3.18}{(link to open access pdf)}
+J. Raymaekers and P.J. Rousseeuw (2020). Handling cellwise outliers by sparse regression and robust covariance. \emph{Journal of Data Science, Statistics, and Visualisation}. \doi{10.52933/jdssv.v1i3.18}(link to open access pdf)
 }
 \author{
 J. Raymaekers and P.J. Rousseeuw

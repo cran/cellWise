@@ -73,9 +73,10 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   # scores      : scores of X.NAimp 
   # OD          : orthogonal distances of the rows of X.NAimp 
   # cutoffOD    : cutoff value for the OD.
+  # highOD      : row numbers of observations with OD > cutoffOD.
   # SD          : score distances of the rows of X.NAimp 
   # cutoffSD    : cutoff value for the SD.
-  # indrows     : row numbers of rowwise outliers.
+  # highSD      : row numbers of observations with SD > cutoffSD.
   # residScale  : scale of the residuals.
   # stdResid    : standardized residuals. Note that these are NA
   #               for all missing values of the data X.
@@ -383,7 +384,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   zeroscales <- which(umcds$scale < 1e-12)
   for (i in seq_len(length(zeroscales))) {
     umcdweights <- unimcd(Y[, zeroscales[i]], alpha = alpha,
-                                     center = !fixedCenter)$weights
+                          center = !fixedCenter)$weights
     if (robustbase::rankMM(Xci[umcdweights == 1, ]) == 1) {
       stop("At least ", sum(umcdweights),
            " observations are identical.")
@@ -426,7 +427,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
     # compute cumulative variability and scree plot and stop.
     # This necessitates computing _all_ eigenvalues:
     Xcih.SVD <- truncPC(Xcih, ncomp = min(n, d),
-                         center = !fixedCenter)
+                        center = !fixedCenter)
     ratios = Xcih.SVD$eigenvalues / Xcih.SVD$eigenvalues[1]
     test <- which(ratios <= 0.001)
     k <- if (length(test) != 0) 
@@ -490,7 +491,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
       
       Xcih <- Xci[H0, ]
       Xcih.SVD <- truncPC(Xcih, ncomp = k,
-                           center = !fixedCenter)
+                          center = !fixedCenter)
       k <- min(k, Xcih.SVD$rank)
       Pr <- Xcih.SVD$loadings[, seq_len(k)]  # loadings matrix
       mXci <- Xcih.SVD$center        # mean vector
@@ -545,7 +546,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
     Hstar[indrows2] <- FALSE 
     # removes outlying rows flagged by DDC
     Xcih.SVD <- truncPC(Xfi[Hstar, ], ncomp = k,
-                         center = !fixedCenter)
+                        center = !fixedCenter)
     k <- min(Xcih.SVD$rank, k)
   } else {
     Hstar     <- rep(0, dim(Xci)[1])
@@ -588,7 +589,7 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   for (j in seq_len(niter)) { # This part is from ROBPCA
     Xcih     <- as.matrix(Xci1[order(mah)[seq_len(h1)], ], ncol = k)
     Xcih.SVD <- truncPC(Xcih, ncomp = k,
-                         center = !fixedCenter)
+                        center = !fixedCenter)
     obj    <- prod(Xcih.SVD$eigenvalues)
     Xci1   <- (Xci1 - matrix(rep(Xcih.SVD$center, times = n1), 
                              nrow = n1, byrow = TRUE)) %*% Xcih.SVD$loadings
@@ -673,11 +674,14 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
                             byrow = TRUE)) %*% loadings
   Cellimp  <- list(scoresci = scoresci)
   out      <- pca.distancesNew(res, Xci, scoresci,
-                                          XciSVD$rank, distprob)
+                               XciSVD$rank, distprob)
+  names(out)[1] <- "ODci"
+  names(out)[3] <- "SDci"
   cutoffOD      <- out$cutoffOD
-  out$indrowsci <- which(out$OD > cutoffOD)   
+  out$highODci  <- which(out$ODci > cutoffOD)
+  cutoffSD      <- out$cutoffSD
+  out$highSDci  <- which(out$SD > cutoffSD)
   Cellimp       <- c(Cellimp, out); rm(out)
-  
   
   # NA-imputed data Xnai : scores and distances
   res$X.NAimp <- Xnai
@@ -687,14 +691,17 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
   
   NAimp          <- list(scoresnai = scoresnai)
   out            <- pca.distancesNew(res, Xnai, scoresnai,
-                                                XciSVD$rank, distprob)
+                                     XciSVD$rank, distprob)
   res$OD         <- out$OD
-  out$cutoffOD   <- cutoffOD
+  out$cutoffOD   <- cutoffOD # cutoff based on the cell-imputed
   res$cutoffOD   <- out$cutoffOD
+  out$highODnai  <- which(out$OD > cutoffOD)
   res$SD         <- out$SD
-  res$cutoffSD   <- out$cutoffSD  
-  out$indrowsnai <- which(out$OD > cutoffOD)
-  res$indrows    <- out$indrowsnai  
+  out$cutoffSD   <- cutoffSD
+  res$cutoffSD   <- out$cutoffSD
+  out$highSDnai  <- which(out$SD > cutoffSD)
+  res$highOD     <- out$highODnai  
+  res$highSD     <- out$highSDnai
   NAimp          <- c(NAimp, out); rm(out)  
   
   if (bigOutput) {
@@ -703,9 +710,12 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
                               byrow = TRUE)) %*% loadings
     Fullimp  <- list(scoresfi = scoresfi)
     out      <- pca.distancesNew(res, Xfi, scoresfi, 
-                                            XciSVD$rank, distprob)
+                                 XciSVD$rank, distprob)
+    names(out)[1] <- "ODfi"
+    names(out)[3] <- "SDfi"
     out$cutoffOD  <- cutoffOD
-    out$indrowsfi <- which(out$OD > cutoffOD)
+    out$highODfi  <- which(out$ODfi > cutoffOD)
+    out$highSDfi  <- which(out$SDfi > cutoffSD)
     Fullimp  <- c(Fullimp, out); rm(out)
   }
   
@@ -826,7 +836,6 @@ MacroPCA <- function(X, k = 0, MacroPCApars = NULL) {
 
 ## AUXILIARY FUNCTIONS:
 
-
 h.alpha.n <- function(alpha, n, p) {
   n2 <- (n + p + 1) %/% 2
   floor(2 * n2 - n + 2 * (n - n2) * alpha)
@@ -910,7 +919,7 @@ critOD <- function(OD, crit = 0.99, umcd = FALSE, alpha, classic = FALSE)
 
 
 makeDirections <- function(data, ndirect, all = TRUE, 
-                            fixedCenter = FALSE)
+                           fixedCenter = FALSE)
 {
   uniran <- function(seed = 0) {
     seed <- floor(seed * 5761) + 999
@@ -1001,9 +1010,7 @@ maxAngle <- function(Ptrue, Phat) {
 
 
 truncPC = function (X, ncomp = NULL, scale = FALSE, center = TRUE, 
-                     signflip = TRUE, via.svd = NULL, scores = FALSE) 
-{ # heb ik lichtjes aangepast zodat het center als een vector
-  # output wordt, wat ettelijke lijnen uitspaart in MacroPCA2
+                    signflip = TRUE, via.svd = NULL, scores = FALSE) { 
   if (!is.numeric(X)) 
     stop(" X must be numeric.")
   Y <- as.matrix(X)
@@ -1016,11 +1023,9 @@ truncPC = function (X, ncomp = NULL, scale = FALSE, center = TRUE,
   Y <- scale(Y, center = center, scale = scale)
   if (isTRUE(scale)) 
     scale <- attr(Y, "scaled:scale")
-  if (isTRUE(center)) { center <- attr(Y, "scaled:center") # PR
-  } else { center = rep(0, d) }                            # PR
+  if (isTRUE(center)) { center <- attr(Y, "scaled:center")
+  } else { center = rep(0, d) }
   if (is.null(ncomp)) {
-    # options(warn = 2) # should treat warnings as errors,
-    # but then does this for whole session?
     SvdY <- try(svd::propack.svd(Y, neig = min(n, d)), silent = TRUE)
     if (inherits(SvdY, "try-error")) {
       SvdY <- svd(Y, nu = min(n, d), nv = min(n, d))
@@ -1030,8 +1035,6 @@ truncPC = function (X, ncomp = NULL, scale = FALSE, center = TRUE,
     if (!(ncomp >= 1)) 
       stop(" ncomp must be at least 1")
     ncomp <- min(ncomp, n, d)
-    # options(warn = 2) # should treat warnings as errors,
-    # but then does this for whole session?
     SvdY <- try(svd::propack.svd(Y, neig = ncomp), silent = TRUE)
     if (inherits(SvdY, "try-error")) {
       SvdY <- svd(Y, nu = ncomp, nv = ncomp)
@@ -1072,4 +1075,3 @@ unimcd <- function(y, alpha = NULL, center = TRUE) {
                   "std::range_error" = function(e){conditionMessage(e)})
   return(list(loc = res$loc, scale = res$scale, weights = drop(res$weights)))
 }
-

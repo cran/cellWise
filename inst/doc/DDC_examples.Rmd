@@ -264,26 +264,20 @@ dim(tempX)
 showrows = c(12,42,56,73,81,94,99,135,150,164,176,198,209,215,234,241,277)
 
 # Make two ggplot2 objects:
-ggpcol = cellMap(standX,
-                 mTitle="By column",
-                 showrows=showrows,
-                 showVals="D",
-                 D=tempX,
-                 adjustrowlabels=0.5)  
+ggpcol = cellMap(standX, showcellvalues="D", D=tempX, 
+                 mTitle="By column", showrows=showrows,
+                 sizecellvalues = 0.6, adjustrowlabels=0.5)  
 plot(ggpcol)
 ```
 
 ```{r,fig.height=10,fig.width=8}
-ggpDDC = cellMap(DDCtransTG$stdResid, 
-                 mTitle="DetectDeviatingCells",
-                 showrows=showrows,
-                 showVals="D",
-                 D=tempX,
-                 adjustrowlabels=0.5)
+ggpDDC = cellMap(DDCtransTG$stdResid, showcellvalues="D", D=tempX,  
+                 mTitle="DetectDeviatingCells", showrows=showrows,
+                 sizecellvalues = 0.6, adjustrowlabels=0.5)  
 plot(ggpDDC)
 
 # Creating the pdf:
-# pdf("cellMap_TopGear.pdf", width = 20, height = 15 )
+# pdf("cellMap_TopGear.pdf", width = 12, height = 10)
 # gridExtra::grid.arrange(ggpcol,ggpDDC,nrow=1) # combines 2 plots in a figure
 # dev.off()
 
@@ -302,11 +296,9 @@ as a `new' dataset.
 
 dim(remX) # 296 11
 
-ggpDDC = cellMap(DDCtransTG$stdResid, 
-                 mTitle="DetectDeviatingCells",
-                 showrows=showrows,
-                 showVals="R",
-                 adjustrowlabels=0.5)
+ggpDDC = cellMap(DDCtransTG$stdResid, showcellvalues="R", 
+                 sizecellvalues = 0.7, mTitle="DetectDeviatingCells", 
+                 showrows=showrows, adjustrowlabels=0.5)
 plot(ggpDDC)
 ```
 
@@ -344,15 +336,14 @@ all.equal(predictDDC,predictDDC2) # TRUE
 ```
 ```{r,fig.height=10,fig.width=8}
 
-ggpnew = cellMap(predictDDC$stdResid,
-                 showVals="R",
-                 mTitle="DDCpredict",
+ggpnew = cellMap(predictDDC$stdResid, showcellvalues="R",
+                 sizecellvalues = 0.7, mTitle="DDCpredict",
                  adjustrowlabels=0.5) 
 plot(ggpnew) # Looks quite similar to the result using the entire dataset:
 
 # Creating the pdf:
-# pdf("TopGear_DDCpredict.pdf",width=20,height=15)
-# gridExtra::grid.arrange(ggpDDC,ggpnew,nrow=1) 
+# pdf("TopGear_DDCpredict.pdf",width=12,height=10)
+# gridExtra::grid.arrange(ggpDDC,ggpnew,nrow=1)
 # dev.off()
 ```
 
@@ -399,20 +390,14 @@ abline(h=sqrt(qchisq(0.975,df=9))) # this horizontal line is the cutoff.
 ```{r,fig.height=8,fig.width=6}
 # cellMaps with rectangular blocks:
 
-ggpMCDphilips = cellMap(data_philips,
-                        indrows=indrowsMCD,
-                        mTitle="MCD",
-                        nrowsinblock=15,
-                        ncolumnsinblock=1,
-                        drawCircles = TRUE)
+ggpMCDphilips = cellMap(data_philips, indrows=indrowsMCD,
+                        mTitle="MCD", nrowsinblock=15,
+                        ncolumnsinblock=1, drawCircles = TRUE)
 plot(ggpMCDphilips)
 
-ggpDDCphilips = cellMap(DDCphilips$stdResid,
-                        indrows=DDCphilips$indrows,
-                        mTitle="DetectDeviatingCells",
-                        nrowsinblock=15,
-                        ncolumnsinblock=1,
-                        drawCircles = TRUE)
+ggpDDCphilips = cellMap(DDCphilips$stdResid, indrows=DDCphilips$indrows,
+                        mTitle="DetectDeviatingCells", nrowsinblock=15,
+                        ncolumnsinblock=1, drawCircles = TRUE)
 plot(ggpDDCphilips)
 # dev.copy(pdf,"Figure_philips_right.pdf",width=6,height=12)
 # dev.off()
@@ -443,30 +428,21 @@ library(rrcov) # contains ROBPCA
 ```{r,fig.height=8,fig.width=6}
 PCAmortality = rrcov::PcaHubert(data_mortality,alpha=0.75,scale=FALSE)
 
-ggpROBPCA = cellMap(remX,
-                    indrows=which(PCAmortality@flag==FALSE),
-                    mTitle="By row",
-                    nrowsinblock=5,
-                    ncolumnsinblock=5, 
-                    rowtitle = "Years",
-                    columntitle = "Age",
-                    sizetitles = 2.0,
+ggpROBPCA = cellMap(remX, indrows=which(PCAmortality@flag==FALSE),
+                    mTitle="By row", nrowsinblock=5,
+                    ncolumnsinblock=5, rowtitle = "Years",
+                    columntitle = "Age", sizetitles = 1.5,
                     drawCircles = TRUE)
 
 plot(ggpROBPCA)
 
-ggpDDC = cellMap(DDCmortality$stdResid,
-                 indrows=DDCmortality$indrows,
-                 mTitle="DetectDeviatingCells",
-                 nrowsinblock=5,
-                 ncolumnsinblock=5,
-                 rowtitle = "Years",
-                 columntitle = "Age",
-                 sizetitles = 2.0,
-                 drawCircles = TRUE)
+ggpDDC = cellMap(DDCmortality$stdResid, 
+                 mTitle="DetectDeviatingCells", nrowsinblock=5,
+                 ncolumnsinblock=5, rowtitle = "Years",
+                 columntitle = "Age", sizetitles = 1.5)
 plot(ggpDDC) # Leads to a detailed interpretation:
 
-# pdf("cellmap_mortality.pdf",width=14,height=12)
+# pdf("cellmap_mortality.pdf",width=9,height=8)
 # gridExtra::grid.arrange(ggpROBPCA,ggpDDC,nrow=1)
 # dev.off()
 ```
@@ -491,8 +467,8 @@ ggpDDC = cellMap(DDCmortality$stdResid,
                  columnblocklabels = collabels,
                  rowtitle = "Epochs",
                  columntitle = "Age groups",
-                 sizetitles = 2.0)
-# pdf("cellmap_mortality_manual_blocks.pdf",width=8,height=5)
+                 sizetitles = 1.2)
+# pdf("cellmap_mortality_manual_blocks.pdf",width=5,height=3)
 plot(ggpDDC)
 # dev.off()
 ```
@@ -572,13 +548,12 @@ ggpROBPCA = cellMap(matrix(0,n,d),
                     indrows=which(PCAglass@flag==FALSE),
                     rowblocklabels=rowlabels,
                     columnblocklabels=columnlabels,
-                    mTitle="By row",
-                    nrowsinblock=5,
+                    mTitle="By row", nrowsinblock=5,
                     ncolumnsinblock=5,
-                    columnangle=0,
                     rowtitle="glass samples",
                     columntitle="wavelengths",
-                    sizetitles=1.5,
+                    sizetitles=1.2,
+                    columnangle=0,
                     drawCircles = TRUE)
 plot(ggpROBPCA)
 
@@ -586,16 +561,15 @@ ggpDDC = cellMap(DDCglass$stdResid,
                  indrows=DDCglass$indrows,
                  rowblocklabels=rowlabels,
                  columnblocklabels=columnlabels,
-                 mTitle="DDC",
-                 nrowsinblock=5,
+                 mTitle="DDC", nrowsinblock=5,
                  ncolumnsinblock=5,
-                 columnangle=0,
                  rowtitle="glass samples",
                  columntitle="wavelengths",
-                 sizetitles=1.5,
+                 sizetitles=1.2,
+                 columnangle=0,
                  drawCircles = TRUE)
 plot(ggpDDC)
-# pdf("cellmap_glass_ROBPCA_DDC.pdf",width=16,height=10)
+# pdf("cellmap_glass_ROBPCA_DDC.pdf",width=8,height=6)
 # gridExtra::grid.arrange(ggpROBPCA,ggpDDC,ncol=1)
 # dev.off()
 
@@ -603,16 +577,15 @@ ggpfastDDC = cellMap(fastDDCglass$stdResid,
                      indrows=fastDDCglass$indrows,
                      rowblocklabels=rowlabels,
                      columnblocklabels=columnlabels,
-                     mTitle="fast DDC",
-                     nrowsinblock=5,
+                     mTitle="fastDDC", nrowsinblock=5,
                      ncolumnsinblock=5,
-                     columnangle=0,
                      rowtitle="glass samples",
                      columntitle="wavelengths",
-                     sizetitles=1.5,
+                     sizetitles=1.2,
+                     columnangle=0,
                      drawCircles = TRUE)
 plot(ggpfastDDC)
-# pdf("cellmap_glass_DDC_fastDDC.pdf",width=16,height=10)
+# pdf("cellmap_glass_DDC_fastDDC.pdf",width=8,height=6)
 # gridExtra::grid.arrange(ggpDDC,ggpfastDDC,ncol=1)
 # dev.off()
 ```

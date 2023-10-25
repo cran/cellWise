@@ -1,4 +1,4 @@
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 knitr::opts_chunk$set(
  fig.width = 8 ,
  fig.height = 12,
@@ -95,8 +95,10 @@ j = 3
 ids = c(52,59,70,218)
 labs = rn[ids]; labs[1] = "Caterham"
 xvals = c(52, 59, 70, 218) 
-yvals = c(-5.70, -7.70, -4.20, -4.35)
-plot_cellMCD(cellout, j, type="index") 
+yvals = c(-6.20, -8.35, -4.55, -4.8)
+plot_cellMCD(cellout, j, type="index",
+             ylab="standardized residual of log(horsepower)",
+             main="standardized residual of log(horsepower)")
 text(x = xvals, y = yvals, labels = labs, cex = 0.9)
 #
 ######### 2. Length
@@ -106,12 +108,13 @@ j = 9
 ids = c(3,50,51,119,144,195,218,232,249)
 labs = rn[ids]
 labs[1] = "Aston Cygnet"; labs[3] = "Caterham"
-xvals = c(2560, 5050, 3100, 5252, 4245,
-          4605, 2360, 2700, 3330) 
-yvals = c(-4.11, -3.88, -3.60, 3.87, -4.30,
-          -5.00, -5.00, -5.90, -4.85)
-plot_cellMCD(cellout, j, type = "Zres/X",
-             main = "standardized residual versus X for length", xlab = "length (mm)", xlim = c(1970, 6000),  ylim = c(-6, 4.5)) #,ids=ids)
+xvals = c(2560, 5050, 3100, 5252, 4245, 4605, 2360, 2700, 3330) 
+yvals = c(-4.46, -4.21, -3.91, 4.20, -4.67, -5.43,
+          -5.46, -6.45, -5.26)
+plot_cellMCD(cellout, j, type="Zres/X",
+             main="standardized residual versus X for length",
+             xlab="length (mm)", xlim=c(1970,6000), 
+             ylim=c(-6.51,4.88)) #,ids=ids)
 text(x = xvals, y = yvals, labels = labs, cex = 0.9)
 # dev.off()
 
@@ -130,7 +133,7 @@ labs = rn[ids]
 labs[2] = "Caterham"
 labs[4] = "Mercedes-Benz G"
 xvals = c(1490, 1000, 1890, 1575, 1757,  810, 2250) 
-yvals = c(5.22,-4.70,-4.73, 4.19,-5.65,-6.05,-7.60)
+yvals = c(5.63,-5.07,-5.10,4.52,-6.19,-6.60,-8.20)
 plot_cellMCD(cellout, j, type="Zres/pred", # vband=F,
              xlab = "predicted weight (kg)") # , ids=ids)
 text(x = xvals, y = yvals, labels = labs, cex = 0.9)
@@ -144,7 +147,9 @@ labs[3] = "Caterham"
 xvals = c(5.145, 4.937, 5.083, 5.065, 5.076, 4.90, 4.75, 4.63, 5.038)
 yvals = c(5.53, 4.53, 4.72, 5.345, 5.44, 3.97, 4.43, 4.30, 4.61)
 plot_cellMCD(cellout, j, type="X/pred", vband=F, vlines=F,
-             xlab="predicted top speed (transformed)")#, ids=ids)
+             xlab="predicted log(top speed)",
+             ylab="observed log(top speed)",
+             main="log(top speed) versus its prediction") #, ids=ids)
 text(x = xvals, y = yvals, labels = labs, cex = 0.9)
 # dev.off()
 
@@ -167,8 +172,8 @@ yvals = c(470, 235, -16)
 plot_cellMCD(cellout, type = "bivariate", horizvar = 4, 
              vertivar = 7, ids = ids, 
              xlim=c(3.5,7.7), ylim = c(-27,480), 
-             main = "miles/gallon versus torque",
-             xlab = "torque (transformed)",
+             main = "miles/gallon versus log(torque)",
+             xlab = "log(torque)",
              ylab = "miles/gallon",
              opacity=0.5, labelpoints=F)
 text(x = xvals, y = yvals, labels = labs, cex = 0.9)
@@ -220,11 +225,7 @@ nrow(X) / ncol(X)
 cellout <- cellMCD(X)
 
 ## -----------------------------------------------------------------------------
-y <- X[, 5]
-y <- transfo(y)$Y
-
-## -----------------------------------------------------------------------------
-data(alcohol, package = "robustbase")
+data(alcohol)
 X <- as.matrix(alcohol)
 X <- transfo(X)$Y
 rowout <- robustbase::covMcd(X)
@@ -281,7 +282,7 @@ cutoff <- sqrt(qchisq(0.975, ncol(X)))
 sum(rd > cutoff)
 cellout <- cellMCD(X)
 cd <- sqrt(mahalanobis(X, center = cellout$mu, cov = cellout$S))
-round(cor(rd, -cd), 3) 
+round(cor(rd, cd), 3) 
 
 ## -----------------------------------------------------------------------------
 data(delivery)
@@ -343,7 +344,7 @@ cellout <- cellMCD(X)
 cd = sqrt(mahalanobis(X, center = cellout$mu, cov = cellout$S))
 round(cor(rd, cd), 3) 
 
-## ---- error=TRUE--------------------------------------------------------------
+## ----error=TRUE---------------------------------------------------------------
 data(lactic)
 X <- as.matrix(lactic)
 X <- transfo(X)$Y
@@ -358,10 +359,15 @@ cellout <- cellMCD(X)
 cd <- sqrt(mahalanobis(X, center = cellout$mu, cov = cellout$S))
 round(cor(rd, cd), 3) 
 
-## ---- error=TRUE--------------------------------------------------------------
+## ----error=TRUE---------------------------------------------------------------
 data(pension)
 X <- as.matrix(pension)
 X <- transfo(X)$Y
+rowout <- robustbase::covMcd(X)
+rd <- sqrt(mahalanobis(X,center=rowout$center,cov=rowout$cov))
+cellout <- cellMCD(X)
+cd <- sqrt(mahalanobis(X,center=cellout$mu,cov=cellout$S))
+round(cor(rd,cd),3) 
 
 ## -----------------------------------------------------------------------------
 data(phosphor)
@@ -386,9 +392,9 @@ cd <- sqrt(mahalanobis(X, center = cellout$mu, cov = cellout$S))
 round(cor(rd, cd), 3) 
 
 ## -----------------------------------------------------------------------------
-cellout$mu - colMeans(X) 
+cellout$raw.mu - colMeans(X) 
 n <- nrow(X)
-cellout$S - (n - 1) * cov(X) / n
+cellout$raw.S - (n - 1) * cov(X) / n
 
 ## -----------------------------------------------------------------------------
 data(radarImage)
@@ -439,16 +445,15 @@ cellout <- cellMCD(X)
 cd <- sqrt(mahalanobis(X, center = cellout$mu, cov = cellout$S))
 round(cor(rd,cd),3) 
 
-## ---- error = TRUE------------------------------------------------------------
-data(telef)
-X <- as.matrix(telef)
-# plot(X)
-X <- transfo(X)$Y
-
-## ---- error = TRUE------------------------------------------------------------
+## ----error = TRUE-------------------------------------------------------------
 data(toxicity)
 X <- as.matrix(toxicity)
-X <- transfo(X, nbsteps = 1)$Y
+X <- transfo(X)$Y
+rowout <- robustbase::covMcd(X)
+rd     <- sqrt(mahalanobis(X,center=rowout$center,cov=rowout$cov))
+cutoff <- sqrt(qchisq(0.975,ncol(X)))
+sum(rd > cutoff) 
+cellout <- cellMCD(X)
 
 ## -----------------------------------------------------------------------------
 data(wood)

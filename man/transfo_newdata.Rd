@@ -5,15 +5,15 @@
 Transform variables based on the output of \code{\link{transfo}}. 
 }
 \description{
-Based on the output of \code{\link{transfo}}, transform the variables using Yeo-Johnson and/or Box-Cox transformations with the previusly estimated parameters and standardization.
+Based on the output of \code{\link{transfo}}, transform the variables using Yeo-Johnson and/or Box-Cox transformations with the previously estimated parameters and standardization.
 }
 \usage{
 transfo_newdata(Xnew, transfo.out)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{Xnew}{A data matrix of dimensions n x d.
-  Its columns are the variables to be transformed.
+  \item{Xnew}{A data matrix with d columns, which contain the variables to be transformed. The number of columns and their names must be the same as those of the original data on which \code{\link{transfo}} was run. The number of rows may be different.
+
 }
 \item{transfo.out}{
 The output of a call to \code{\link{transfo}}.
@@ -23,7 +23,7 @@ The output of a call to \code{\link{transfo}}.
 Returns a matrix with transformed variables.
 }
 \references{
-J. Raymaekers and P.J. Rousseeuw (2021). Transforming variables to central normality. \emph{Machine Learning}. \doi{10.1007/s10994-021-05960-5}{(link to open access pdf)}
+J. Raymaekers and P.J. Rousseeuw (2021). Transforming variables to central normality. \emph{Machine Learning}. \doi{10.1007/s10994-021-05960-5}(link to open access pdf)
 }
 \author{
 J. Raymaekers and P.J. Rousseeuw

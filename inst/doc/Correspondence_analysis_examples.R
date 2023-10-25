@@ -1,7 +1,7 @@
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 knitr::opts_chunk$set(
-  fig.width = 8 ,
-  fig.height = 12,
+  fig.width = 6,
+  fig.height = 6,
   fig.align ='center'
 )
 
@@ -29,15 +29,14 @@ d <- ncol(S)
 (eigvals <- eigen(t(S) %*% S)$values)
 
 
-## -----------------------------------------------------------------------------
+## ----fig.height=8,fig.width=3-------------------------------------------------
 DDC.out <- DDC(S)
 ggp <- cellMap(R = DDC.out$stdResid,
-               mTitle = "",
+               mTitle = "clothes data",
                rowtitle = "countries",
-               columntitle = "brackets",
-               sizetitles = 2)
+               columntitle = "brackets")
 
-# pdf("clothes_cellmap.pdf", width = 4, height = 8)
+# pdf("clothes_cellmap.pdf", width = 3, height = 6)
 plot(ggp)
 # dev.off()
 
@@ -49,7 +48,7 @@ lines(apply(S, 2, median), lwd = 3) # median profile
 # The profile of these countries deviate in a similar way: 
 # they trade a lot of cheap clothes, and fewer expensive ones. 
 
-## -----------------------------------------------------------------------------
+## ----fig.height=6,fig.width=6-------------------------------------------------
 svd.out <- svd(S)
 svd.out$d# S is indeed singular:
 (svd.out$d)^2 - eigen(t(S) %*% S)$values # ~0
@@ -77,7 +76,7 @@ title(xlab="Dimension 1", line=2.3)
 title(ylab="Dimension 2", line=2.3)
 # dev.off()
 
-## -----------------------------------------------------------------------------
+## ----fig.height=6,fig.width=6-------------------------------------------------
 # We apply MacroPCA with center fixed at zero.
 # As in classical CA, we do not prescale S.
 MacroPCApar0 <- list(scale = FALSE, center = rep(0,d))
@@ -130,21 +129,20 @@ S    <- diag(sqrt(rvec)) %*% (R - rep(1, nrow(X)) %*%
 dimnames(S) <- dimnames(X)
 d <- ncol(S)
 
-## -----------------------------------------------------------------------------
+## ----fig.height=8,fig.width=3-------------------------------------------------
 DDC.out <- DDC(S)
 ggp     <- cellMap(R = DDC.out$stdResid,
-                   mTitle = "",
+                   mTitle = "brands data",
                    rowtitle = "brands",
-                   columntitle = "perceptions",
-                   sizetitles = 2.3)
-#pdf("brands_cellmap.pdf", width = 6, height = 13)
+                   columntitle = "perceptions")
+# pdf("brands_cellmap.pdf", width = 3.5, height = 8)
 plot(ggp)
-#dev.off()
+# dev.off()
 
 # Volvo is most deviating (3 cells), followed by Hyundai
 # (2 cells) and Maserati (2 cells).
 
-## -----------------------------------------------------------------------------
+## ----fig.height=6,fig.width=6-------------------------------------------------
 svd.out <- svd(S)
 svd.out$d # S is singular:
 diff(c(0,cumsum(svd.out$d^2)/sum(svd.out$d^2)))
@@ -173,7 +171,7 @@ title(xlab="Dimension 1", line=2.3)
 title(ylab="Dimension 2", line=2.3)
 # dev.off()
 
-## -----------------------------------------------------------------------------
+## ----fig.height=6,fig.width=6-------------------------------------------------
 MacroPCApar0 <- list(scale = FALSE, center = rep(0, d))
 MacroPCA.out <- MacroPCA(S, k = 0, MacroPCApars = MacroPCApar0)
 
